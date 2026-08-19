@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Scope Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1000px;margin:auto;padding:24px;background:#f5f7fb;color:#222;line-height:1.7}
+header{background:#1d4ed8;color:#fff;padding:22px;border-radius:10px}
+.card{background:#fff;border-radius:10px;padding:18px;margin:18px 0;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+h2{color:#1d4ed8}
+pre{background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre}
+button{background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px}
+th{background:#dbeafe}
+@media print{button{display:none}.card{box-shadow:none;border:1px solid #ddd}}
+</style>
+<script>
+function printPDF(){window.print();}
+</script>
+</head>
+<body>
+<header>
+<h1>JavaScript Scope</h1>
+<p>Interview Notes • Simple Language • Print Ready</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>What is Scope?</h2>
+<p><b>Scope</b> defines <b>where a variable can be accessed</b>. Think of it as the visibility area of a variable.</p>
+<div class="diagram">
+Variable Created
+      │
+      ▼
+Where can it be used?
+      │
+      ▼
+That area is called Scope
+</div>
+</div>
+
+<div class="card">
+<h2>1. Global Scope</h2>
+<p>Variables declared outside all functions or blocks are globally accessible.</p>
+<pre>
+let company = "OpenAI";
+
+function show(){
+  console.log(company);
+}
+
+show();
+</pre>
+<p>Output: OpenAI</p>
+</div>
+
+<div class="card">
+<h2>2. Function Scope</h2>
+<p>Variables declared inside a function are available only inside that function.</p>
+<pre>
+function demo(){
+  let name = "Omkar";
+  console.log(name);
+}
+demo();
+console.log(name);
+</pre>
+<p>Output: ReferenceError</p>
+<div class="diagram">
+Function
+---------
+name
+---------
+Outside ❌
+</div>
+</div>
+
+<div class="card">
+<h2>3. Block Scope</h2>
+<p><code>let</code> and <code>const</code> are block scoped.</p>
+<pre>
+if(true){
+ let age = 24;
+}
+console.log(age);
+</pre>
+<p>Output: ReferenceError</p>
+<p><code>var</code> ignores block scope.</p>
+<pre>
+if(true){
+ var city="Mumbai";
+}
+console.log(city);
+</pre>
+<p>Output: Mumbai</p>
+</div>
+
+<div class="card">
+<h2>4. Module Scope</h2>
+<p>Variables declared in one ES Module are private unless exported.</p>
+<pre>
+// math.js
+export const PI = 3.14;
+
+// app.js
+import { PI } from "./math.js";
+</pre>
+<p>Modules prevent global pollution and make code reusable.</p>
+</div>
+
+<div class="card">
+<h2>Scope Chain</h2>
+<pre>
+let country="India";
+
+function state(){
+  let s="MH";
+
+  function city(){
+    console.log(s);
+    console.log(country);
+  }
+
+  city();
+}
+</pre>
+<div class="diagram">
+city()
+   │
+state()
+   │
+Global
+</div>
+<p>JavaScript searches the current scope first, then parent scopes until it finds the variable.</p>
+</div>
+
+<div class="card">
+<h2>Comparison</h2>
+<table>
+<tr><th>Scope</th><th>Accessible From</th></tr>
+<tr><td>Global</td><td>Everywhere</td></tr>
+<tr><td>Function</td><td>Only inside function</td></tr>
+<tr><td>Block</td><td>Only inside { }</td></tr>
+<tr><td>Module</td><td>Only inside module unless exported</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Interview Questions</h2>
+<ol>
+<li>What is scope in JavaScript?</li>
+<li>Difference between Global Scope and Function Scope?</li>
+<li>What is Block Scope?</li>
+<li>Is <code>var</code> block scoped?</li>
+<li>Why do <code>let</code> and <code>const</code> throw ReferenceError outside a block?</li>
+<li>What is Module Scope?</li>
+<li>Explain the Scope Chain.</li>
+<li>How does scope help prevent variable conflicts?</li>
+<li>Why are ES Modules preferred in modern JavaScript?</li>
+<li>How does React use scope in components?</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Scope = Visibility of variables.</li>
+<li>✔ Global = Accessible everywhere.</li>
+<li>✔ Function = Inside function only.</li>
+<li>✔ Block = let & const only.</li>
+<li>✔ var is NOT block scoped.</li>
+<li>✔ Module Scope keeps files isolated.</li>
+<li>✔ Scope Chain searches from inner to outer scope.</li>
+</ul>
+</div>
+
+</body>
+</html>

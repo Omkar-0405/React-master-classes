@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript Hoisting - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#222;max-width:1000px;margin:auto;padding:24px;line-height:1.7}
+header{background:#1e3a8a;color:#fff;padding:25px;border-radius:10px}
+h2{color:#1e3a8a;border-bottom:2px solid #dbeafe;padding-bottom:4px}
+.card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin:18px 0}
+pre{background:#1e1e1e;color:#d4d4d4;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px}
+th{background:#e0e7ff}
+button{background:#2563eb;color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:16px}
+code{color:#ffd166}
+@media print{
+button{display:none}
+body{background:#fff}
+.card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+<script>
+function printPDF(){window.print();}
+</script>
+</head>
+<body>
+
+<header>
+<h1>JavaScript Hoisting</h1>
+<p>Simple Interview Notes • Beginner Friendly • Print Ready</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>What is Hoisting?</h2>
+<p>Hoisting means <b>JavaScript moves declarations to the top of their scope before execution.</b> Only declarations are hoisted, not the assignments.</p>
+</div>
+
+<div class="card">
+<h2>Execution Order</h2>
+<div class="diagram">
+JS Starts
+   │
+Create Memory
+   │
+Hoist Variables & Functions
+   │
+Execute Code Line by Line
+</div>
+</div>
+
+<div class="card">
+<h2>var Hoisting</h2>
+<pre>console.log(a);
+var a = 10;</pre>
+<p>Memory Phase:</p>
+<div class="diagram">
+a → undefined
+</div>
+<p>Output:</p>
+<pre>undefined</pre>
+<p><b>Reason:</b> <code>var</code> gets memory first and is initialized with <code>undefined</code>.</p>
+</div>
+
+<div class="card">
+<h2>let Hoisting</h2>
+<pre>console.log(age);
+let age = 20;</pre>
+<pre>ReferenceError</pre>
+<p><code>let</code> is hoisted but remains uninitialized until its declaration.</p>
+</div>
+
+<div class="card">
+<h2>const Hoisting</h2>
+<pre>console.log(PI);
+const PI = 3.14;</pre>
+<pre>ReferenceError</pre>
+<p><code>const</code> behaves like <code>let</code> but must also be initialized when declared.</p>
+</div>
+
+<div class="card">
+<h2>Temporal Dead Zone (TDZ)</h2>
+<p>TDZ is the time between memory creation and variable initialization.</p>
+<div class="diagram">
+Memory Created
+      │
+      ▼
+ TDZ Begins
+      │
+let x;
+      │
+TDZ Ends
+</div>
+</div>
+
+<div class="card">
+<h2>Function Declaration Hoisting</h2>
+<pre>
+greet();
+
+function greet(){
+ console.log("Hello");
+}
+</pre>
+<pre>Hello</pre>
+<p>Entire function is hoisted.</p>
+</div>
+
+<div class="card">
+<h2>Function Expression</h2>
+<pre>
+sayHi();
+
+var sayHi = function(){
+ console.log("Hi");
+}
+</pre>
+<pre>TypeError: sayHi is not a function</pre>
+<p>Only the variable is hoisted as <code>undefined</code>.</p>
+</div>
+
+<div class="card">
+<h2>Arrow Function</h2>
+<pre>
+hello();
+
+const hello = () => {
+ console.log("Hello");
+}
+</pre>
+<pre>ReferenceError</pre>
+<p>Arrow functions follow the hoisting rules of the variable they are assigned to.</p>
+</div>
+
+<div class="card">
+<h2>Comparison</h2>
+<table>
+<tr><th>Feature</th><th>var</th><th>let</th><th>const</th></tr>
+<tr><td>Hoisted</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Initialized</td><td>undefined</td><td>No</td><td>No</td></tr>
+<tr><td>TDZ</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Redeclare</td><td>Yes</td><td>No</td><td>No</td></tr>
+<tr><td>Reassign</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Why does <code>var</code> become undefined?</h2>
+<p>During the memory creation phase, JavaScript allocates memory for <code>var</code> variables and automatically initializes them with <code>undefined</code>. The assignment happens later during execution.</p>
+</div>
+
+<div class="card">
+<h2>Difference: Function Declaration vs Function Expression</h2>
+<table>
+<tr><th>Function Declaration</th><th>Function Expression</th></tr>
+<tr><td>Fully hoisted</td><td>Variable only is hoisted</td></tr>
+<tr><td>Can call before declaration</td><td>Cannot call before assignment</td></tr>
+<tr><td>Safer for reusable functions</td><td>Useful for callbacks</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li>What is hoisting?</li>
+<li>Why does <code>var</code> print undefined?</li>
+<li>Is <code>let</code> hoisted?</li>
+<li>What is the Temporal Dead Zone?</li>
+<li>Difference between <code>var</code>, <code>let</code> and <code>const</code>?</li>
+<li>Why do function declarations work before declaration?</li>
+<li>Why do function expressions fail before assignment?</li>
+<li>How are arrow functions hoisted?</li>
+<li>What happens during the memory creation phase?</li>
+<li>How does hoisting help the JavaScript engine?</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Declarations are hoisted.</li>
+<li>✔ Assignments are not hoisted.</li>
+<li>✔ var → undefined.</li>
+<li>✔ let & const → TDZ.</li>
+<li>✔ Function declarations are fully hoisted.</li>
+<li>✔ Function expressions and arrow functions depend on variable hoisting.</li>
+</ul>
+</div>
+
+</body>
+</html>

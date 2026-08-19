@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Error Handling - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#b91c1c;color:#fff;padding:28px;border-radius:12px}
+h2{color:#b91c1c}h3{color:#991b1b}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#fee2e2}
+code{background:#fef2f2;padding:2px 5px;border-radius:4px}.note{background:#fef2f2;border-left:4px solid #dc2626;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 18 — React Error Handling</h1>
+<p>Simple Interview Handbook • Error Boundaries • Suspense • Fallback UI • Retry UI • Logging</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Why Error Handling?</h2>
+<p>Error handling prevents one failure from making the whole user experience unusable and gives users a clear recovery path.</p>
+<div class="diagram">Error
+  ↓
+Detect
+  ↓
+Contain
+  ↓
+Show useful UI
+  ↓
+Log / report
+  ↓
+Recover or retry
+</div>
+<div class="note"><b>Interview idea:</b> Error handling has two goals: protect the user experience and give developers enough information to diagnose the problem.</div>
+</div>
+
+<div class="card">
+<h2>2. Error Boundary</h2>
+<p>An <b>Error Boundary</b> is a React component that catches rendering errors in its descendant tree and displays fallback UI instead of letting the broken subtree take down the whole interface.</p>
+<p>Error boundaries are implemented using class components with <code>static getDerivedStateFromError</code> and/or <code>componentDidCatch</code>, or through framework/library abstractions built on them.</p>
+<pre>class ErrorBoundary
+  extends React.Component {
+
+  state = {
+    hasError: false
+  };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error(error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return &lt;p&gt;Something went wrong.&lt;/p&gt;;
+    }
+
+    return this.props.children;
+  }
+}</pre>
+</div>
+
+<div class="card">
+<h2>Error Boundary Flow</h2>
+<div class="diagram">App
+ ↓
+Error Boundary
+ ↓
+Feature
+ ↓
+Component ❌
+ ↓
+Boundary catches render error
+ ↓
+Fallback UI
+</div>
+<p>The boundary can isolate a part of the application instead of showing a broken screen everywhere.</p>
+</div>
+
+<div class="card">
+<h2>3. What Error Boundaries Catch</h2>
+<p>Error boundaries catch errors during rendering and certain React lifecycle/constructor work in their descendant tree.</p>
+<ul>
+<li>Rendering errors.</li>
+<li>Errors in class lifecycle methods.</li>
+<li>Errors in constructors of descendant components.</li>
+</ul>
+<div class="note"><b>Important:</b> Error boundaries do not automatically catch every kind of error. Event-handler errors, asynchronous callback errors and server-side rendering errors need their own handling strategies.</div>
+</div>
+
+<div class="card">
+<h2>4. Event Handler Errors</h2>
+<pre>function Button() {
+  function handleClick() {
+    try {
+      riskyOperation();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return (
+    &lt;button onClick={handleClick}&gt;
+      Save
+    &lt;/button&gt;
+  );
+}</pre>
+<p>Use normal JavaScript <code>try/catch</code> for errors that occur directly in event handlers.</p>
+</div>
+
+<div class="card">
+<h2>5. Async/API Errors</h2>
+<pre>async function loadUsers() {
+  try {
+    const response =
+      await fetch("/api/users");
+
+    if (!response.ok) {
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    setError(error);
+  }
+}</pre>
+<p>Network failures and API errors should normally be handled at the data-fetching layer and represented in the UI with loading/error states.</p>
+</div>
+
+<div class="card">
+<h2>6. Fallback UI</h2>
+<p><b>Fallback UI</b> is the interface shown when the expected content cannot currently be displayed.</p>
+<div class="diagram">Normal UI
+   ↓
+Failure
+   ↓
+Fallback
+ ├── Explain problem
+ ├── Keep useful navigation
+ └── Offer recovery
+</div>
+<p>Good fallback UI is specific, calm and actionable.</p>
+</div>
+
+<div class="card">
+<h2>Good vs Bad Fallback</h2>
+<table>
+<tr><th>Weak</th><th>Better</th></tr>
+<tr><td>"Error."</td><td>"We couldn't load your orders."</td></tr>
+<tr><td>No recovery.</td><td>Retry button.</td></tr>
+<tr><td>Blank page.</td><td>Preserve surrounding navigation.</td></tr>
+<tr><td>Technical stack trace.</td><td>Useful user-friendly message.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. Retry UI</h2>
+<p>A retry action lets the user repeat an operation that may fail temporarily.</p>
+<pre>function UserList() {
+  const [error, setError] =
+    useState(null);
+
+  async function load() {
+    try {
+      setError(null);
+      // fetch data...
+    } catch (e) {
+      setError(e);
+    }
+  }
+
+  if (error) {
+    return (
+      &lt;div&gt;
+        &lt;p&gt;Could not load users.&lt;/p&gt;
+        &lt;button onClick={load}&gt;
+          Try again
+        &lt;/button&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return &lt;UserTable /&gt;;
+}</pre>
+</div>
+
+<div class="card">
+<h2>Retry Strategy</h2>
+<div class="diagram">Request
+ ↓
+Failure?
+ ├── No → Show data
+ └── Yes
+      ↓
+Transient error?
+ ├── Yes → Retry
+ └── No  → Explain / fix action
+</div>
+<p>Do not retry every error forever. Authentication errors, validation errors and permanent failures usually need a different response.</p>
+</div>
+
+<div class="card">
+<h2>8. Automatic Retry vs Manual Retry</h2>
+<table>
+<tr><th>Automatic</th><th>Manual</th></tr>
+<tr><td>Useful for transient network failures.</td><td>Useful when user action is needed.</td></tr>
+<tr><td>Must have retry limits/backoff.</td><td>Clear to the user.</td></tr>
+<tr><td>Can recover silently.</td><td>Good for important failed operations.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>9. Suspense</h2>
+<p><b>React Suspense</b> lets a part of the UI show a fallback while a supported child operation is not ready.</p>
+<pre>&lt;Suspense
+  fallback={&lt;Spinner /&gt;}
+&gt;
+  &lt;LazyPage /&gt;
+&lt;/Suspense&gt;</pre>
+<p>Common use cases include lazy-loaded components and framework-supported data/code loading.</p>
+</div>
+
+<div class="card">
+<h2>Suspense Flow</h2>
+<div class="diagram">Render
+  ↓
+Child not ready
+  ↓
+Suspense boundary
+  ↓
+Fallback UI
+  ↓
+Child becomes ready
+  ↓
+Real UI
+</div>
+<div class="note">Suspense is primarily a loading/readiness mechanism. It is not a replacement for Error Boundaries.</div>
+</div>
+
+<div class="card">
+<h2>10. Suspense + Lazy Loading</h2>
+<pre>import { lazy, Suspense } from "react";
+
+const Dashboard = lazy(
+  () =&gt; import("./Dashboard")
+);
+
+function App() {
+  return (
+    &lt;Suspense
+      fallback={&lt;p&gt;Loading...&lt;/p&gt;}
+    &gt;
+      &lt;Dashboard /&gt;
+    &lt;/Suspense&gt;
+  );
+}</pre>
+<p>The dynamic import creates a separately loaded chunk, while Suspense provides the loading UI while it is unavailable.</p>
+</div>
+
+<div class="card">
+<h2>11. Suspense vs Error Boundary</h2>
+<table>
+<tr><th>Suspense</th><th>Error Boundary</th></tr>
+<tr><td>Handles "not ready yet".</td><td>Handles certain descendant errors.</td></tr>
+<tr><td>Shows fallback while waiting.</td><td>Shows fallback after an error.</td></tr>
+<tr><td>Often used with lazy loading.</td><td>Used to isolate rendering failures.</td></tr>
+<tr><td>Loading/readiness concept.</td><td>Error/recovery concept.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. Combining Suspense and Error Boundary</h2>
+<pre>&lt;ErrorBoundary&gt;
+  &lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+    &lt;Dashboard /&gt;
+  &lt;/Suspense&gt;
+&lt;/ErrorBoundary&gt;</pre>
+<div class="diagram">Error Boundary
+      ↓
+  Suspense
+   ↙     ↘
+Loading   Error
+   ↓       ↓
+Fallback  Error UI
+      ↓
+   Success UI
+</div>
+</div>
+
+<div class="card">
+<h2>13. Logging</h2>
+<p><b>Logging</b> records useful diagnostic information so developers can understand what failed.</p>
+<pre>componentDidCatch(error, info) {
+  logger.error({
+    error,
+    componentStack: info.componentStack
+  });
+}</pre>
+<p>In production, logs are often sent to an error-monitoring platform rather than only printed to the browser console.</p>
+</div>
+
+<div class="card">
+<h2>What Should You Log?</h2>
+<ul>
+<li>Error message/type.</li>
+<li>Stack trace.</li>
+<li>React component stack when available.</li>
+<li>Route/page.</li>
+<li>Relevant non-sensitive context.</li>
+<li>Application version/build.</li>
+<li>Useful request/correlation ID.</li>
+</ul>
+<div class="note"><b>Security:</b> Never log passwords, access tokens, session secrets or unnecessary personal/sensitive data.</div>
+</div>
+
+<div class="card">
+<h2>14. Logging Levels</h2>
+<table>
+<tr><th>Level</th><th>Use</th></tr>
+<tr><td>Debug</td><td>Detailed development diagnostics.</td></tr>
+<tr><td>Info</td><td>Useful application events.</td></tr>
+<tr><td>Warn</td><td>Unexpected condition that is not necessarily a failure.</td></tr>
+<tr><td>Error</td><td>Failure requiring investigation or recovery.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>15. Error Classification</h2>
+<div class="diagram">Error
+ ├── User / Validation
+ │     → Explain + correct input
+ │
+ ├── Authentication
+ │     → Re-authenticate
+ │
+ ├── Authorization
+ │     → Explain permission issue
+ │
+ ├── Network / Transient
+ │     → Retry / reconnect
+ │
+ ├── Server
+ │     → Fallback + retry
+ │
+ └── Programming / Render
+       → Error Boundary + log
+</div>
+<p>Classification helps choose the correct recovery instead of showing the same generic message for every failure.</p>
+</div>
+
+<div class="card">
+<h2>16. Error Boundary with Retry</h2>
+<pre>class ErrorBoundary
+  extends React.Component {
+
+  state = {
+    hasError: false
+  };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  reset = () =&gt; {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        &lt;div&gt;
+          &lt;p&gt;Something went wrong.&lt;/p&gt;
+          &lt;button onClick={this.reset}&gt;
+            Try again
+          &lt;/button&gt;
+        &lt;/div&gt;
+      );
+    }
+
+    return this.props.children;
+  }
+}</pre>
+<p>In real applications, retrying may also require resetting failed data/query state or changing a boundary key so the failed subtree is genuinely remounted.</p>
+</div>
+
+<div class="card">
+<h2>17. Boundary Placement</h2>
+<div class="diagram">App
+ ├── Header
+ ├── Error Boundary
+ │    └── Dashboard
+ │         ├── Chart
+ │         └── Table
+ └── Footer
+</div>
+<p>Place boundaries around meaningful sections. One global boundary is useful as a last-resort safety net, while smaller boundaries can isolate independent features.</p>
+</div>
+
+<div class="card">
+<h2>18. Common Mistakes</h2>
+<ul>
+<li>Showing a blank screen after an error.</li>
+<li>Using one generic message for every failure.</li>
+<li>Retrying permanent errors indefinitely.</li>
+<li>Assuming Error Boundaries catch event-handler errors.</li>
+<li>Using Suspense as if it were an error handler.</li>
+<li>Logging sensitive data.</li>
+<li>Logging only "Something went wrong" with no diagnostic context.</li>
+<li>Putting one boundary around everything and losing feature isolation.</li>
+<li>Giving users a retry button that cannot actually reset the failed state.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>19. Production Error Strategy</h2>
+<div class="diagram">User action
+   ↓
+Application
+   ↓
+Error occurs
+   ↓
+Classify
+   ├── Recover locally
+   ├── Retry
+   ├── Show fallback
+   └── Ask user for action
+          ↓
+       Log safely
+          ↓
+   Monitoring / alerting
+          ↓
+      Developer fixes
+</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is an Error Boundary?</b> A React component that catches certain descendant rendering/lifecycle errors and displays fallback UI.</li>
+<li><b>Can a functional component itself be an Error Boundary?</b> React's built-in Error Boundary mechanism is class-based; functional components commonly consume boundaries provided by a wrapper/library/framework.</li>
+<li><b>What does getDerivedStateFromError do?</b> It updates state so the boundary can render fallback UI after an error.</li>
+<li><b>What does componentDidCatch do?</b> It provides a place to perform side effects such as logging the error and component stack.</li>
+<li><b>What errors do Error Boundaries not catch?</b> They do not automatically catch event-handler errors, many asynchronous callback errors, or errors outside their descendant render/lifecycle scope.</li>
+<li><b>What is Suspense?</b> A mechanism for showing fallback UI while supported child content is not ready.</li>
+<li><b>Is Suspense an Error Boundary?</b> No. Suspense handles waiting/readiness; Error Boundaries handle certain errors.</li>
+<li><b>Where is Suspense commonly used?</b> Lazy-loaded components and framework-supported loading/data patterns.</li>
+<li><b>What is fallback UI?</b> The UI shown when normal content cannot currently be displayed or is still loading.</li>
+<li><b>What makes good fallback UI?</b> Clear explanation, preserved navigation where possible, useful recovery and no unnecessary technical details.</li>
+<li><b>When should you retry an API request?</b> Mainly for transient failures, with sensible limits and backoff for automatic retries.</li>
+<li><b>Why not retry every error?</b> Validation, permission and other permanent errors will not be fixed by repeated requests.</li>
+<li><b>What should production logging contain?</b> Useful error/context information such as stack, route, version and correlation data, while excluding secrets and unnecessary sensitive data.</li>
+<li><b>Why use multiple Error Boundaries?</b> To isolate independent parts of the UI so one failure does not necessarily break the entire application.</li>
+<li><b>How do you retry after an Error Boundary failure?</b> Reset the boundary/subtree and also reset any relevant failed state or data source.</li>
+<li><b>How do you handle fetch errors?</b> Check the response, throw/represent failures, catch them at the data layer and expose loading/error/retry states to the UI.</li>
+<li><b>What is the difference between loading and error states?</b> Loading means work is still in progress; error means the operation failed and needs recovery or user action.</li>
+<li><b>Should you show stack traces to users?</b> No. Show a useful user-facing message and keep detailed diagnostics in protected logs.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A chart crashes and the whole dashboard disappears.</b><br>Wrap the chart/dashboard section in an Error Boundary so the failure is isolated and provide a useful fallback.</li>
+<li><b>A button's click handler throws.</b><br>Handle the error inside the event flow with try/catch or an appropriate action error state; do not rely on an Error Boundary to catch it.</li>
+<li><b>A lazy-loaded page fails to render.</b><br>Use Suspense for the loading state and an Error Boundary around the lazy subtree for failures.</li>
+<li><b>An API request returns 500.</b><br>Represent the request as an error state, show a useful message and offer retry when retrying makes sense.</li>
+<li><b>The network temporarily disconnects.</b><br>Consider bounded automatic retry with backoff or a clear manual retry action.</li>
+<li><b>The API returns 400 because the form is invalid.</b><br>Do not blindly retry. Show the validation error and let the user correct the input.</li>
+<li><b>A request fails because the session expired.</b><br>Handle authentication separately, such as refreshing/re-authenticating or redirecting appropriately.</li>
+<li><b>A retry button does nothing because cached failed state remains.</b><br>Reset the relevant query/request state or remount/reset the failed subtree before retrying.</li>
+<li><b>The product team wants one "Something went wrong" message everywhere.</b><br>Use a consistent design but classify errors so users receive useful, context-specific recovery actions.</li>
+<li><b>Production logs contain access tokens.</b><br>Remove/redact secrets immediately and audit logging so sensitive credentials are never recorded.</li>
+<li><b>A developer adds console.error everywhere.</b><br>Centralize production error reporting where practical and attach useful context rather than scattering unstructured logs.</li>
+<li><b>A global Error Boundary catches everything.</b><br>Keep it as a last-resort safety net but add smaller boundaries around independently useful application sections.</li>
+<li><b>A Suspense fallback shows forever.</b><br>Investigate the underlying loading/data/code path; Suspense itself does not mean the operation failed.</li>
+<li><b>A component fails because of a programming bug.</b><br>Contain it with an Error Boundary, log diagnostic details, show fallback UI and fix the underlying bug.</li>
+<li><b>An error message exposes database details to users.</b><br>Return a safe user-facing message and keep detailed technical diagnostics in protected logs.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Error Boundary = catches certain descendant render/lifecycle errors.</li>
+<li>✔ getDerivedStateFromError = update fallback state.</li>
+<li>✔ componentDidCatch = logging/side effects.</li>
+<li>✔ Event-handler errors need their own handling.</li>
+<li>✔ Async/API errors need data-layer handling.</li>
+<li>✔ Suspense = loading/readiness fallback.</li>
+<li>✔ Suspense ≠ Error Boundary.</li>
+<li>✔ Fallback should explain + recover.</li>
+<li>✔ Retry transient errors carefully.</li>
+<li>✔ Don't retry permanent errors forever.</li>
+<li>✔ Multiple boundaries can isolate features.</li>
+<li>✔ Reset failed state when implementing retry.</li>
+<li>✔ Log diagnostic context.</li>
+<li>✔ Never log secrets.</li>
+<li>✔ Keep technical stack traces away from users.</li>
+<li>✔ Error handling should classify failures.</li>
+</ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Lifecycle - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1080px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#9333ea;color:#fff;padding:28px;border-radius:12px}h2{color:#9333ea}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f3e8ff}
+code{background:#f3e8ff;padding:2px 5px;border-radius:4px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 4 — React Lifecycle</h1>
+<p>Simple Interview Handbook • Functional Lifecycle • Class Lifecycle • Error Boundaries</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is the React Lifecycle?</h2>
+<p>The lifecycle describes what happens to a component from the time it appears, through updates, until it is removed.</p>
+<div class="diagram">MOUNT
+Component appears
+      ↓
+   RENDER
+      ↓
+   COMMIT
+      ↓
+Component visible
+
+UPDATE
+Props / State / Context change
+      ↓
+   RENDER
+      ↓
+   COMMIT
+      ↓
+Updated UI
+
+UNMOUNT
+Component removed
+      ↓
+Cleanup</div>
+<p>Modern React function components use Hooks such as <code>useEffect</code> for synchronization and cleanup rather than class lifecycle methods.</p>
+</div>
+
+<div class="card">
+<h2>2. Functional Lifecycle — Mount</h2>
+<p><b>Mount</b> means a component is being added to the UI for the first time.</p>
+<pre>function User() {
+  useEffect(() => {
+    console.log("Mounted");
+  }, []);
+
+  return &lt;h1&gt;User&lt;/h1&gt;;
+}</pre>
+<p>With an empty dependency array, the effect setup runs after the component commits on mount. In development Strict Mode, React may run an extra setup/cleanup cycle to help detect unsafe effects.</p>
+</div>
+
+<div class="card">
+<h2>3. Functional Lifecycle — Update</h2>
+<p>A function component may render again when its state changes, its parent renders, its props change, or relevant context changes.</p>
+<pre>function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log("Count changed:", count);
+  }, [count]);
+
+  return (
+    &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;
+      {count}
+    &lt;/button&gt;
+  );
+}</pre>
+<p>The effect runs after a committed render when <code>count</code> has changed.</p>
+</div>
+
+<div class="card">
+<h2>4. Functional Lifecycle — Unmount</h2>
+<p><b>Unmount</b> means the component is removed from the UI.</p>
+<pre>useEffect(() => {
+  const id = setInterval(() => {
+    console.log("tick");
+  }, 1000);
+
+  return () => {
+    clearInterval(id);
+  };
+}, []);</pre>
+<p>The returned function is the cleanup. React runs it when the effect is removed, including on unmount.</p>
+</div>
+
+<div class="card">
+<h2>5. useEffect Lifecycle Pattern</h2>
+<div class="diagram">Render
+  ↓
+DOM commit
+  ↓
+Effect setup
+  ↓
+Dependencies change
+  ↓
+Previous cleanup
+  ↓
+New effect setup
+  ↓
+Unmount
+  ↓
+Final cleanup</div>
+<p>Think of an Effect as synchronizing the component with an external system such as a timer, subscription, event listener or network connection.</p>
+</div>
+
+<div class="card">
+<h2>6. Class Lifecycle Overview</h2>
+<table>
+<tr><th>Phase</th><th>Method</th><th>Main Purpose</th></tr>
+<tr><td>Mount</td><td>constructor</td><td>Initialize state and instance setup.</td></tr>
+<tr><td>Mount / Update</td><td>render</td><td>Describe UI.</td></tr>
+<tr><td>Mount</td><td>componentDidMount</td><td>Run after initial commit.</td></tr>
+<tr><td>Update</td><td>shouldComponentUpdate</td><td>Control whether an update should proceed.</td></tr>
+<tr><td>Update</td><td>componentDidUpdate</td><td>Run after an update commits.</td></tr>
+<tr><td>Update</td><td>getSnapshotBeforeUpdate</td><td>Read DOM information immediately before commit.</td></tr>
+<tr><td>Unmount</td><td>componentWillUnmount</td><td>Cleanup before removal.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. constructor()</h2>
+<p>Runs when a class component instance is created.</p>
+<pre>class Counter extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      count: 0
+    };
+  }
+
+  render() {
+    return &lt;p&gt;{this.state.count}&lt;/p&gt;;
+  }
+}</pre>
+<p>Use it mainly for initializing state and binding methods when needed. Modern function components normally use <code>useState</code>.</p>
+</div>
+
+<div class="card">
+<h2>8. render()</h2>
+<p><code>render()</code> returns the UI representation.</p>
+<pre>render() {
+  return &lt;h1&gt;Hello {this.props.name}&lt;/h1&gt;;
+}</pre>
+<p>It should be kept free of side effects. Do not perform subscriptions, timers or manual DOM side effects inside render.</p>
+</div>
+
+<div class="card">
+<h2>9. componentDidMount()</h2>
+<p>Runs after the component has been mounted and its initial DOM has been committed.</p>
+<pre>componentDidMount() {
+  this.loadUser();
+}</pre>
+<p>Typical uses: subscriptions, DOM work, starting timers and initial client-side data loading.</p>
+</div>
+
+<div class="card">
+<h2>10. shouldComponentUpdate()</h2>
+<p>Lets a class component decide whether it should continue with an update.</p>
+<pre>shouldComponentUpdate(nextProps, nextState) {
+  return nextState.count !== this.state.count;
+}</pre>
+<p>Returning <code>false</code> skips the component's update render for that update. Use it carefully; incorrect comparisons can cause stale UI.</p>
+<p>Function components commonly use <code>React.memo</code> for similar memoization of props, when appropriate.</p>
+</div>
+
+<div class="card">
+<h2>11. componentDidUpdate()</h2>
+<p>Runs after an update has committed.</p>
+<pre>componentDidUpdate(prevProps) {
+  if (prevProps.userId !== this.props.userId) {
+    this.loadUser();
+  }
+}</pre>
+<p>Always guard operations that could trigger another update to avoid infinite loops.</p>
+</div>
+
+<div class="card">
+<h2>12. componentWillUnmount()</h2>
+<p>Runs immediately before the component is removed.</p>
+<pre>componentWillUnmount() {
+  this.subscription.unsubscribe();
+  clearInterval(this.timer);
+}</pre>
+<p>Use it to clean up subscriptions, timers and external resources.</p>
+</div>
+
+<div class="card">
+<h2>13. getSnapshotBeforeUpdate()</h2>
+<p>Runs after render but immediately before React commits DOM changes. It can capture information from the current DOM that would otherwise be lost after the update.</p>
+<pre>getSnapshotBeforeUpdate(prevProps, prevState) {
+  return this.listRef.current.scrollHeight;
+}
+
+componentDidUpdate(prevProps, prevState, snapshot) {
+  console.log(snapshot);
+}</pre>
+<p>A classic use case is preserving scroll position in a growing list.</p>
+</div>
+
+<div class="card">
+<h2>14. Error Boundary</h2>
+<p>An Error Boundary catches errors thrown during rendering and certain lifecycle methods in its descendant tree and shows fallback UI.</p>
+<pre>class ErrorBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error(error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return &lt;h2&gt;Something went wrong.&lt;/h2&gt;;
+    }
+
+    return this.props.children;
+  }
+}</pre>
+<p>Error boundaries are class-based in React's built-in API. They do not catch every kind of error, such as ordinary event-handler errors or server-side errors.</p>
+</div>
+
+<div class="card">
+<h2>Functional vs Class Lifecycle</h2>
+<table>
+<tr><th>Class</th><th>Modern Function Equivalent / Pattern</th></tr>
+<tr><td>constructor</td><td><code>useState</code>, initialization</td></tr>
+<tr><td>componentDidMount</td><td><code>useEffect(..., [])</code> for synchronization after mount</td></tr>
+<tr><td>componentDidUpdate</td><td><code>useEffect</code> with dependencies</td></tr>
+<tr><td>componentWillUnmount</td><td>Effect cleanup function</td></tr>
+<tr><td>shouldComponentUpdate</td><td><code>React.memo</code> and memoization patterns</td></tr>
+<tr><td>getSnapshotBeforeUpdate</td><td>No direct one-to-one Hook replacement; sometimes <code>useLayoutEffect</code> is relevant for DOM layout work</td></tr>
+<tr><td>Error Boundary</td><td>Built-in boundaries remain class-based</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>useEffect vs useLayoutEffect</h2>
+<p><code>useEffect</code> is the normal choice for side effects and external synchronization.</p>
+<p><code>useLayoutEffect</code> runs after DOM mutations but before the browser paints, making it useful for layout measurements that must happen before the user sees the result.</p>
+<pre>useLayoutEffect(() => {
+  const height = ref.current.getBoundingClientRect().height;
+}, []);</pre>
+<p>Prefer <code>useEffect</code> unless you specifically need layout timing.</p>
+</div>
+
+<div class="card">
+<h2>Important Lifecycle Mental Model</h2>
+<div class="diagram">FUNCTION COMPONENT
+
+Mount:
+Render → Commit → Effect
+
+Update:
+Render → Commit → Effect cleanup → Effect setup
+
+Unmount:
+Cleanup
+
+
+CLASS COMPONENT
+
+Mount:
+constructor → render → componentDidMount
+
+Update:
+render → getSnapshotBeforeUpdate
+      → DOM commit → componentDidUpdate
+
+Unmount:
+componentWillUnmount</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What are the three major lifecycle phases?</b> Mount, update and unmount.</li>
+<li><b>What is mounting?</b> Adding a component to the UI for the first time.</li>
+<li><b>What is updating?</b> Rendering and committing changes after props, state or context change.</li>
+<li><b>What is unmounting?</b> Removing a component from the UI.</li>
+<li><b>What replaces componentDidMount in function components?</b> Often an effect with an empty dependency array, when the goal is synchronization after mount.</li>
+<li><b>What replaces componentWillUnmount?</b> The cleanup function returned from an Effect.</li>
+<li><b>What is componentDidUpdate used for?</b> Running logic after an update has committed, often guarded by comparing previous and current values.</li>
+<li><b>What is shouldComponentUpdate?</b> A class lifecycle method that can skip an update when appropriate.</li>
+<li><b>What is getSnapshotBeforeUpdate?</b> A method for reading DOM information immediately before the DOM is committed.</li>
+<li><b>What is an Error Boundary?</b> A component that catches certain descendant rendering/lifecycle errors and shows fallback UI.</li>
+<li><b>Why should side effects not run in render?</b> Rendering should stay pure and may be invoked more than once.</li>
+<li><b>useEffect vs useLayoutEffect?</b> useEffect is the normal effect; useLayoutEffect is for work that must happen after DOM mutation but before paint.</li>
+<li><b>Can Error Boundaries catch event-handler errors?</b> No; handle those errors in the event handler itself.</li>
+<li><b>Why is cleanup important?</b> It prevents stale subscriptions, timers, listeners and other external resources from remaining active.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>You start a WebSocket subscription when a component appears.</b><br>Start it in an Effect and return cleanup that closes/unsubscribes it.</li>
+<li><b>A timer continues after navigating away.</b><br>Clear it in Effect cleanup or componentWillUnmount for a class component.</li>
+<li><b>An API request depends on userId.</b><br>Use an Effect with userId in its dependency list and handle cleanup/race conditions appropriately.</li>
+<li><b>A class component needs initial data loading.</b><br>componentDidMount is the traditional lifecycle method.</li>
+<li><b>A class component needs to react only when userId changes.</b><br>Compare previous props inside componentDidUpdate.</li>
+<li><b>A component needs to read its DOM size before paint.</b><br>Consider useLayoutEffect when necessary.</li>
+<li><b>You need to preserve scroll position before a DOM update in a class component.</b><br>Use getSnapshotBeforeUpdate and consume its value in componentDidUpdate.</li>
+<li><b>A child component throws during rendering.</b><br>Place it under an Error Boundary to show fallback UI.</li>
+<li><b>An error occurs inside an onClick handler.</b><br>Error Boundaries do not catch it; handle the error in the event handler.</li>
+<li><b>An Effect appears to run twice in development.</b><br>Check Strict Mode. Development Strict Mode can perform an extra setup/cleanup cycle to expose unsafe Effects.</li>
+<li><b>You want to prevent unnecessary class-component updates.</b><br>Use shouldComponentUpdate carefully or consider React.PureComponent/React.memo patterns where appropriate.</li>
+<li><b>An Effect sets up an event listener.</b><br>Remove the same listener in cleanup so it does not accumulate across updates.</li>
+<li><b>You put an API call directly in render.</b><br>Move synchronization/side effects out of render, typically into an Effect or another appropriate data-fetching mechanism.</li>
+<li><b>A component is removed because a condition becomes false.</b><br>The component unmounts and its Effect cleanup runs.</li>
+<li><b>A dependency changes for an Effect.</b><br>React cleans up the previous Effect and then runs the new setup after the committed update.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Mount = component appears.</li>
+<li>✔ Update = component changes.</li>
+<li>✔ Unmount = component disappears.</li>
+<li>✔ Function components use Hooks for lifecycle-related synchronization.</li>
+<li>✔ useEffect cleanup = cleanup on dependency change/unmount.</li>
+<li>✔ constructor → initialize class instance.</li>
+<li>✔ render → describe UI.</li>
+<li>✔ componentDidMount → after initial commit.</li>
+<li>✔ shouldComponentUpdate → control class updates.</li>
+<li>✔ componentDidUpdate → after update commit.</li>
+<li>✔ componentWillUnmount → cleanup before removal.</li>
+<li>✔ getSnapshotBeforeUpdate → read DOM before commit.</li>
+<li>✔ Error Boundary → fallback for certain descendant errors.</li>
+</ul>
+</div>
+
+</body></html>

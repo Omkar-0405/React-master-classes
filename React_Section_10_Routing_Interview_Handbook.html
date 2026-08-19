@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Routing - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#be123c;color:#fff;padding:28px;border-radius:12px}
+h2{color:#be123c}h3{color:#9f1239}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ffe4e6}
+code{background:#fff1f2;padding:2px 5px;border-radius:4px}.note{background:#fff1f2;border-left:4px solid #e11d48;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 10 — React Routing</h1>
+<p>Simple Interview Handbook • React Router • Nested Routes • Outlet • Params • Search Params • Lazy Routes • Loaders • Protected Routes</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is Routing?</h2>
+<p>Routing decides which UI should be displayed for a given URL.</p>
+<div class="diagram">URL
+ ↓
+Router
+ ↓
+Match route
+ ↓
+Render route element
+ ↓
+Page / Layout</div>
+<p>In a client-side React application, the router can update the UI without requesting a completely new HTML document for every navigation.</p>
+</div>
+
+<div class="card">
+<h2>2. React Router</h2>
+<p><b>React Router</b> provides routing primitives for React applications, including route matching, navigation, nested routes, URL parameters and data APIs.</p>
+<pre>import {
+  createBrowserRouter,
+  RouterProvider
+} from "react-router-dom";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: &lt;Home /&gt;
+  },
+  {
+    path: "/about",
+    element: &lt;About /&gt;
+  }
+]);
+
+createRoot(document.getElementById("root")).render(
+  &lt;RouterProvider router={router} /&gt;
+);</pre>
+</div>
+
+<div class="card">
+<h2>3. Routes and Route Matching</h2>
+<p>A route maps a URL pattern to UI and optionally to data-loading/error-handling behavior.</p>
+<pre>const router = createBrowserRouter([
+  {
+    path: "/users/:userId",
+    element: &lt;User /&gt;
+  }
+]);</pre>
+<p>When the browser navigates to <code>/users/42</code>, the <code>:userId</code> parameter matches <code>42</code>.</p>
+</div>
+
+<div class="card">
+<h2>4. Nested Routes</h2>
+<p>Nested routes let child routes render inside a parent route layout.</p>
+<pre>const router = createBrowserRouter([
+  {
+    path: "/dashboard",
+    element: &lt;DashboardLayout /&gt;,
+    children: [
+      {
+        index: true,
+        element: &lt;DashboardHome /&gt;
+      },
+      {
+        path: "settings",
+        element: &lt;Settings /&gt;
+      },
+      {
+        path: "users",
+        element: &lt;Users /&gt;
+      }
+    ]
+  }
+]);</pre>
+<p>Notice that child paths such as <code>settings</code> are relative to the parent.</p>
+</div>
+
+<div class="card">
+<h2>5. Outlet</h2>
+<p><code>Outlet</code> is the placeholder where the currently matched child route renders.</p>
+<pre>import { Outlet, NavLink } from "react-router-dom";
+
+function DashboardLayout() {
+  return (
+    &lt;div&gt;
+      &lt;nav&gt;
+        &lt;NavLink to="/dashboard"&gt;Home&lt;/NavLink&gt;
+        &lt;NavLink to="/dashboard/settings"&gt;Settings&lt;/NavLink&gt;
+      &lt;/nav&gt;
+
+      &lt;main&gt;
+        &lt;Outlet /&gt;
+      &lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+<div class="diagram">/dashboard
+     ↓
+DashboardLayout
+     ↓
+  &lt;Outlet /&gt;
+     ↓
+DashboardHome
+
+/dashboard/settings
+     ↓
+DashboardLayout
+     ↓
+  &lt;Outlet /&gt;
+     ↓
+Settings</div>
+</div>
+
+<div class="card">
+<h2>6. URL Params</h2>
+<p>Route params represent dynamic path segments.</p>
+<pre>Route:
+"/products/:productId"
+
+URL:
+"/products/123"</pre>
+<pre>import { useParams } from "react-router-dom";
+
+function Product() {
+  const { productId } = useParams();
+
+  return &lt;h1&gt;Product {productId}&lt;/h1&gt;;
+}</pre>
+<p>Params are useful when the resource identity is part of the path.</p>
+</div>
+
+<div class="card">
+<h2>Params vs Search Params</h2>
+<table>
+<tr><th>Route Params</th><th>Search Params</th></tr>
+<tr><td><code>/products/123</code></td><td><code>/products?category=books</code></td></tr>
+<tr><td>Usually identifies a resource.</td><td>Usually represents filtering, sorting, pagination or optional UI state.</td></tr>
+<tr><td>Defined in route pattern.</td><td>Comes after <code>?</code>.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. Search Params</h2>
+<p>Search/query parameters are values after <code>?</code>.</p>
+<pre>URL:
+"/products?category=books&page=2"</pre>
+<pre>import { useSearchParams } from "react-router-dom";
+
+function Products() {
+  const [searchParams, setSearchParams] =
+    useSearchParams();
+
+  const category = searchParams.get("category");
+  const page = searchParams.get("page");
+
+  return (
+    &lt;button
+      onClick={() =&gt; {
+        setSearchParams({
+          category: "electronics",
+          page: "1"
+        });
+      }}
+    &gt;
+      {category} - page {page}
+    &lt;/button&gt;
+  );
+}</pre>
+<p>Search params are strings, so convert them when you need numbers/booleans.</p>
+</div>
+
+<div class="card">
+<h2>8. Navigation</h2>
+<p>Use router navigation APIs instead of manually changing <code>window.location</code> for normal client-side navigation.</p>
+<pre>import {
+  Link,
+  useNavigate
+} from "react-router-dom";
+
+function Home() {
+  const navigate = useNavigate();
+
+  return (
+    &lt;&gt;
+      &lt;Link to="/about"&gt;About&lt;/Link&gt;
+
+      &lt;button onClick={() =&gt; navigate("/dashboard")}&gt;
+        Dashboard
+      &lt;/button&gt;
+    &lt;/&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>9. Lazy Routes</h2>
+<p>Lazy routes allow route modules to be loaded only when the route is needed.</p>
+<pre>const router = createBrowserRouter([
+  {
+    path: "/",
+    element: &lt;Layout /&gt;,
+    children: [
+      {
+        path: "dashboard",
+        lazy: async () =&gt; {
+          const module = await import("./routes/dashboard");
+          return {
+            Component: module.Component
+          };
+        }
+      }
+    ]
+  }
+]);</pre>
+<p>This can reduce the initial JavaScript required for routes that users may never visit.</p>
+</div>
+
+<div class="card">
+<h2>10. React.lazy vs Route lazy</h2>
+<table>
+<tr><th>React.lazy</th><th>React Router lazy route</th></tr>
+<tr><td>Lazy-loads a React component.</td><td>Lazy-loads route module implementations.</td></tr>
+<tr><td>Usually paired with Suspense.</td><td>Integrated with React Router's route/data APIs.</td></tr>
+<tr><td>Useful for individual components.</td><td>Useful for route-level code splitting.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>11. Loaders</h2>
+<p>A React Router <code>loader</code> lets a route define data that should be loaded for that route.</p>
+<pre>const router = createBrowserRouter([
+  {
+    path: "/users/:userId",
+    loader: async ({ params }) =&gt; {
+      const response = await fetch(
+        `/api/users/${params.userId}`
+      );
+
+      if (!response.ok) {
+        throw new Response("User not found", {
+          status: response.status
+        });
+      }
+
+      return response.json();
+    },
+    element: &lt;User /&gt;
+  }
+]);</pre>
+<p>The route component can read the loaded data with <code>useLoaderData()</code>.</p>
+</div>
+
+<div class="card">
+<h2>12. useLoaderData</h2>
+<pre>import { useLoaderData } from "react-router-dom";
+
+function User() {
+  const user = useLoaderData();
+
+  return &lt;h1&gt;{user.name}&lt;/h1&gt;;
+}</pre>
+<p>The loader and route component are connected through the router's data APIs.</p>
+</div>
+
+<div class="card">
+<h2>13. Loader vs useEffect Fetch</h2>
+<table>
+<tr><th>Route Loader</th><th>useEffect Fetch</th></tr>
+<tr><td>Route-level data API.</td><td>Component-level synchronization.</td></tr>
+<tr><td>Can load data as part of navigation.</td><td>Component first renders, then effect runs.</td></tr>
+<tr><td>Works with router navigation/data APIs.</td><td>Useful for effects tied to component lifecycle.</td></tr>
+</table>
+<p>Choose based on whether the data is fundamentally part of route loading or component synchronization.</p>
+</div>
+
+<div class="card">
+<h2>14. Protected Routes</h2>
+<p>A protected route allows access only when the user satisfies an authentication/authorization condition.</p>
+<pre>function ProtectedRoute({ children }) {
+  const user = useAuth();
+
+  if (!user) {
+    return &lt;Navigate to="/login" replace /&gt;;
+  }
+
+  return children;
+}</pre>
+<p>This is a UI/navigation guard. The backend must still enforce authorization.</p>
+</div>
+
+<div class="card">
+<h2>15. Protected Routes with a Layout</h2>
+<pre>function RequireAuth() {
+  const user = useAuth();
+
+  if (!user) {
+    return &lt;Navigate to="/login" replace /&gt;;
+  }
+
+  return &lt;Outlet /&gt;;
+}
+
+const router = createBrowserRouter([
+  {
+    element: &lt;RequireAuth /&gt;,
+    children: [
+      {
+        path: "/dashboard",
+        element: &lt;Dashboard /&gt;
+      },
+      {
+        path: "/settings",
+        element: &lt;Settings /&gt;
+      }
+    ]
+  }
+]);</pre>
+<p>One guard can protect multiple routes.</p>
+</div>
+
+<div class="card">
+<h2>16. Authentication vs Authorization</h2>
+<table>
+<tr><th>Authentication</th><th>Authorization</th></tr>
+<tr><td>Who are you?</td><td>What are you allowed to access?</td></tr>
+<tr><td>Login/session/token identity.</td><td>Roles, permissions, resource access.</td></tr>
+<tr><td>Example: user is logged in.</td><td>Example: only admins can access /admin.</td></tr>
+</table>
+<div class="note"><b>Security rule:</b> A frontend protected route is not a security boundary. APIs must enforce authorization on the server.</div>
+</div>
+
+<div class="card">
+<h2>17. Role-Based Protected Route</h2>
+<pre>function RequireAdmin() {
+  const user = useAuth();
+
+  if (!user) {
+    return &lt;Navigate to="/login" replace /&gt;;
+  }
+
+  if (user.role !== "admin") {
+    return &lt;Navigate to="/forbidden" replace /&gt;;
+  }
+
+  return &lt;Outlet /&gt;;
+}</pre>
+<p>This improves UX, but the server must also check the user's permissions.</p>
+</div>
+
+<div class="card">
+<h2>18. 404 / Not Found Route</h2>
+<pre>const router = createBrowserRouter([
+  {
+    path: "*",
+    element: &lt;NotFound /&gt;
+  }
+]);</pre>
+<p>A catch-all route can render a friendly not-found page when no more specific route matches.</p>
+</div>
+
+<div class="card">
+<h2>19. Route Error Handling</h2>
+<p>Data routers support route-level error handling. A route can provide an error element/component to show fallback UI when its loader/action or descendant route encounters a handled routing error.</p>
+<pre>const router = createBrowserRouter([
+  {
+    path: "/users/:id",
+    loader: loadUser,
+    element: &lt;User /&gt;,
+    errorElement: &lt;RouteError /&gt;
+  }
+]);</pre>
+</div>
+
+<div class="card">
+<h2>20. Complete Routing Mental Model</h2>
+<div class="diagram">URL changes
+   ↓
+Router matches route tree
+   ↓
+Nested layouts selected
+   ↓
+Loaders run (if configured)
+   ↓
+Route components render
+   ↓
+&lt;Outlet /&gt; renders child route
+   ↓
+Protected checks / redirects
+   ↓
+Page displayed</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is React Router?</b> A routing library/toolset for matching URLs to React UI and managing navigation and route data.</li>
+<li><b>What are nested routes?</b> Child routes rendered within a parent route/layout.</li>
+<li><b>What is Outlet?</b> The placeholder where a matched child route renders.</li>
+<li><b>What are route params?</b> Dynamic values embedded in a path, such as <code>/users/:id</code>.</li>
+<li><b>What are search params?</b> Query values after <code>?</code>, such as <code>?page=2</code>.</li>
+<li><b>Params vs search params?</b> Params commonly identify a resource; search params commonly represent filters, sorting, pagination or optional state.</li>
+<li><b>How do you navigate programmatically?</b> Use <code>useNavigate</code> or router navigation APIs.</li>
+<li><b>What is lazy routing?</b> Loading route code only when the route is needed.</li>
+<li><b>Why lazy-load routes?</b> To reduce the initial JavaScript bundle.</li>
+<li><b>What is a loader?</b> A route-level data-loading function used by React Router's data APIs.</li>
+<li><b>Loader vs useEffect?</b> A loader is integrated with route navigation/data loading; useEffect is component-level synchronization.</li>
+<li><b>What is a protected route?</b> A route that redirects or blocks UI access when authentication/authorization requirements are not met.</li>
+<li><b>Is a protected React route secure?</b> No. Server-side authorization is still required.</li>
+<li><b>Authentication vs authorization?</b> Authentication identifies the user; authorization determines what the user is allowed to do.</li>
+<li><b>How do you protect multiple routes?</b> Use a parent guard/layout that renders an Outlet for authorized child routes.</li>
+<li><b>How do you implement a 404?</b> Add a catch-all route such as <code>*</code>.</li>
+<li><b>Why use replace when redirecting to login?</b> It can prevent the protected URL from remaining as an unwanted history entry.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>/dashboard/settings should share the dashboard sidebar.</b><br>Use nested routes with a DashboardLayout and Outlet.</li>
+<li><b>You need the current user ID from /users/42.</b><br>Define <code>/users/:userId</code> and read it with useParams.</li>
+<li><b>You need /products?category=books&amp;page=2.</b><br>Use search params with useSearchParams.</li>
+<li><b>A filter should survive page refresh.</b><br>Store it in the URL search params rather than only local component state.</li>
+<li><b>An admin page is rarely visited.</b><br>Lazy-load the admin route to reduce the initial bundle.</li>
+<li><b>You need user data before rendering a route.</b><br>Consider a route loader if the data is naturally part of route navigation.</li>
+<li><b>A user navigates to /dashboard while logged out.</b><br>Redirect to /login with a protected route/guard.</li>
+<li><b>A logged-in user opens /admin but lacks the admin role.</b><br>Redirect to a forbidden/unauthorized page and enforce the same permission on the server.</li>
+<li><b>Every protected route repeats the same auth check.</b><br>Use a parent protected layout with Outlet.</li>
+<li><b>An unknown URL should show a custom page.</b><br>Add a catch-all <code>*</code> route.</li>
+<li><b>A loader fails because a user does not exist.</b><br>Throw/return an appropriate response/error and show route-level error UI.</li>
+<li><b>A component fetches data that is unrelated to route entry.</b><br>useEffect or a server-state library may be more appropriate than a route loader.</li>
+<li><b>You want to navigate after saving a form.</b><br>Use useNavigate or the appropriate router navigation API after the save succeeds.</li>
+<li><b>You want a link that behaves like normal SPA navigation.</b><br>Use Link/NavLink instead of manually changing window.location.</li>
+<li><b>You need to preserve the current filter while navigating pages.</b><br>Keep the filter in search params and update the URL intentionally during navigation.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Router = URL → UI.</li>
+<li>✔ Nested routes = child UI inside parent layout.</li>
+<li>✔ Outlet = child route placeholder.</li>
+<li>✔ Params = dynamic path values.</li>
+<li>✔ Search params = query-string values.</li>
+<li>✔ Link/NavLink = client-side navigation.</li>
+<li>✔ useNavigate = programmatic navigation.</li>
+<li>✔ Lazy route = load route code when needed.</li>
+<li>✔ Loader = route-level data loading.</li>
+<li>✔ Protected route = UI access guard.</li>
+<li>✔ Backend must enforce authorization.</li>
+<li>✔ Authentication = who are you?</li>
+<li>✔ Authorization = what can you access?</li>
+<li>✔ * route = catch-all / 404.</li>
+</ul>
+</div>
+
+</body>
+</html>

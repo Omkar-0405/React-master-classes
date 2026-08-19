@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Section 24 — Interview Coding Problems</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1150px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#7e22ce;color:#fff;padding:30px;border-radius:12px}
+h2{color:#7e22ce}h3{color:#6b21a8}.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#f3e8ff}
+code{background:#faf5ff;padding:2px 5px;border-radius:4px}.note{background:#faf5ff;border-left:4px solid #9333ea;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 24 — React Interview Coding Problems</h1>
+<p>Simple Coding Handbook • 25 Frequently Asked React UI Problems</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. How to Approach a React Coding Interview</h2>
+<div class="diagram">Understand requirements
+        ↓
+Break UI into components
+        ↓
+Identify state
+        ↓
+Define events/data flow
+        ↓
+Build simple version
+        ↓
+Handle edge cases
+        ↓
+Improve performance
+</div>
+<p>Do not immediately write code. Spend a few minutes explaining the state, component structure and edge cases first.</p>
+</div>
+
+<div class="card">
+<h2>2. Coding Checklist</h2>
+<ul>
+<li>What are the components?</li>
+<li>What state is required?</li>
+<li>Who owns each state?</li>
+<li>What happens on user action?</li>
+<li>What are loading/error/empty states?</li>
+<li>What happens with empty input?</li>
+<li>What happens with duplicate data?</li>
+<li>Can stale requests create bugs?</li>
+<li>Does the list need virtualization/pagination?</li>
+<li>Can the solution be made reusable?</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>3. Todo App</h2>
+<p><b>Requirements:</b> Add, complete, delete and filter todos.</p>
+<div class="diagram">TodoApp
+├── TodoInput
+├── TodoFilters
+└── TodoList
+    └── TodoItem
+</div>
+<pre>const [todos, setTodos] = useState([]);
+
+function addTodo(text) {
+  setTodos(prev => [
+    ...prev,
+    {
+      id: crypto.randomUUID(),
+      text,
+      completed: false
+    }
+  ]);
+}
+
+function toggleTodo(id) {
+  setTodos(prev =>
+    prev.map(todo =>
+      todo.id === id
+        ? { ...todo, completed: !todo.completed }
+        : todo
+    )
+  );
+}</pre>
+<p><b>Interview focus:</b> immutable updates, stable IDs and derived filtering.</p>
+</div>
+
+<div class="card">
+<h2>4. Accordion</h2>
+<p>Click a section to expand/collapse it.</p>
+<pre>const [openId, setOpenId] = useState(null);
+
+function toggle(id) {
+  setOpenId(prev =>
+    prev === id ? null : id
+  );
+}</pre>
+<p>For multiple open sections, use a Set/array of open IDs instead.</p>
+</div>
+
+<div class="card">
+<h2>5. Tabs</h2>
+<div class="diagram">Tabs
+├── Tab buttons
+└── Active panel
+</div>
+<pre>const [activeTab, setActiveTab] =
+  useState("profile");
+
+return (
+  &lt;&gt;
+    {tabs.map(tab =&gt; (
+      &lt;button
+        key={tab.id}
+        onClick={() =&gt; setActiveTab(tab.id)}
+      &gt;
+        {tab.label}
+      &lt;/button&gt;
+    ))}
+
+    &lt;Panel id={activeTab} /&gt;
+  &lt;/&gt;
+);</pre>
+<p><b>Focus:</b> controlled selection and accessibility with appropriate tab roles/keyboard behavior.</p>
+</div>
+
+<div class="card">
+<h2>6. Modal</h2>
+<pre>function Modal({ open, onClose, children }) {
+  if (!open) return null;
+
+  return (
+    &lt;div role="dialog" aria-modal="true"&gt;
+      &lt;button onClick={onClose}&gt;
+        Close
+      &lt;/button&gt;
+      {children}
+    &lt;/div&gt;
+  );
+}</pre>
+<p><b>Important:</b> In a production modal, handle focus management, Escape, background interaction and portal layering.</p>
+</div>
+
+<div class="card">
+<h2>7. Dropdown</h2>
+<pre>const [open, setOpen] = useState(false);
+
+return (
+  &lt;div&gt;
+    &lt;button
+      aria-expanded={open}
+      onClick={() =&gt; setOpen(v =&gt; !v)}
+    &gt;
+      Select
+    &lt;/button&gt;
+
+    {open && (
+      &lt;ul role="listbox"&gt;
+        {options.map(option =&gt; (
+          &lt;li key={option.value}&gt;
+            {option.label}
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    )}
+  &lt;/div&gt;
+);</pre>
+<p>Interviewers may test outside-click handling and keyboard navigation.</p>
+</div>
+
+<div class="card">
+<h2>8. Typeahead Search</h2>
+<p>Show suggestions while the user types.</p>
+<div class="diagram">Input
+ ↓
+Query
+ ↓
+Debounce
+ ↓
+API
+ ↓
+Suggestions
+</div>
+<pre>const [query, setQuery] = useState("");
+const [results, setResults] = useState([]);
+
+useEffect(() =&gt; {
+  if (!query.trim()) {
+    setResults([]);
+    return;
+  }
+
+  const timer = setTimeout(async () =&gt; {
+    const data = await searchUsers(query);
+    setResults(data);
+  }, 300);
+
+  return () =&gt; clearTimeout(timer);
+}, [query]);</pre>
+<div class="note">For production, also handle cancellation/stale responses and loading/error states.</div>
+</div>
+
+<div class="card">
+<h2>9. Infinite Scroll</h2>
+<div class="diagram">Scroll
+ ↓
+Near bottom?
+ ↓ yes
+Fetch next page
+ ↓
+Append items
+ ↓
+Repeat
+</div>
+<pre>const observer = useRef();
+
+const lastItemRef = node =&gt; {
+  if (!node) return;
+
+  observer.current?.disconnect();
+
+  observer.current = new IntersectionObserver(
+    entries =&gt; {
+      if (entries[0].isIntersecting) {
+        loadNextPage();
+      }
+    }
+  );
+
+  observer.current.observe(node);
+};</pre>
+<p>Guard against duplicate requests and stop when there is no next page.</p>
+</div>
+
+<div class="card">
+<h2>10. Pagination</h2>
+<pre>const [page, setPage] = useState(1);
+const pageSize = 10;
+
+const start =
+  (page - 1) * pageSize;
+
+const visibleItems =
+  items.slice(start, start + pageSize);
+
+const totalPages =
+  Math.ceil(items.length / pageSize);</pre>
+<p>For large server datasets, prefer server-side pagination/cursor pagination rather than downloading everything.</p>
+</div>
+
+<div class="card">
+<h2>11. Debounce Search</h2>
+<p>Debounce waits until the user stops typing before running an action.</p>
+<pre>function useDebounce(value, delay) {
+  const [debounced, setDebounced] =
+    useState(value);
+
+  useEffect(() =&gt; {
+    const id = setTimeout(
+      () =&gt; setDebounced(value),
+      delay
+    );
+
+    return () =&gt; clearTimeout(id);
+  }, [value, delay]);
+
+  return debounced;
+}</pre>
+</div>
+
+<div class="card">
+<h2>12. Drag &amp; Drop</h2>
+<div class="diagram">Drag start
+   ↓
+Track item
+   ↓
+Drag over target
+   ↓
+Drop
+   ↓
+Update order
+</div>
+<pre>function moveItem(items, from, to) {
+  const copy = [...items];
+  const [item] = copy.splice(from, 1);
+  copy.splice(to, 0, item);
+  return copy;
+}</pre>
+<p>Use stable IDs for items. For complex drag/drop, a dedicated library can handle accessibility and pointer/keyboard behavior.</p>
+</div>
+
+<div class="card">
+<h2>13. Kanban Board</h2>
+<div class="diagram">Board
+├── Todo
+├── In Progress
+└── Done
+
+Card
+ ↓ drag
+Column
+ ↓
+Update status + order
+</div>
+<pre>const [columns, setColumns] = useState({
+  todo: [],
+  progress: [],
+  done: []
+});
+
+function moveCard(from, to, cardId) {
+  // remove from source
+  // insert into target
+  // update state immutably
+}</pre>
+<p><b>Interview focus:</b> normalized data, drag state, optimistic persistence and rollback.</p>
+</div>
+
+<div class="card">
+<h2>14. Nested Comments</h2>
+<div class="diagram">Comment
+├── Comment
+│   └── Comment
+└── Comment
+</div>
+<pre>function Comment({ comment }) {
+  return (
+    &lt;div&gt;
+      &lt;p&gt;{comment.text}&lt;/p&gt;
+
+      {comment.replies?.map(reply =&gt; (
+        &lt;Comment
+          key={reply.id}
+          comment={reply}
+        /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</pre>
+<p>Recursion is the natural solution for tree-shaped comment data.</p>
+</div>
+
+<div class="card">
+<h2>15. Tree View</h2>
+<pre>function TreeNode({ node }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setOpen(v =&gt; !v)}&gt;
+        {node.name}
+      &lt;/button&gt;
+
+      {open &&
+        node.children?.map(child =&gt; (
+          &lt;TreeNode
+            key={child.id}
+            node={child}
+          /&gt;
+        ))}
+    &lt;/div&gt;
+  );
+}</pre>
+<p><b>Focus:</b> recursion, stable IDs and expansion state.</p>
+</div>
+
+<div class="card">
+<h2>16. Folder Explorer</h2>
+<div class="diagram">Explorer
+├── Folder
+│   ├── File
+│   └── Folder
+│       └── File
+└── Folder
+</div>
+<p>Use a recursive tree renderer. For a large filesystem, lazy-load folder children when expanded.</p>
+<pre>async function expandFolder(folderId) {
+  const children =
+    await fetchChildren(folderId);
+
+  setTree(prev =&gt;
+    updateChildren(prev, folderId, children)
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>17. Dynamic Form</h2>
+<pre>const fields = [
+  {
+    type: "text",
+    name: "firstName",
+    label: "First Name"
+  },
+  {
+    type: "select",
+    name: "country",
+    label: "Country",
+    options: [...]
+  }
+];
+
+function FieldRenderer({ field }) {
+  switch (field.type) {
+    case "text":
+      return &lt;input name={field.name} /&gt;;
+    case "select":
+      return &lt;select name={field.name}&gt;...&lt;/select&gt;;
+    default:
+      return null;
+  }
+}</pre>
+<p><b>Interview focus:</b> schema-driven rendering, validation and extensibility.</p>
+</div>
+
+<div class="card">
+<h2>18. Shopping Cart</h2>
+<pre>const [cart, setCart] = useState([]);
+
+function addToCart(product) {
+  setCart(prev =&gt; {
+    const existing =
+      prev.find(x =&gt; x.id === product.id);
+
+    if (existing) {
+      return prev.map(x =&gt;
+        x.id === product.id
+          ? { ...x, qty: x.qty + 1 }
+          : x
+      );
+    }
+
+    return [...prev, { ...product, qty: 1 }];
+  });
+}
+
+const total = cart.reduce(
+  (sum, item) =&gt;
+    sum + item.price * item.qty,
+  0
+);</pre>
+</div>
+
+<div class="card">
+<h2>19. Multi-select</h2>
+<pre>const [selected, setSelected] =
+  useState(new Set());
+
+function toggle(id) {
+  setSelected(prev =&gt; {
+    const next = new Set(prev);
+
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+
+    return next;
+  });
+}</pre>
+<p>For a controlled reusable component, expose <code>value</code> and <code>onChange</code>.</p>
+</div>
+
+<div class="card">
+<h2>20. Theme Switcher</h2>
+<pre>const [theme, setTheme] =
+  useState("light");
+
+useEffect(() =&gt; {
+  document.documentElement
+    .dataset.theme = theme;
+
+  localStorage.setItem(
+    "theme",
+    theme
+  );
+}, [theme]);</pre>
+<p>For larger apps, use a theme provider/context and CSS variables/design tokens.</p>
+</div>
+
+<div class="card">
+<h2>21. Virtualized List</h2>
+<p>Render only the visible portion of a large list.</p>
+<div class="diagram">10,000 items
+      ↓
+Viewport
+      ↓
+Render rows 120–145
+      ↓
+Scroll
+      ↓
+Render next visible range
+</div>
+<pre>const visibleItems =
+  items.slice(startIndex, endIndex);</pre>
+<p>Real implementations also need spacer/position calculations and are often easier with a proven virtualization library.</p>
+</div>
+
+<div class="card">
+<h2>22. Data Table</h2>
+<pre>const [sort, setSort] =
+  useState({
+    key: "name",
+    direction: "asc"
+  });
+
+const sorted = [...rows].sort(
+  (a, b) =&gt; {
+    const result =
+      String(a[sort.key])
+        .localeCompare(String(b[sort.key]));
+
+    return sort.direction === "asc"
+      ? result
+      : -result;
+  }
+);</pre>
+<p>For interview depth, discuss sorting, filtering, pagination, selection, column configuration and virtualization.</p>
+</div>
+
+<div class="card">
+<h2>23. File Upload</h2>
+<pre>function handleFileChange(event) {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  if (file.size &gt; 5 * 1024 * 1024) {
+    setError("Max 5 MB");
+    return;
+  }
+
+  setFile(file);
+}</pre>
+<p>For production: validate type/size, show progress, handle cancellation, upload errors and server-side validation.</p>
+</div>
+
+<div class="card">
+<h2>24. Image Gallery</h2>
+<div class="diagram">Thumbnail
+   ↓ click
+Selected image
+   ↓
+Prev / Next
+   ↓
+Lightbox
+</div>
+<pre>const [active, setActive] = useState(0);
+
+function next() {
+  setActive(i =&gt;
+    (i + 1) % images.length
+  );
+}
+
+function previous() {
+  setActive(i =&gt;
+    (i - 1 + images.length) %
+    images.length
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>25. OTP Input</h2>
+<p>Usually use one controlled value or an array of digits and move focus automatically.</p>
+<pre>const refs = useRef([]);
+
+function handleChange(index, value) {
+  const digit = value.slice(-1);
+
+  setOtp(prev =&gt; {
+    const next = [...prev];
+    next[index] = digit;
+    return next;
+  });
+
+  if (digit) {
+    refs.current[index + 1]?.focus();
+  }
+}</pre>
+<p>Also handle Backspace, paste, numeric input and accessibility.</p>
+</div>
+
+<div class="card">
+<h2>26. Stepper</h2>
+<pre>const [step, setStep] = useState(0);
+
+function next() {
+  setStep(s =&gt;
+    Math.min(s + 1, steps.length - 1)
+  );
+}
+
+function previous() {
+  setStep(s =&gt;
+    Math.max(s - 1, 0)
+  );
+}</pre>
+<p>For a multi-step form, keep draft values outside individual step components so navigation does not lose data.</p>
+</div>
+
+<div class="card">
+<h2>27. Calendar</h2>
+<p>Break the problem into date calculations, grid generation and UI selection.</p>
+<div class="diagram">Calendar
+├── Header
+│   ├── Previous
+│   ├── Month
+│   └── Next
+└── Grid
+    └── Day cells
+</div>
+<p>Important edge cases: month length, leap years, week start, timezone handling and selected/disabled dates.</p>
+</div>
+
+<div class="card">
+<h2>28. Carousel</h2>
+<pre>const [index, setIndex] = useState(0);
+
+function next() {
+  setIndex(i =&gt;
+    (i + 1) % slides.length
+  );
+}
+
+function previous() {
+  setIndex(i =&gt;
+    (i - 1 + slides.length) %
+    slides.length
+  );
+}</pre>
+<p>Production carousel: keyboard controls, focus management, touch/pointer support, accessible labels and reduced-motion support.</p>
+</div>
+
+<div class="card">
+<h2>29. Common Interview Follow-ups</h2>
+<table>
+<tr><th>Problem</th><th>Likely follow-up</th></tr>
+<tr><td>Todo</td><td>Persist to API/localStorage? How to optimize?</td></tr>
+<tr><td>Accordion</td><td>Single vs multiple open items?</td></tr>
+<tr><td>Typeahead</td><td>Debounce? Cancel stale requests?</td></tr>
+<tr><td>Infinite scroll</td><td>Duplicate calls? End of list? Back navigation?</td></tr>
+<tr><td>Kanban</td><td>Optimistic update and rollback?</td></tr>
+<tr><td>Tree</td><td>Lazy loading? 10,000 nodes?</td></tr>
+<tr><td>Form</td><td>Schema-driven validation?</td></tr>
+<tr><td>Cart</td><td>Derived totals? Persistence?</td></tr>
+<tr><td>Virtualized list</td><td>Variable row height?</td></tr>
+<tr><td>File upload</td><td>Progress, retry, cancellation?</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>30. Coding Interview Performance Rules</h2>
+<ul>
+<li>Use functional state updates when the next state depends on previous state.</li>
+<li>Never mutate React state directly.</li>
+<li>Use stable keys for dynamic lists.</li>
+<li>Clean up timers, listeners and observers.</li>
+<li>Handle async race conditions.</li>
+<li>Disable duplicate submissions when necessary.</li>
+<li>Keep derived values derived instead of duplicating state.</li>
+<li>Extract reusable logic into hooks when it improves clarity.</li>
+<li>Do not optimize before identifying a real bottleneck.</li>
+<li>Explain trade-offs while coding.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Most Asked Coding Interview Questions</h2>
+<ol>
+<li><b>Build a Todo App.</b> Test state updates, immutable arrays, filtering and component decomposition.</li>
+<li><b>Build an Accordion.</b> Test controlled selection and conditional rendering.</li>
+<li><b>Build Tabs.</b> Test state, reusable components and accessibility.</li>
+<li><b>Build a Modal.</b> Test portals, Escape handling, focus and cleanup.</li>
+<li><b>Build a Dropdown.</b> Test outside click, keyboard navigation and controlled state.</li>
+<li><b>Build Typeahead Search.</b> Test debounce, async handling and stale-request prevention.</li>
+<li><b>Build Infinite Scroll.</b> Test IntersectionObserver, pagination and duplicate-request prevention.</li>
+<li><b>Build Pagination.</b> Test derived page calculations and API integration.</li>
+<li><b>Build a Debounce Hook.</b> Test timers and cleanup.</li>
+<li><b>Build Drag & Drop.</b> Test event/state handling and immutable reorder operations.</li>
+<li><b>Build a Kanban Board.</b> Test nested state, drag/drop and optimistic updates.</li>
+<li><b>Build Nested Comments.</b> Test recursion and tree rendering.</li>
+<li><b>Build a Tree View.</b> Test recursive components and expansion state.</li>
+<li><b>Build a Dynamic Form.</b> Test schema-driven rendering and validation.</li>
+<li><b>Build a Shopping Cart.</b> Test normalized updates and derived totals.</li>
+<li><b>Build a Multi-select.</b> Test selection sets and controlled component design.</li>
+<li><b>Build a Theme Switcher.</b> Test Context/CSS variables/persistence.</li>
+<li><b>Build a Virtualized List.</b> Test performance and visible-range calculations.</li>
+<li><b>Build a Data Table.</b> Test sorting, filtering, pagination and reusable configuration.</li>
+<li><b>Build a File Upload.</b> Test File API, validation and async progress.</li>
+<li><b>Build an Image Gallery.</b> Test indexing, navigation and conditional UI.</li>
+<li><b>Build an OTP Input.</b> Test refs, focus movement and keyboard/paste handling.</li>
+<li><b>Build a Stepper.</b> Test navigation and state preservation.</li>
+<li><b>Build a Calendar.</b> Test date logic and grid generation.</li>
+<li><b>Build a Carousel.</b> Test navigation, boundaries and accessibility.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>31. Scenario-Based Questions</h2>
+<ol>
+<li><b>Your typeahead shows results for an older query after a newer query.</b><br>Cancel the previous request with AbortController or track request IDs and ignore stale responses.</li>
+<li><b>Infinite scroll fires five requests at once.</b><br>Guard with an in-flight flag/query state and only request the next page when the current request is settled.</li>
+<li><b>A modal traps the user behind it.</b><br>Implement focus management, Escape handling and proper modal semantics; restore focus when it closes.</li>
+<li><b>A 10,000-item list is slow.</b><br>Use virtualization so only visible rows are rendered.</li>
+<li><b>A Kanban API rejects an optimistic move.</b><br>Rollback the local move and show a clear error.</li>
+<li><b>A tree has 50,000 nodes.</b><br>Do not render the entire tree blindly; lazy-load children and consider virtualization/efficient expansion state.</li>
+<li><b>A form has 100 fields and becomes difficult to maintain.</b><br>Use a schema-driven field registry and reusable field components instead of a giant conditional component.</li>
+<li><b>A user double-clicks Submit and creates two orders.</b><br>Disable or guard duplicate submission and use server-side idempotency for critical operations.</li>
+<li><b>A shopping cart total is wrong after quantity changes.</b><br>Keep the item state as the source of truth and derive the total from the current cart rather than storing a separately mutable total.</li>
+<li><b>A multi-select re-renders the whole application.</b><br>Keep selection state local if possible and inspect unnecessary parent renders before adding memoization.</li>
+<li><b>An OTP component loses focus after typing.</b><br>Store input refs and move focus deliberately after a valid digit while handling paste and backspace.</li>
+<li><b>A calendar shows the wrong day around midnight.</b><br>Review timezone/date-only handling and avoid accidental conversion between local time and UTC for date-only values.</li>
+<li><b>A file upload is 500 MB.</b><br>Do not load the entire file into memory unnecessarily; use streaming/chunked upload where supported and show progress/cancellation.</li>
+<li><b>A carousel is inaccessible by keyboard.</b><br>Add keyboard controls, focusable controls, accessible labels and respect reduced-motion preferences.</li>
+<li><b>A data table has millions of records.</b><br>Use server-side filtering/sorting/pagination or cursors and virtualize the visible rows rather than loading everything into the browser.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ First identify components and state.</li>
+<li>✔ Keep state close to its owner.</li>
+<li>✔ Use functional updates when based on previous state.</li>
+<li>✔ Never mutate state directly.</li>
+<li>✔ Stable keys for lists.</li>
+<li>✔ Clean up effects/timers/listeners.</li>
+<li>✔ Debounce typeahead/search.</li>
+<li>✔ Prevent stale async results.</li>
+<li>✔ Use IntersectionObserver for infinite scroll.</li>
+<li>✔ Virtualize large lists.</li>
+<li>✔ Use recursion for tree-shaped data.</li>
+<li>✔ Schema-driven forms scale better.</li>
+<li>✔ Derived data should usually be calculated, not duplicated.</li>
+<li>✔ Optimistic UI needs rollback.</li>
+<li>✔ Critical actions need duplicate-submission protection.</li>
+<li>✔ Large datasets need server-side strategies.</li>
+<li>✔ Accessibility is part of the implementation.</li>
+<li>✔ Explain trade-offs while coding.</li>
+</ul>
+</div>
+
+</body>
+</html>

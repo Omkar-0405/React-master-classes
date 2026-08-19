@@ -1,0 +1,145 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript ES6+ Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1050px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#b45309;color:#fff;padding:26px;border-radius:12px}h2{color:#b45309}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#fef3c7}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+<header><h1>JavaScript ES6+</h1><p>Simple Interview Handbook • Print Ready</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>What is ES6+?</h2><p>ES6 introduced major JavaScript improvements. ES6+ means ES6 and newer language features.</p></div>
+
+<div class="card"><h2>1. let and const</h2><p>Both are block-scoped.</p>
+<pre>let age = 25;
+age = 26; // allowed
+
+const name = "Omkar";
+// name = "Rahul"; // TypeError</pre>
+<table><tr><th>Feature</th><th>let</th><th>const</th></tr><tr><td>Block scoped</td><td>Yes</td><td>Yes</td></tr><tr><td>Reassign</td><td>Yes</td><td>No</td></tr><tr><td>Redeclare</td><td>No</td><td>No</td></tr><tr><td>TDZ</td><td>Yes</td><td>Yes</td></tr></table>
+<p>Prefer <code>const</code> unless reassignment is required.</p></div>
+
+<div class="card"><h2>2. Template Literal</h2><p>Backticks allow interpolation and multi-line strings.</p>
+<pre>const name = "Omkar";
+const age = 25;
+
+const message = `My name is ${name} and I am ${age}.`;</pre></div>
+
+<div class="card"><h2>3. Optional Chaining (?.)</h2><p>Safely accesses a property when a value may be null or undefined.</p>
+<pre>const user = { profile: { name: "Omkar" } };
+
+console.log(user.profile?.name); // Omkar
+console.log(user.address?.city); // undefined
+
+user.getName?.();</pre>
+<p>It avoids errors from missing intermediate properties.</p></div>
+
+<div class="card"><h2>4. Nullish Coalescing (??)</h2><p>Uses the right side only when the left side is <code>null</code> or <code>undefined</code>.</p>
+<pre>const name = null;
+const result = name ?? "Guest"; // Guest
+
+0 || 10;  // 10
+0 ?? 10;  // 0
+
+"" || "Guest"; // Guest
+"" ?? "Guest"; // ""</pre>
+<p>Use <code>??</code> when values such as <code>0</code> and <code>""</code> are valid.</p></div>
+
+<div class="card"><h2>5. Modules</h2><p>Modules split code into separate files using <code>export</code> and <code>import</code>.</p>
+<pre>// math.js
+export const add = (a, b) => a + b;
+
+// app.js
+import { add } from "./math.js";</pre>
+<h3>Default export</h3>
+<pre>// User.js
+export default function User(){}
+
+// app.js
+import User from "./User.js";</pre>
+<p>Each module has its own scope.</p></div>
+
+<div class="card"><h2>6. Dynamic Import</h2><p>Loads a module only when it is needed.</p>
+<pre>button.addEventListener("click", async () => {
+  const module = await import("./heavyFeature.js");
+  module.start();
+});</pre>
+<div class="diagram">Initial page
+    ↓
+User needs feature
+    ↓
+import("./feature.js")
+    ↓
+Feature loads</div>
+<p>Useful for code splitting and reducing initial JavaScript.</p></div>
+
+<div class="card"><h2>7. Default Parameters</h2><p>A default value is used when an argument is omitted or <code>undefined</code>.</p>
+<pre>function greet(name = "Guest") {
+  return `Hello ${name}`;
+}
+
+greet();        // Hello Guest
+greet("Omkar"); // Hello Omkar
+greet(undefined); // Hello Guest
+greet(null);      // Hello null</pre></div>
+
+<div class="card"><h2>Quick Comparison</h2><table>
+<tr><th>Feature</th><th>Purpose</th></tr>
+<tr><td>let / const</td><td>Block-scoped variables</td></tr>
+<tr><td>Template literal</td><td>Interpolation and multi-line strings</td></tr>
+<tr><td>Optional chaining</td><td>Safe nullish property access</td></tr>
+<tr><td>Nullish coalescing</td><td>Fallback for null/undefined</td></tr>
+<tr><td>Modules</td><td>Organize code across files</td></tr>
+<tr><td>Dynamic import</td><td>Load code on demand</td></tr>
+<tr><td>Default parameters</td><td>Fallback function arguments</td></tr>
+</table></div>
+
+<div class="card"><h2>React Connection</h2>
+<pre>function UserCard({ user }) {
+  const name = user?.profile?.name ?? "Guest";
+
+  return (
+    &lt;div&gt;{`Welcome, ${name}`}&lt;/div&gt;
+  );
+}</pre>
+<p>These features appear constantly in modern React applications.</p></div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>let vs const?</b> Both are block scoped; let can be reassigned, const cannot.</li>
+<li><b>Are let and const hoisted?</b> Yes, but they remain in the TDZ until initialized.</li>
+<li><b>What are template literals?</b> Backtick strings supporting interpolation and multi-line text.</li>
+<li><b>What does optional chaining do?</b> Safely accesses properties/calls when a value may be nullish.</li>
+<li><b>What does ?? do?</b> Provides a fallback only for null or undefined.</li>
+<li><b>?? vs ||?</b> || treats all falsy values as fallback; ?? only null/undefined.</li>
+<li><b>What are modules?</b> Files with their own scope that explicitly import/export values.</li>
+<li><b>Why dynamic import?</b> To load code on demand and support code splitting.</li>
+<li><b>When do default parameters apply?</b> When the argument is omitted or undefined.</li>
+<li><b>Does null trigger a default parameter?</b> No.</li>
+<li><b>Why is ES6+ important for React?</b> Modern React code relies heavily on these features.</li>
+<li><b>Can optional chaining be used with functions?</b> Yes, e.g. <code>obj.method?.()</code>.</li>
+</ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>A variable should never be reassigned.</b><br>Use <code>const</code>.</li>
+<li><b>A loop counter changes.</b><br>Use <code>let</code>.</li>
+<li><b>An API field may not exist.</b><br>Use optional chaining.</li>
+<li><b>0 is valid but a fallback is needed only when missing.</b><br>Use <code>??</code>, not <code>||</code>.</li>
+<li><b>An API username may be null.</b><br>Use <code>user.name ?? "Guest"</code>.</li>
+<li><b>A large feature is rarely used.</b><br>Consider dynamic import for code splitting.</li>
+<li><b>A utility is shared across files.</b><br>Export it and import it where needed.</li>
+<li><b>A function has an optional argument.</b><br>Give the parameter a default value.</li>
+<li><b>You need readable dynamic UI text.</b><br>Use a template literal.</li>
+<li><b>A component is needed only after a user opens a feature.</b><br>Use dynamic import, often with React lazy loading.</li>
+<li><b>An empty string is a valid value.</b><br>Use <code>??</code> instead of <code>||</code>.</li>
+<li><b>A deeply nested API response may be incomplete.</b><br>Use optional chaining and a nullish fallback where appropriate.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ const = default choice.</li><li>✔ let = reassignment needed.</li><li>✔ Template literal = backticks + ${expression}.</li>
+<li>✔ ?. = safe nullish access.</li><li>✔ ?? = fallback only for null/undefined.</li><li>✔ export/import = modules.</li>
+<li>✔ import() = load module on demand.</li><li>✔ Default parameter = fallback for undefined.</li>
+</ul></div>
+</body></html>

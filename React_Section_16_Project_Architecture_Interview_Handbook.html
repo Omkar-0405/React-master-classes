@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Project Architecture - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#0f766e;color:#fff;padding:28px;border-radius:12px}
+h2{color:#0f766e}h3{color:#115e59}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ccfbf1}
+code{background:#f0fdfa;padding:2px 5px;border-radius:4px}.note{background:#f0fdfa;border-left:4px solid #0d9488;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 16 — React Project Architecture</h1>
+<p>Simple Interview Handbook • Folder Structure • Feature Architecture • Atomic Design • Modularity • SoC • Shared Components • Barrel Exports • Design Systems</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is Project Architecture?</h2>
+<p>Project architecture is how we organize code, responsibilities and dependencies so an application remains understandable and maintainable as it grows.</p>
+<div class="diagram">Small App
+  ↓
+Few files
+  ↓
+Simple structure
+
+Large App
+  ↓
+Many features + teams
+  ↓
+Need boundaries
+  ↓
+Clear architecture
+</div>
+<div class="note"><b>Interview idea:</b> There is no single perfect folder structure. The goal is clear ownership, low coupling, high cohesion and easy change.</div>
+</div>
+
+<div class="card">
+<h2>2. A Simple Folder Structure</h2>
+<pre>src/
+├── components/
+├── pages/
+├── hooks/
+├── services/
+├── utils/
+├── types/
+├── assets/
+├── styles/
+├── routes/
+└── App.tsx</pre>
+<p>This is a simple layer-oriented structure. It can work well for small applications.</p>
+</div>
+
+<div class="card">
+<h2>Layer-Based Structure</h2>
+<div class="diagram">UI
+ ↓
+Pages / Components
+ ↓
+Hooks
+ ↓
+Services / API
+ ↓
+Backend
+
+Shared:
+utils / types / constants / styles
+</div>
+<p><b>Problem at scale:</b> files for one feature can become scattered across many folders.</p>
+</div>
+
+<div class="card">
+<h2>3. Feature-Based Architecture</h2>
+<p>Feature-based architecture groups code by business feature rather than technical type.</p>
+<pre>src/
+├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── types.ts
+│   │   └── index.ts
+│   │
+│   ├── users/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   └── types.ts
+│   │
+│   └── orders/
+│       ├── components/
+│       ├── hooks/
+│       ├── services/
+│       └── types.ts
+│
+├── shared/
+└── app/</pre>
+<p>Everything needed for a feature is closer together.</p>
+</div>
+
+<div class="card">
+<h2>Feature-Based Flow</h2>
+<div class="diagram">User Feature
+ ├─ UI
+ ├─ hooks
+ ├─ API
+ ├─ types
+ └─ tests
+       ↓
+Self-contained feature
+       ↓
+Other features depend only on
+explicit public APIs
+</div>
+</div>
+
+<div class="card">
+<h2>4. Feature-Based vs Layer-Based</h2>
+<table>
+<tr><th>Layer-Based</th><th>Feature-Based</th></tr>
+<tr><td>Groups by technical role.</td><td>Groups by business capability.</td></tr>
+<tr><td>Easy for small apps.</td><td>Scales well for larger apps.</td></tr>
+<tr><td>Feature code can be scattered.</td><td>Feature code stays together.</td></tr>
+<tr><td>Simple initial setup.</td><td>Needs clearer boundaries.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>5. Atomic Design</h2>
+<p><b>Atomic Design</b> organizes UI into increasing levels of complexity.</p>
+<div class="diagram">Atoms
+ ↓
+Buttons, inputs, icons
+ ↓
+Molecules
+ ↓
+Search box, form field
+ ↓
+Organisms
+ ↓
+Header, data table
+ ↓
+Templates
+ ↓
+Page layout
+ ↓
+Pages
+ ↓
+Actual screen
+</div>
+<p>It is primarily a UI composition methodology, not a complete application architecture.</p>
+</div>
+
+<div class="card">
+<h2>Atomic Design Example</h2>
+<pre>components/
+├── atoms/
+│   ├── Button.tsx
+│   └── Input.tsx
+├── molecules/
+│   ├── SearchBox.tsx
+│   └── FormField.tsx
+├── organisms/
+│   ├── Header.tsx
+│   └── UserTable.tsx
+├── templates/
+└── pages/</pre>
+<div class="note">Do not force every component into an atomic category. If the classification adds confusion, a simpler component structure may be better.</div>
+</div>
+
+<div class="card">
+<h2>6. Modular Design</h2>
+<p>Modular design divides the application into modules with clear responsibilities and boundaries.</p>
+<div class="diagram">Application
+ ├── Auth Module
+ ├── User Module
+ ├── Order Module
+ └── Reporting Module
+
+Each module:
+- owns related code
+- exposes a small public API
+- hides internal details
+</div>
+<p>The goal is to reduce coupling and make changes safer.</p>
+</div>
+
+<div class="card">
+<h2>Module Boundary Example</h2>
+<pre>// features/users/index.ts
+export {
+  UserList,
+  useUsers
+} from "./public";
+
+export type {
+  User
+} from "./types";</pre>
+<p>Consumers should ideally depend on the module's public API rather than its internal files.</p>
+</div>
+
+<div class="card">
+<h2>7. Separation of Concerns</h2>
+<p><b>Separation of Concerns (SoC)</b> means keeping different responsibilities separate.</p>
+<div class="diagram">Component
+ → rendering / UI
+
+Hook
+ → UI-related state / behavior
+
+Service
+ → API communication
+
+Utility
+ → reusable pure logic
+
+Store
+ → shared application state
+
+Types
+ → contracts
+</div>
+</div>
+
+<div class="card">
+<h2>Bad Separation</h2>
+<pre>function UserPage() {
+  // UI
+  // API calls
+  // validation
+  // transformation
+  // global state
+  // business rules
+  // local state
+  // formatting
+  // 500 lines later...
+}</pre>
+<p>Large components become difficult to test and change.</p>
+</div>
+
+<div class="card">
+<h2>Better Separation</h2>
+<pre>// UserPage.tsx
+const { users, loading } = useUsers();
+
+return &lt;UserTable users={users} loading={loading} /&gt;;
+
+// useUsers.ts
+// state + UI-facing behavior
+
+// userService.ts
+// API calls
+
+// userUtils.ts
+// pure transformations</pre>
+</div>
+
+<div class="card">
+<h2>8. Shared Components</h2>
+<p>A shared component is reusable across multiple features.</p>
+<pre>shared/
+├── components/
+│   ├── Button/
+│   ├── Modal/
+│   ├── Input/
+│   └── DataTable/
+├── hooks/
+├── utils/
+└── types/</pre>
+<p>Good shared components solve repeated problems without knowing feature-specific business rules.</p>
+</div>
+
+<div class="card">
+<h2>When Should a Component Become Shared?</h2>
+<ul>
+<li>Used by multiple features.</li>
+<li>Has a stable API.</li>
+<li>Represents a common UI pattern.</li>
+<li>Its behavior is not tied to one business domain.</li>
+</ul>
+<div class="note"><b>Don't abstract too early:</b> Two similar components are not automatically the same abstraction. Wait until the shared behavior is clear.</div>
+</div>
+
+<div class="card">
+<h2>9. Barrel Exports</h2>
+<p>A barrel file re-exports multiple modules from a single entry point.</p>
+<pre>// components/index.ts
+export { Button } from "./Button";
+export { Modal } from "./Modal";
+export { Input } from "./Input";</pre>
+<p>Then:</p>
+<pre>import {
+  Button,
+  Modal,
+  Input
+} from "@/components";</pre>
+</div>
+
+<div class="card">
+<h2>Barrel Export — Advantages</h2>
+<ul>
+<li>Cleaner imports.</li>
+<li>Defines a public API.</li>
+<li>Hides internal file structure.</li>
+<li>Can improve discoverability.</li>
+</ul>
+<p><b>Tradeoff:</b> Large or poorly designed barrels can complicate dependency graphs and, depending on tooling, affect tree-shaking or module loading behavior.</p>
+</div>
+
+<div class="card">
+<h2>10. Design Systems</h2>
+<p>A <b>design system</b> is a shared collection of UI components, design tokens, rules and usage guidance.</p>
+<div class="diagram">Design System
+ ├── Tokens
+ │   ├── Colors
+ │   ├── Spacing
+ │   ├── Typography
+ │   └── Radius
+ │
+ ├── Components
+ │   ├── Button
+ │   ├── Input
+ │   ├── Modal
+ │   └── Table
+ │
+ └── Guidelines
+     ├── Accessibility
+     ├── Usage
+     └── Patterns
+</div>
+</div>
+
+<div class="card">
+<h2>Design System vs Component Library</h2>
+<table>
+<tr><th>Component Library</th><th>Design System</th></tr>
+<tr><td>Reusable UI components.</td><td>Components + tokens + guidelines + patterns.</td></tr>
+<tr><td>Focuses on implementation.</td><td>Also defines design and product consistency.</td></tr>
+<tr><td>Example: Button, Modal, Table.</td><td>Also defines when/how those components should be used.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>11. Architecture Dependency Direction</h2>
+<p>Clear dependency direction prevents circular dependencies and tight coupling.</p>
+<div class="diagram">App / Features
+       ↓
+Shared UI / Shared Utilities
+       ↓
+Low-level helpers
+
+Avoid:
+Shared → Feature A → Feature B → Shared
+                 ↑
+              cycles
+</div>
+<p>Not every application needs a strict hierarchy, but dependencies should be intentional.</p>
+</div>
+
+<div class="card">
+<h2>12. Avoid the "Shared" Dumping Ground</h2>
+<p>Putting everything reusable-looking into <code>shared/</code> can create a huge dependency-heavy folder.</p>
+<pre>shared/
+├── UserBusinessRules.ts ❌
+├── OrderCalculation.ts ❌
+├── AuthLogic.ts ❌
+├── Button.tsx
+└── DateFormat.ts</pre>
+<p>Business logic should normally remain near its owning feature/domain unless it is genuinely cross-domain.</p>
+</div>
+
+<div class="card">
+<h2>13. Testing Architecture</h2>
+<p>Keep tests close to the code when that improves discoverability.</p>
+<pre>features/
+└── users/
+    ├── components/
+    │   ├── UserList.tsx
+    │   └── UserList.test.tsx
+    ├── hooks/
+    │   ├── useUsers.ts
+    │   └── useUsers.test.ts
+    └── services/
+        ├── userService.ts
+        └── userService.test.ts</pre>
+<p>Project-wide E2E tests can live separately because they represent application journeys rather than one module.</p>
+</div>
+
+<div class="card">
+<h2>14. Example Scalable Structure</h2>
+<pre>src/
+├── app/
+│   ├── providers/
+│   ├── routes/
+│   └── App.tsx
+│
+├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── types.ts
+│   │   └── index.ts
+│   │
+│   ├── users/
+│   └── orders/
+│
+├── shared/
+│   ├── components/
+│   ├── hooks/
+│   ├── utils/
+│   ├── constants/
+│   └── types/
+│
+├── assets/
+└── styles/</pre>
+</div>
+
+<div class="card">
+<h2>15. Architecture Principles</h2>
+<ul>
+<li><b>High cohesion:</b> related code stays together.</li>
+<li><b>Low coupling:</b> modules know as little as practical about each other.</li>
+<li><b>Clear boundaries:</b> modules expose intentional APIs.</li>
+<li><b>Single responsibility:</b> avoid giant components/services.</li>
+<li><b>Dependency direction:</b> avoid accidental circular dependencies.</li>
+<li><b>Reuse carefully:</b> abstract repeated behavior only when the abstraction is clear.</li>
+<li><b>Consistency:</b> shared design tokens and patterns reduce UI drift.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>16. Architecture Tradeoffs</h2>
+<table>
+<tr><th>Too Simple</th><th>Too Complex</th></tr>
+<tr><td>Scattered responsibilities as app grows.</td><td>Many folders/abstractions for a small app.</td></tr>
+<tr><td>Harder ownership.</td><td>Harder onboarding.</td></tr>
+<tr><td>Duplication may grow.</td><td>Simple changes require many files.</td></tr>
+</table>
+<div class="note"><b>Best answer in interviews:</b> Architecture should match the application's size, domain complexity and team structure. Do not introduce complexity without a problem to solve.</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is project architecture?</b> The organization of code, responsibilities, modules and dependencies in an application.</li>
+<li><b>What folder structure do you prefer?</b> For small apps, a simple layer structure can work; for larger apps, feature-based architecture often keeps business code cohesive.</li>
+<li><b>What is feature-based architecture?</b> Code is grouped around business features such as auth, users and orders.</li>
+<li><b>Why use feature-based architecture?</b> It keeps related code together and can make large applications easier to maintain.</li>
+<li><b>What is Atomic Design?</b> A UI methodology that organizes components into atoms, molecules, organisms, templates and pages.</li>
+<li><b>Is Atomic Design a complete architecture?</b> No. It mainly describes UI composition and should not replace application/domain architecture.</li>
+<li><b>What is modular design?</b> Splitting the system into modules with clear responsibilities and public boundaries.</li>
+<li><b>What is Separation of Concerns?</b> Keeping different responsibilities separate so each part is easier to understand and change.</li>
+<li><b>What makes a good shared component?</b> It solves a genuinely common problem and has a stable, feature-independent API.</li>
+<li><b>What is a barrel export?</b> A file that re-exports modules through a single public entry point.</li>
+<li><b>Are barrel exports always good?</b> No. They improve imports but poorly designed barrels can complicate dependencies or bundling.</li>
+<li><b>What is a design system?</b> Shared design tokens, components, patterns and usage guidelines that create consistent UI.</li>
+<li><b>Design system vs component library?</b> A component library focuses on reusable implementation; a design system also includes tokens, guidelines and patterns.</li>
+<li><b>What is high cohesion?</b> Related responsibilities are grouped together.</li>
+<li><b>What is low coupling?</b> Modules depend on as little implementation detail of other modules as practical.</li>
+<li><b>Should all reusable code go into shared?</b> No. Business-specific code should remain close to its owning feature.</li>
+<li><b>How do you prevent circular dependencies?</b> Define dependency direction, keep module boundaries clear and inspect the dependency graph when necessary.</li>
+<li><b>How do you choose an architecture?</b> Consider application size, domain complexity, team size, change patterns and deployment requirements.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A 50-line app has 15 architecture folders.</b><br>Simplify it. Architecture should solve real complexity, not create it.</li>
+<li><b>A large app has components, hooks and services scattered by type.</b><br>Consider feature-based organization so each business capability owns its related code.</li>
+<li><b>The User feature needs a user-specific validation rule.</b><br>Keep the rule inside the users feature rather than placing it in shared just because it is a utility.</li>
+<li><b>Three features use the same Button.</b><br>Move the genuinely reusable Button into the shared/design-system layer.</li>
+<li><b>Two components look similar but have different business rules.</b><br>Do not immediately merge them. Share lower-level UI only if the common behavior is clear.</li>
+<li><b>A shared component imports directly from a feature.</b><br>Review the dependency direction; shared code depending on a feature often creates undesirable coupling.</li>
+<li><b>Two feature modules need each other's internals.</b><br>Identify the shared contract/domain and expose a small public API rather than importing internal files.</li>
+<li><b>Imports contain long paths such as ../../../components.</b><br>Use aliases or well-designed public entry points where they improve clarity.</li>
+<li><b>A barrel export creates a circular dependency.</b><br>Inspect the dependency graph and split/restructure the public API; do not keep adding exports to the same barrel.</li>
+<li><b>The company wants consistent buttons, spacing and colors across products.</b><br>Build a design system with shared tokens, components and usage guidelines.</li>
+<li><b>A developer puts API calls directly in every component.</b><br>Extract reusable service/API functions or a server-state layer to separate network concerns from UI.</li>
+<li><b>A component has rendering, API calls, validation and business rules in 500 lines.</b><br>Separate UI, hooks, services and domain logic based on responsibility.</li>
+<li><b>A team wants Atomic Design for every file.</b><br>Explain that Atomic Design is a useful UI methodology, but forcing every component into a category can add unnecessary complexity.</li>
+<li><b>A design-system Button needs a feature-specific permission rule.</b><br>Keep generic permission/business logic outside the base Button; compose it at the feature level.</li>
+<li><b>Five teams work on the same frontend.</b><br>Use clear feature/module ownership, public APIs, shared design-system standards and dependency boundaries.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Architecture = organization of responsibilities + dependencies.</li>
+<li>✔ Small app → simple structure can be best.</li>
+<li>✔ Large app → feature-based structure often scales better.</li>
+<li>✔ Feature-based = group by business capability.</li>
+<li>✔ Atomic Design = UI composition methodology.</li>
+<li>✔ Modular design = clear module boundaries.</li>
+<li>✔ SoC = separate responsibilities.</li>
+<li>✔ Shared components = genuinely reusable UI.</li>
+<li>✔ Barrel = public re-export entry point.</li>
+<li>✔ Design system = tokens + components + patterns + guidelines.</li>
+<li>✔ High cohesion = related code together.</li>
+<li>✔ Low coupling = fewer unnecessary dependencies.</li>
+<li>✔ Keep business logic near its feature.</li>
+<li>✔ Avoid shared folder becoming a dumping ground.</li>
+<li>✔ Avoid circular dependencies.</li>
+<li>✔ Don't over-engineer small applications.</li>
+<li>✔ Architecture should evolve with the product.</li>
+</ul>
+</div>
+
+</body>
+</html>

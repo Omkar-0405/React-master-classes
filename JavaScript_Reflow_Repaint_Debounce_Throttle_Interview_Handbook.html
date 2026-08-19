@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reflow, Repaint, Debounce & Throttle - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1050px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#4f46e5;color:#fff;padding:26px;border-radius:12px}
+h2{color:#4f46e5}.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#e0e7ff}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Reflow vs Repaint • Debounce • Throttle</h1>
+<p>Simple Interview Handbook • Browser Performance • Print Ready</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Reflow vs Repaint</h2>
+<p>When the page changes, the browser may need to recalculate layout or redraw pixels.</p>
+<div class="diagram">DOM / Style Change
+       ↓
+   Does geometry change?
+      /        \
+    Yes         No
+     ↓           ↓
+   Reflow      Repaint
+     ↓           ↓
+  Paint        Composite
+       \       /
+        Screen</div>
+</div>
+
+<div class="card">
+<h2>Reflow (Layout)</h2>
+<p><b>Reflow</b> happens when the browser must recalculate the <b>size or position</b> of elements.</p>
+<pre>element.style.width = "500px";
+element.style.height = "200px";
+element.style.margin = "20px";</pre>
+<p>These changes can affect the element's geometry and possibly surrounding elements.</p>
+<p>Reflow is also commonly called <b>layout</b>.</p>
+</div>
+
+<div class="card">
+<h2>Repaint</h2>
+<p><b>Repaint</b> happens when the browser needs to redraw visual appearance without changing layout geometry.</p>
+<pre>element.style.color = "red";
+element.style.backgroundColor = "black";</pre>
+<p>Changing colors can require repaint without requiring a new layout.</p>
+</div>
+
+<div class="card">
+<h2>Reflow vs Repaint</h2>
+<table>
+<tr><th>Reflow</th><th>Repaint</th></tr>
+<tr><td>Recalculates layout</td><td>Redraws visual appearance</td></tr>
+<tr><td>Usually more expensive</td><td>Usually cheaper than layout</td></tr>
+<tr><td>Width, height, position, geometry</td><td>Color, background, shadow, etc.</td></tr>
+</table>
+<p><b>Interview tip:</b> A layout change can lead to paint and compositing work too.</p>
+</div>
+
+<div class="card">
+<h2>Forced Synchronous Layout</h2>
+<p>A performance problem can occur when JavaScript writes a style and immediately reads layout information.</p>
+<pre>box.style.width = "500px";
+
+console.log(box.offsetWidth);</pre>
+<p>The browser may have to calculate layout immediately to answer <code>offsetWidth</code>.</p>
+<p>Repeated read → write → read → write patterns can cause <b>layout thrashing</b>.</p>
+</div>
+
+<div class="card">
+<h2>How to Reduce Layout Work</h2>
+<ul>
+<li>Batch DOM writes.</li>
+<li>Read layout values before making writes when possible.</li>
+<li>Avoid unnecessary DOM changes.</li>
+<li>Prefer transform/opacity for suitable animations.</li>
+<li>Use CSS classes instead of many individual style changes when practical.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>2. Debounce</h2>
+<p><b>Debounce</b> waits until events stop happening for a specified time before running the function.</p>
+<div class="diagram">Events:  • • • • • •
+                  ↓
+             wait for gap
+                  ↓
+                Run ✓</div>
+<p><b>Simple idea:</b> "Run after the user stops."</p>
+</div>
+
+<div class="card">
+<h2>Debounce Implementation</h2>
+<pre>function debounce(fn, delay) {
+  let timer;
+
+  return function (...args) {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}</pre>
+
+<h3>Usage</h3>
+<pre>const search = debounce((value) => {
+  console.log("API call:", value);
+}, 500);
+
+input.addEventListener("input", e => {
+  search(e.target.value);
+});</pre>
+<p>If the user types continuously, the timer keeps resetting. The API call happens after typing stops for 500ms.</p>
+</div>
+
+<div class="card">
+<h2>Debounce Use Cases</h2>
+<ul>
+<li>Search box API requests.</li>
+<li>Autocomplete.</li>
+<li>Form validation after typing stops.</li>
+<li>Resize handling when only the final size matters.</li>
+<li>Autosave after the user stops editing.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>3. Throttle</h2>
+<p><b>Throttle</b> limits a function to running at most once during a specified interval.</p>
+<div class="diagram">Events:  • • • • • • • •
+         ↓
+     Run  ✓
+         ↓
+     wait 200ms
+         ↓
+     Run  ✓
+         ↓
+     wait
+         ↓
+     Run  ✓</div>
+<p><b>Simple idea:</b> "Run at most once every X milliseconds."</p>
+</div>
+
+<div class="card">
+<h2>Throttle Implementation</h2>
+<pre>function throttle(fn, delay) {
+  let lastCall = 0;
+
+  return function (...args) {
+    const now = Date.now();
+
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      fn.apply(this, args);
+    }
+  };
+}</pre>
+
+<h3>Usage</h3>
+<pre>const handleScroll = throttle(() => {
+  console.log("scrolling");
+}, 200);
+
+window.addEventListener("scroll", handleScroll);</pre>
+<p>The function can run at most once per 200ms with this simple implementation.</p>
+</div>
+
+<div class="card">
+<h2>Throttle Use Cases</h2>
+<ul>
+<li>Scroll events.</li>
+<li>Mouse movement.</li>
+<li>Window resize when periodic updates are useful.</li>
+<li>Drag events.</li>
+<li>Continuous position tracking.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Debounce vs Throttle</h2>
+<table>
+<tr><th>Debounce</th><th>Throttle</th></tr>
+<tr><td>Waits for events to stop</td><td>Runs at controlled intervals</td></tr>
+<tr><td>Best for final result</td><td>Best for continuous updates</td></tr>
+<tr><td>Search input</td><td>Scroll</td></tr>
+<tr><td>Autosave after typing</td><td>Mouse movement</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Easy Way to Remember</h2>
+<div class="diagram">DEBOUNCE
+"Stop → Then run"
+
+Typing:  •••••••••  STOP → RUN
+
+
+THROTTLE
+"Keep running, but slowly"
+
+Scroll: •••••••••••••
+       RUN   RUN   RUN</div>
+</div>
+
+<div class="card">
+<h2>React Connection</h2>
+<pre>const debouncedSearch = useMemo(
+  () => debounce(searchUsers, 500),
+  []
+);</pre>
+<p>In React, be careful with function identity, cleanup and stale closures when using debounce/throttle inside components. Libraries or well-tested hooks can simplify this.</p>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is reflow?</b> Recalculation of element layout and geometry.</li>
+<li><b>What is repaint?</b> Redrawing visual appearance.</li>
+<li><b>Which is usually more expensive?</b> Reflow/layout is generally more expensive because it can affect surrounding geometry.</li>
+<li><b>Can repaint happen without reflow?</b> Yes, for many visual-only changes.</li>
+<li><b>What is layout thrashing?</b> Repeated forced layout caused by alternating DOM writes and layout reads.</li>
+<li><b>What is debounce?</b> Run after events stop for a chosen delay.</li>
+<li><b>What is throttle?</b> Limit execution to at most a controlled frequency.</li>
+<li><b>Debounce vs throttle?</b> Debounce waits for silence; throttle allows periodic execution.</li>
+<li><b>Where would you use debounce?</b> Search, autocomplete and autosave.</li>
+<li><b>Where would you use throttle?</b> Scroll, drag and continuous mouse events.</li>
+<li><b>Why use transform for animation?</b> It can often avoid layout and be handled efficiently during compositing.</li>
+<li><b>Why can debounce/throttle be tricky in React?</b> Function identity, cleanup and closures must be handled correctly.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>User types in a search box and you want one API request after they stop.</b><br>Use debounce.</li>
+<li><b>You need scroll position updates while scrolling, but not on every event.</b><br>Use throttle.</li>
+<li><b>An element's width changes and surrounding elements move.</b><br>Layout/reflow may occur.</li>
+<li><b>You only change text color.</b><br>This can require repaint without layout.</li>
+<li><b>You change width and immediately read offsetHeight.</b><br>This can force synchronous layout.</li>
+<li><b>A scroll handler makes expensive calculations hundreds of times per second.</b><br>Throttle it.</li>
+<li><b>An autosave should happen after the user stops typing.</b><br>Debounce it.</li>
+<li><b>A drag interaction needs regular updates during movement.</b><br>Throttle is often more appropriate.</li>
+<li><b>An animation changes left repeatedly.</b><br>Consider transform instead, when appropriate, to reduce layout work.</li>
+<li><b>You need to process only the final resize dimensions.</b><br>Debounce resize handling.</li>
+<li><b>You need periodic resize updates while resizing.</b><br>Throttle resize handling.</li>
+<li><b>A React debounce creates a new timer every render.</b><br>Stabilize the debounced function and clean it up appropriately.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Reflow = layout recalculation.</li>
+<li>✔ Repaint = redraw visual appearance.</li>
+<li>✔ Layout changes can lead to paint/composite work.</li>
+<li>✔ Debounce = run after events stop.</li>
+<li>✔ Throttle = run at controlled intervals.</li>
+<li>✔ Search/autosave → debounce.</li>
+<li>✔ Scroll/drag/mousemove → throttle.</li>
+<li>✔ Avoid forced synchronous layout and layout thrashing.</li>
+</ul>
+</div>
+
+</body></html>

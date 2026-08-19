@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript Event Propagation - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1050px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#7c2d12;color:#fff;padding:26px;border-radius:12px}h2{color:#7c2d12}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#ffedd5}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+
+<header><h1>JavaScript Event Propagation</h1><p>Simple Interview Handbook • Bubbling • Capturing • Delegation</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>What is Event Propagation?</h2>
+<p>When an event happens on an element, the browser moves the event through the DOM tree.</p>
+<div class="diagram">Capturing
+   ↓
+Window
+   ↓
+Document
+   ↓
+Parent
+   ↓
+Child  ← event target
+   ↑
+Bubbling</div>
+<p>The three important ideas are <b>capturing, target, and bubbling</b>.</p></div>
+
+<div class="card"><h2>1. Bubbling</h2>
+<p>In bubbling, the event moves from the target <b>up toward its ancestors</b>.</p>
+<pre>const parent = document.querySelector("#parent");
+const child = document.querySelector("#child");
+
+parent.addEventListener("click", () => {
+  console.log("parent");
+});
+
+child.addEventListener("click", () => {
+  console.log("child");
+});</pre>
+<p>Clicking the child normally produces:</p>
+<pre>child
+parent</pre>
+<div class="diagram">Child event
+    ↑
+Parent
+    ↑
+Document
+    ↑
+Window</div></div>
+
+<div class="card"><h2>2. Capturing</h2>
+<p>Capturing is the opposite direction: the event travels <b>from the outer ancestor toward the target</b>.</p>
+<pre>parent.addEventListener("click", () => {
+  console.log("parent");
+}, true);
+
+child.addEventListener("click", () => {
+  console.log("child");
+}, true);</pre>
+<p>The third argument <code>true</code> enables capture for this listener.</p>
+<pre>parent
+child</pre>
+<div class="diagram">Window
+  ↓
+Document
+  ↓
+Parent
+  ↓
+Child ← target</div></div>
+
+<div class="card"><h2>3. Target Phase</h2>
+<p>The event eventually reaches the element where the event actually occurred: the <b>target</b>.</p>
+<div class="diagram">Capture → Target → Bubble</div>
+<p>For most interview questions, remember the complete order as:</p>
+<pre>Capturing → Target → Bubbling</pre></div>
+
+<div class="card"><h2>4. event.stopPropagation()</h2>
+<p>Stops the event from continuing to other ancestors or descendants in the propagation path.</p>
+<pre>child.addEventListener("click", (event) => {
+  event.stopPropagation();
+});</pre>
+<p>It does <b>not</b> stop other listeners on the same element. For that, <code>stopImmediatePropagation()</code> is relevant.</p></div>
+
+<div class="card"><h2>5. Event Delegation</h2>
+<p>Event delegation means putting one event listener on a parent instead of adding separate listeners to many children.</p>
+<pre>const list = document.querySelector("#list");
+
+list.addEventListener("click", (event) => {
+  if (event.target.matches("button")) {
+    console.log("Button clicked:", event.target.textContent);
+  }
+});</pre>
+<div class="diagram">Many buttons
+  │
+  ├── button
+  ├── button
+  ├── button
+  └── button
+       │
+       ▼
+ One listener on parent</div>
+<p>Delegation works well because events usually bubble.</p></div>
+
+<div class="card"><h2>Why Use Event Delegation?</h2>
+<ul>
+<li>Fewer event listeners.</li>
+<li>Useful for dynamic elements.</li>
+<li>Less repetitive code.</li>
+<li>Can reduce listener management overhead.</li>
+</ul>
+<p>It is especially useful for large lists, tables and menus.</p></div>
+
+<div class="card"><h2>event.target vs event.currentTarget</h2>
+<pre>parent.addEventListener("click", (event) => {
+  console.log(event.target);
+  console.log(event.currentTarget);
+});</pre>
+<table>
+<tr><th>Property</th><th>Meaning</th></tr>
+<tr><td>event.target</td><td>The element where the event originated.</td></tr>
+<tr><td>event.currentTarget</td><td>The element whose listener is currently running.</td></tr>
+</table>
+<p>These are very important for event delegation.</p></div>
+
+<div class="card"><h2>React Connection</h2>
+<p>React uses a synthetic event system and handles events through its event infrastructure. The DOM concepts of bubbling, capturing and delegation are still important when working with React events.</p>
+<pre>function List() {
+  const handleClick = (event) => {
+    if (event.target.dataset.id) {
+      console.log(event.target.dataset.id);
+    }
+  };
+
+  return (
+    &lt;div onClick={handleClick}&gt;
+      &lt;button data-id="1"&gt;One&lt;/button&gt;
+      &lt;button data-id="2"&gt;Two&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</pre></div>
+
+<div class="card"><h2>Bubbling vs Capturing</h2>
+<table>
+<tr><th>Bubbling</th><th>Capturing</th></tr>
+<tr><td>Target → ancestors</td><td>Ancestors → target</td></tr>
+<tr><td>Common default</td><td>Must opt into capture listener</td></tr>
+<tr><td>Common for delegation</td><td>Useful when parent needs early handling</td></tr>
+</table></div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>What is event propagation?</b> The movement of an event through the DOM.</li>
+<li><b>What is bubbling?</b> Event travels from target toward ancestors.</li>
+<li><b>What is capturing?</b> Event travels from ancestors toward target.</li>
+<li><b>What is the event flow?</b> Capturing → target → bubbling.</li>
+<li><b>How do you enable capturing?</b> Use a capture listener, such as <code>addEventListener(type, handler, true)</code>.</li>
+<li><b>What is event delegation?</b> Handling child events using a listener on a common ancestor.</li>
+<li><b>Why does delegation work?</b> Because events commonly bubble to ancestors.</li>
+<li><b>target vs currentTarget?</b> target is the original event source; currentTarget is the element whose listener is running.</li>
+<li><b>What does stopPropagation do?</b> Stops propagation to other elements in the event path.</li>
+<li><b>stopPropagation vs preventDefault?</b> stopPropagation affects propagation; preventDefault cancels the browser's default action.</li>
+<li><b>Why use delegation for dynamic lists?</b> One parent listener can handle current and newly added children.</li>
+<li><b>Does stopPropagation stop same-element listeners?</b> No; use stopImmediatePropagation when needed.</li>
+</ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>A button click should also trigger a parent click handler.</b><br>Allow bubbling normally.</li>
+<li><b>A child click must not reach the parent handler.</b><br>Use <code>event.stopPropagation()</code> when appropriate.</li>
+<li><b>You have 1,000 list items.</b><br>Use event delegation on the list container.</li>
+<li><b>New list items are added dynamically.</b><br>Delegation avoids attaching a new listener to every new item.</li>
+<li><b>You need to know which button in a list was clicked.</b><br>Use <code>event.target</code> or find the relevant ancestor with <code>closest()</code>.</li>
+<li><b>A parent listener needs to know the element it is attached to.</b><br>Use <code>event.currentTarget</code>.</li>
+<li><b>You need an ancestor to handle an event before the target.</b><br>Use capturing.</li>
+<li><b>You want to cancel a link's navigation.</b><br>Use <code>event.preventDefault()</code>, not stopPropagation.</li>
+<li><b>You need to stop the event from reaching ancestors.</b><br>Use <code>stopPropagation()</code>.</li>
+<li><b>Two listeners on the same element should not both run.</b><br>Consider <code>stopImmediatePropagation()</code>.</li>
+<li><b>A click is on a nested icon inside a button.</b><br>Use <code>closest("button")</code> when delegation needs the button rather than the exact icon target.</li>
+<li><b>A React parent has onClick and a child has onClick.</b><br>Both can run through bubbling unless propagation is stopped.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ Capturing = outside → target.</li>
+<li>✔ Target = event's original element.</li>
+<li>✔ Bubbling = target → outside.</li>
+<li>✔ Delegation = parent handles child events.</li>
+<li>✔ event.target = original source.</li>
+<li>✔ event.currentTarget = current listener element.</li>
+<li>✔ stopPropagation = stop event path propagation.</li>
+<li>✔ preventDefault = stop browser default action.</li>
+</ul></div>
+</body></html>

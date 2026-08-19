@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browser Storage - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1050px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#1e40af;color:#fff;padding:26px;border-radius:12px}h2{color:#1e40af}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#dbeafe}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+<header><h1>Browser Storage</h1><p>Simple Interview Handbook • Cookies • Local Storage • Session Storage • IndexedDB</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>What is Browser Storage?</h2>
+<p>Browser storage lets a web application keep data on the user's device so it can be used again later.</p>
+<div class="diagram">Web App
+   │
+   ├── Cookies
+   ├── localStorage
+   ├── sessionStorage
+   └── IndexedDB</div>
+<p>They differ mainly in <b>size, lifetime, access, and purpose</b>.</p></div>
+
+<div class="card"><h2>1. Cookies</h2>
+<p>Cookies are small pieces of data associated with a website. They are commonly used for sessions, authentication-related state, preferences and tracking.</p>
+<pre>document.cookie = "theme=dark; Max-Age=3600; Path=/";</pre>
+<p>A cookie can be sent to the server automatically with matching HTTP requests.</p>
+<h3>Important Security Flags</h3>
+<ul>
+<li><b>HttpOnly:</b> JavaScript cannot read the cookie.</li>
+<li><b>Secure:</b> sent only over HTTPS.</li>
+<li><b>SameSite:</b> controls cross-site sending behavior.</li>
+</ul>
+<p class="tip"><b>Security:</b> Sensitive authentication cookies are commonly protected with HttpOnly, Secure and an appropriate SameSite policy.</p>
+</div>
+
+<div class="card"><h2>2. Local Storage</h2>
+<p><code>localStorage</code> stores string key-value data that normally remains after the browser tab and browser are closed.</p>
+<pre>localStorage.setItem("theme", "dark");
+
+const theme = localStorage.getItem("theme");
+
+localStorage.removeItem("theme");
+// localStorage.clear();</pre>
+<p>Objects must be serialized:</p>
+<pre>localStorage.setItem("user", JSON.stringify(user));
+
+const user = JSON.parse(
+  localStorage.getItem("user")
+);</pre>
+<p>It is synchronous and should not be used for large or performance-sensitive data.</p></div>
+
+<div class="card"><h2>3. Session Storage</h2>
+<p><code>sessionStorage</code> also stores string key-value data, but its lifetime is tied to the page session/tab.</p>
+<pre>sessionStorage.setItem("step", "2");
+
+const step = sessionStorage.getItem("step");</pre>
+<p>It is useful for temporary UI state such as a multi-step form or temporary navigation data.</p></div>
+
+<div class="card"><h2>4. IndexedDB</h2>
+<p>IndexedDB is a browser database for storing larger amounts of structured data, including objects and binary data.</p>
+<div class="diagram">Web App
+   │
+   ▼
+IndexedDB
+   │
+   ├── Database
+   ├── Object Stores
+   └── Indexes</div>
+<pre>const request = indexedDB.open("AppDB", 1);
+
+request.onupgradeneeded = event => {
+  const db = event.target.result;
+  db.createObjectStore("users", { keyPath: "id" });
+};</pre>
+<p>It is asynchronous and suitable for offline-capable applications and larger client-side datasets.</p></div>
+
+<div class="card"><h2>Comparison</h2>
+<table>
+<tr><th>Feature</th><th>Cookies</th><th>localStorage</th><th>sessionStorage</th><th>IndexedDB</th></tr>
+<tr><td>Typical size</td><td>Small</td><td>Small</td><td>Small</td><td>Much larger</td></tr>
+<tr><td>Data type</td><td>Text</td><td>String</td><td>String</td><td>Structured data</td></tr>
+<tr><td>Sent with HTTP requests</td><td>Yes, when applicable</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Lifetime</td><td>Session or configured expiry</td><td>Persistent</td><td>Page session</td><td>Persistent until removed/cleared</td></tr>
+<tr><td>JavaScript access</td><td>Usually yes; HttpOnly blocks it</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Best for</td><td>Server-aware state</td><td>Simple persistent data</td><td>Temporary tab data</td><td>Large structured/offline data</td></tr>
+</table></div>
+
+<div class="card"><h2>Cookies vs localStorage</h2>
+<div class="diagram">Cookie
+Browser ─────────► Server
+        sent with request
+
+localStorage
+Browser ─────────X Server
+        stays in browser</div>
+<p>This difference is one of the most important interview points.</p></div>
+
+<div class="card"><h2>Security: Where should tokens go?</h2>
+<p>Do not blindly store sensitive authentication tokens in JavaScript-readable storage. If a session mechanism uses cookies, an <b>HttpOnly + Secure + appropriate SameSite</b> cookie can reduce exposure to token theft through JavaScript.</p>
+<p>Storage choice depends on the application's threat model and architecture. There is no universal "best storage" for every authentication design.</p></div>
+
+<div class="card"><h2>React Connection</h2>
+<pre>useEffect(() => {
+  localStorage.setItem(
+    "theme",
+    theme
+  );
+}, [theme]);</pre>
+<p>Browser storage is external to React state. Read it at appropriate times and synchronize it deliberately rather than treating it as a replacement for React state.</p></div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>What is browser storage?</b> A set of browser mechanisms for keeping application data on the client.</li>
+<li><b>Cookies vs localStorage?</b> Cookies can be sent with HTTP requests; localStorage stays client-side.</li>
+<li><b>localStorage vs sessionStorage?</b> localStorage is persistent; sessionStorage is tied to the page session.</li>
+<li><b>Can localStorage store objects directly?</b> No. Values are strings, so use JSON serialization for JSON-compatible objects.</li>
+<li><b>What is IndexedDB?</b> An asynchronous browser database for structured client-side data.</li>
+<li><b>Which storage is best for large structured offline data?</b> IndexedDB.</li>
+<li><b>Can JavaScript read an HttpOnly cookie?</b> No.</li>
+<li><b>Are cookies automatically sent to the server?</b> Matching cookies can be sent with HTTP requests according to cookie rules.</li>
+<li><b>Is localStorage synchronous?</b> Yes, its API is synchronous.</li>
+<li><b>Does sessionStorage survive closing the browser?</b> It is associated with a page session and normally does not survive the end of that session.</li>
+<li><b>Can browser storage be used for sensitive data?</b> Be cautious; XSS and other threats matter. Choose storage based on the security model.</li>
+<li><b>Why use IndexedDB instead of localStorage?</b> For larger structured data and asynchronous database operations.</li>
+</ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>Remember a user's theme across visits.</b><br>Use localStorage.</li>
+<li><b>Keep a multi-step form state only for the current tab/session.</b><br>Use sessionStorage when simple string data is sufficient.</li>
+<li><b>The server needs a session identifier on requests.</b><br>A cookie is a natural mechanism.</li>
+<li><b>Store thousands of structured offline records.</b><br>Use IndexedDB.</li>
+<li><b>Store a JSON-compatible object in localStorage.</b><br>Use JSON.stringify when writing and JSON.parse when reading.</li>
+<li><b>You need JavaScript to be unable to read an authentication cookie.</b><br>Use an HttpOnly cookie, with Secure and appropriate SameSite settings.</li>
+<li><b>You want a value to survive browser restarts.</b><br>Use persistent localStorage or an appropriately persistent cookie, depending on the requirement.</li>
+<li><b>You need a temporary value that should not remain after the page session ends.</b><br>Consider sessionStorage.</li>
+<li><b>You want client-side data shared with the server automatically.</b><br>Cookies can be sent with requests; localStorage and IndexedDB are not automatically sent.</li>
+<li><b>You need a browser cache-like database for an offline-first app.</b><br>IndexedDB is a strong fit.</li>
+<li><b>You store a secret in localStorage because it is convenient.</b><br>Reconsider the design; JavaScript-readable storage can be exposed by XSS.</li>
+<li><b>You need to store a small preference and read it synchronously.</b><br>localStorage is often suitable.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ Cookies = small + can be sent to server.</li>
+<li>✔ localStorage = persistent string key-value storage.</li>
+<li>✔ sessionStorage = temporary page-session storage.</li>
+<li>✔ IndexedDB = larger structured browser database.</li>
+<li>✔ HttpOnly = JavaScript cannot read cookie.</li>
+<li>✔ Secure = HTTPS only.</li>
+<li>✔ SameSite = controls cross-site cookie behavior.</li>
+<li>✔ Do not treat client storage as automatically secure.</li>
+</ul></div>
+</body></html>

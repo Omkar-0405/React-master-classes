@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TypeScript with React - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#1d4ed8;color:#fff;padding:28px;border-radius:12px}
+h2{color:#1d4ed8}h3{color:#1e40af}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#dbeafe}
+code{background:#eff6ff;padding:2px 5px;border-radius:4px}.note{background:#eff6ff;border-left:4px solid #2563eb;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 15 — TypeScript with React</h1>
+<p>Simple Interview Handbook • Props • Generics • Utility Types • Unions • Type Guards • React.FC • Events • Refs • Custom Hooks</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Why TypeScript with React?</h2>
+<p>TypeScript adds static type checking to JavaScript. It catches many mistakes during development before the application runs.</p>
+<div class="diagram">TypeScript
+   ↓
+Check types
+   ↓
+Compile / transform
+   ↓
+JavaScript
+   ↓
+Browser</div>
+<p>In React, TypeScript is especially useful for props, events, refs, API data, hooks and reusable components.</p>
+<div class="note"><b>Interview idea:</b> TypeScript does not replace runtime validation. Data coming from an API is still untrusted at runtime.</div>
+</div>
+
+<div class="card">
+<h2>2. Props Interface</h2>
+<p>An interface can describe the props a component expects.</p>
+<pre>interface ButtonProps {
+  label: string;
+  disabled?: boolean;
+  onClick: () =&gt; void;
+}
+
+function Button({
+  label,
+  disabled = false,
+  onClick
+}: ButtonProps) {
+  return (
+    &lt;button
+      disabled={disabled}
+      onClick={onClick}
+    &gt;
+      {label}
+    &lt;/button&gt;
+  );
+}</pre>
+<p><code>?</code> makes a property optional. You can also use a type alias instead of an interface.</p>
+</div>
+
+<div class="card">
+<h2>Interface vs Type</h2>
+<table>
+<tr><th>interface</th><th>type</th></tr>
+<tr><td>Common for object shapes and public contracts.</td><td>Can represent objects plus unions, tuples, primitives and more.</td></tr>
+<tr><td>Can be extended and declaration-merged.</td><td>Supports composition through intersections/unions.</td></tr>
+<tr><td>Both can type React props.</td><td>Choice often depends on team style and use case.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>3. Children Typing</h2>
+<pre>import type { ReactNode } from "react";
+
+interface CardProps {
+  title: string;
+  children: ReactNode;
+}
+
+function Card({
+  title,
+  children
+}: CardProps) {
+  return (
+    &lt;section&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      {children}
+    &lt;/section&gt;
+  );
+}</pre>
+<p><code>ReactNode</code> is useful when children may contain strings, elements, fragments, numbers and other renderable React content.</p>
+</div>
+
+<div class="card">
+<h2>4. Generic Components</h2>
+<p>Generics allow a component to work with different types while preserving type safety.</p>
+<pre>interface ListProps&lt;T&gt; {
+  items: T[];
+  renderItem: (item: T) =&gt; React.ReactNode;
+}
+
+function List&lt;T&gt;({
+  items,
+  renderItem
+}: ListProps&lt;T&gt;) {
+  return (
+    &lt;ul&gt;
+      {items.map((item, index) =&gt; (
+        &lt;li key={index}&gt;
+          {renderItem(item)}
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</pre>
+<pre>&lt;List
+  items={[1, 2, 3]}
+  renderItem={n =&gt; &lt;span&gt;{n * 2}&lt;/span&gt;}
+/&gt;
+
+&lt;List
+  items={["React", "TypeScript"]}
+  renderItem={name =&gt; &lt;span&gt;{name}&lt;/span&gt;}
+/&gt;</pre>
+<p>The same component works with different item types without losing type information.</p>
+</div>
+
+<div class="card">
+<h2>5. Generic Component with Key Selection</h2>
+<pre>interface TableProps&lt;T&gt; {
+  data: T[];
+  getKey: (item: T) =&gt; string | number;
+}
+
+function Table&lt;T&gt;({
+  data,
+  getKey
+}: TableProps&lt;T&gt;) {
+  return (
+    &lt;div&gt;
+      {data.map(item =&gt; (
+        &lt;div key={getKey(item)}&gt;
+          {JSON.stringify(item)}
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</pre>
+<p>Generics are especially useful for reusable tables, selects, lists, forms and data-driven components.</p>
+</div>
+
+<div class="card">
+<h2>6. Utility Types</h2>
+<p>TypeScript utility types transform existing types instead of making you repeat them.</p>
+<pre>interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+}
+
+type UserUpdate = Partial&lt;User&gt;;
+type UserPreview = Pick&lt;User, "id" | "name"&gt;;
+type UserWithoutId = Omit&lt;User, "id"&gt;;
+type ReadonlyUser = Readonly&lt;User&gt;;</pre>
+</div>
+
+<div class="card">
+<h2>Common Utility Types</h2>
+<table>
+<tr><th>Utility</th><th>Meaning</th></tr>
+<tr><td><code>Partial&lt;T&gt;</code></td><td>All properties become optional.</td></tr>
+<tr><td><code>Required&lt;T&gt;</code></td><td>All properties become required.</td></tr>
+<tr><td><code>Readonly&lt;T&gt;</code></td><td>Properties cannot be reassigned through that type.</td></tr>
+<tr><td><code>Pick&lt;T, K&gt;</code></td><td>Select specific properties.</td></tr>
+<tr><td><code>Omit&lt;T, K&gt;</code></td><td>Remove specific properties.</td></tr>
+<tr><td><code>Record&lt;K, T&gt;</code></td><td>Creates an object type with keys K and values T.</td></tr>
+<tr><td><code>ReturnType&lt;F&gt;</code></td><td>Gets a function's return type.</td></tr>
+<tr><td><code>Parameters&lt;F&gt;</code></td><td>Gets a function's parameter tuple.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. Union Types</h2>
+<p>A union means a value can be one of several types or literal values.</p>
+<pre>type Status =
+  | "idle"
+  | "loading"
+  | "success"
+  | "error";
+
+function StatusText({
+  status
+}: {
+  status: Status;
+}) {
+  return &lt;p&gt;{status}&lt;/p&gt;;
+}</pre>
+<p>Literal unions are very useful for component variants, status values and restricted props.</p>
+</div>
+
+<div class="card">
+<h2>Union with Props</h2>
+<pre>type ButtonProps =
+  | {
+      variant: "link";
+      href: string;
+    }
+  | {
+      variant: "button";
+      onClick: () =&gt; void;
+    };</pre>
+<p>This can express that a link needs <code>href</code>, while a button needs <code>onClick</code>.</p>
+</div>
+
+<div class="card">
+<h2>8. Type Guards</h2>
+<p>A type guard helps TypeScript narrow a broad type to a more specific type.</p>
+<pre>function isString(
+  value: unknown
+): value is string {
+  return typeof value === "string";
+}
+
+function print(value: unknown) {
+  if (isString(value)) {
+    console.log(value.toUpperCase());
+  }
+}</pre>
+</div>
+
+<div class="card">
+<h2>Discriminated Union</h2>
+<pre>type Result =
+  | { status: "success"; data: User }
+  | { status: "error"; message: string };
+
+function View({ result }: { result: Result }) {
+  if (result.status === "success") {
+    return &lt;p&gt;{result.data.name}&lt;/p&gt;;
+  }
+
+  return &lt;p&gt;{result.message}&lt;/p&gt;;
+}</pre>
+<p>The <code>status</code> property acts as the discriminator, allowing TypeScript to narrow the object safely.</p>
+</div>
+
+<div class="card">
+<h2>9. React.FC</h2>
+<p><code>React.FC&lt;Props&gt;</code> is a type for React function components.</p>
+<pre>import type { FC } from "react";
+
+interface Props {
+  name: string;
+}
+
+const Welcome: FC&lt;Props&gt; = ({ name }) =&gt; {
+  return &lt;h1&gt;Hello {name}&lt;/h1&gt;;
+};</pre>
+<p>Modern React code does not require <code>React.FC</code>. Many teams prefer typing the props directly on the function because it is simpler and explicit.</p>
+</div>
+
+<div class="card">
+<h2>React.FC — Interview Point</h2>
+<pre>function Welcome({ name }: Props) {
+  return &lt;h1&gt;Hello {name}&lt;/h1&gt;;
+}</pre>
+<p>This direct style is often preferred. It makes the function's props obvious and avoids treating <code>FC</code> as necessary for every component.</p>
+</div>
+
+<div class="card">
+<h2>10. Event Types</h2>
+<p>React provides event types for common DOM interactions.</p>
+<pre>function Input() {
+  const handleChange = (
+    event: React.ChangeEvent&lt;HTMLInputElement&gt;
+  ) =&gt; {
+    console.log(event.target.value);
+  };
+
+  return (
+    &lt;input onChange={handleChange} /&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>Common React Event Types</h2>
+<table>
+<tr><th>Event</th><th>Type</th></tr>
+<tr><td>Input change</td><td><code>React.ChangeEvent&lt;HTMLInputElement&gt;</code></td></tr>
+<tr><td>Form submit</td><td><code>React.FormEvent&lt;HTMLFormElement&gt;</code></td></tr>
+<tr><td>Button click</td><td><code>React.MouseEvent&lt;HTMLButtonElement&gt;</code></td></tr>
+<tr><td>Keyboard</td><td><code>React.KeyboardEvent&lt;HTMLInputElement&gt;</code></td></tr>
+<tr><td>Focus</td><td><code>React.FocusEvent&lt;HTMLInputElement&gt;</code></td></tr>
+<tr><td>Select change</td><td><code>React.ChangeEvent&lt;HTMLSelectElement&gt;</code></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Form Submit Event</h2>
+<pre>function Form() {
+  const handleSubmit = (
+    event: React.FormEvent&lt;HTMLFormElement&gt;
+  ) =&gt; {
+    event.preventDefault();
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      ...
+    &lt;/form&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>11. Refs</h2>
+<p>Use <code>useRef</code> when you need a stable mutable reference that does not cause a re-render when its <code>current</code> value changes.</p>
+<pre>const inputRef =
+  useRef&lt;HTMLInputElement | null&gt;(null);
+
+function focusInput() {
+  inputRef.current?.focus();
+}
+
+return (
+  &lt;&gt;
+    &lt;input ref={inputRef} /&gt;
+    &lt;button onClick={focusInput}&gt;
+      Focus
+    &lt;/button&gt;
+  &lt;/&gt;
+);</pre>
+</div>
+
+<div class="card">
+<h2>useRef — DOM vs Mutable Value</h2>
+<pre>const timerRef =
+  useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null);
+
+const countRef = useRef(0);
+
+countRef.current += 1;</pre>
+<p>Changing <code>ref.current</code> does not trigger a render. Use state when a value must update the UI.</p>
+</div>
+
+<div class="card">
+<h2>12. Custom Hooks Typing</h2>
+<p>Custom hooks should expose clear input and output types.</p>
+<pre>function useToggle(
+  initial = false
+): [boolean, () =&gt; void] {
+  const [value, setValue] =
+    useState(initial);
+
+  const toggle = () =&gt;
+    setValue(v =&gt; !v);
+
+  return [value, toggle];
+}</pre>
+<p>The return type makes the hook contract explicit.</p>
+</div>
+
+<div class="card">
+<h2>Generic Custom Hook</h2>
+<pre>function useFetch&lt;T&gt;(
+  url: string
+): {
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
+} {
+  // implementation
+  return {
+    data: null,
+    loading: true,
+    error: null
+  };
+}
+
+const result = useFetch&lt;User&gt;("/api/user");</pre>
+<p>Generics let one hook support different response types while preserving type safety.</p>
+</div>
+
+<div class="card">
+<h2>13. API Data Typing</h2>
+<p>TypeScript types do not validate JSON at runtime.</p>
+<pre>interface User {
+  id: number;
+  name: string;
+}
+
+const user: User =
+  await response.json();</pre>
+<p>This tells TypeScript what you expect, but the server could still return invalid data. Use runtime validation when the boundary requires strong guarantees.</p>
+</div>
+
+<div class="card">
+<h2>14. Generic API Response</h2>
+<pre>interface ApiResponse&lt;T&gt; {
+  data: T;
+  message: string;
+}
+
+async function getUser(): Promise&lt;ApiResponse&lt;User&gt;&gt; {
+  const response = await fetch("/api/user");
+  return response.json();
+}</pre>
+<p>This avoids duplicating the response wrapper type for every API resource.</p>
+</div>
+
+<div class="card">
+<h2>15. Event Handler Props</h2>
+<pre>interface SearchProps {
+  onSearch: (query: string) =&gt; void;
+}
+
+function Search({
+  onSearch
+}: SearchProps) {
+  return (
+    &lt;input
+      onChange={e =&gt;
+        onSearch(e.target.value)
+      }
+    /&gt;
+  );
+}</pre>
+<p>Type callbacks by their input and return values.</p>
+</div>
+
+<div class="card">
+<h2>16. Generic Select Component</h2>
+<pre>interface SelectProps&lt;T&gt; {
+  options: T[];
+  value: T;
+  getLabel: (item: T) =&gt; string;
+  onChange: (item: T) =&gt; void;
+}
+
+function Select&lt;T&gt;({
+  options,
+  value,
+  getLabel,
+  onChange
+}: SelectProps&lt;T&gt;) {
+  return (
+    &lt;select
+      value={getLabel(value)}
+      onChange={e =&gt; {
+        const item = options.find(
+          x =&gt; getLabel(x) === e.target.value
+        );
+
+        if (item) onChange(item);
+      }}
+    &gt;
+      {options.map(item =&gt; (
+        &lt;option key={getLabel(item)}&gt;
+          {getLabel(item)}
+        &lt;/option&gt;
+      ))}
+    &lt;/select&gt;
+  );
+}</pre>
+<p>In production, use a stable ID/value rather than relying on labels as unique identifiers.</p>
+</div>
+
+<div class="card">
+<h2>17. Type Narrowing in React</h2>
+<pre>function ErrorMessage({
+  error
+}: {
+  error: unknown;
+}) {
+  if (error instanceof Error) {
+    return &lt;p&gt;{error.message}&lt;/p&gt;;
+  }
+
+  return &lt;p&gt;Something went wrong&lt;/p&gt;;
+}</pre>
+<p>Using <code>unknown</code> instead of <code>any</code> forces you to narrow the value before using it unsafely.</p>
+</div>
+
+<div class="card">
+<h2>18. any vs unknown</h2>
+<table>
+<tr><th>any</th><th>unknown</th></tr>
+<tr><td>Turns off many type checks.</td><td>Requires narrowing before most operations.</td></tr>
+<tr><td>Easy but unsafe.</td><td>Safer for unknown external data.</td></tr>
+<tr><td>Can hide bugs.</td><td>Encourages explicit validation/narrowing.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>19. TypeScript Best Practices in React</h2>
+<ul>
+<li>Type component props explicitly.</li>
+<li>Prefer narrow types over <code>any</code>.</li>
+<li>Use discriminated unions for state machines.</li>
+<li>Use generics for truly reusable data-driven components.</li>
+<li>Type DOM events using React's event types.</li>
+<li>Type refs with the actual DOM element or value type.</li>
+<li>Keep custom hook contracts clear.</li>
+<li>Remember that TypeScript types disappear at runtime.</li>
+<li>Validate untrusted API data when necessary.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>Why use TypeScript with React?</b> It catches many type errors during development and makes component/API contracts clearer.</li>
+<li><b>How do you type React props?</b> Define an interface/type and use it as the function parameter type.</li>
+<li><b>Interface vs type?</b> Both can type props; interfaces are object-oriented/extensible contracts, while type aliases are more flexible for unions and compositions.</li>
+<li><b>What are generics?</b> A way to write reusable code while preserving the relationship between input and output types.</li>
+<li><b>Why use generic components?</b> To build reusable components that work with many data types without losing type safety.</li>
+<li><b>What is Partial?</b> It makes all properties of a type optional.</li>
+<li><b>Pick vs Omit?</b> Pick selects properties; Omit removes properties.</li>
+<li><b>What is a union type?</b> A type that allows one of several alternatives.</li>
+<li><b>What is a discriminated union?</b> A union whose members share a literal discriminator that lets TypeScript narrow the member safely.</li>
+<li><b>What is a type guard?</b> A runtime check that provides information TypeScript uses to narrow a type.</li>
+<li><b>What is React.FC?</b> A function-component type. It is optional; direct props typing is often simpler.</li>
+<li><b>How do you type an input event?</b> Usually with <code>React.ChangeEvent&lt;HTMLInputElement&gt;</code>.</li>
+<li><b>How do you type a form submit?</b> Use <code>React.FormEvent&lt;HTMLFormElement&gt;</code>.</li>
+<li><b>How do you type a DOM ref?</b> For example, <code>useRef&lt;HTMLInputElement | null&gt;(null)</code>.</li>
+<li><b>Does changing ref.current re-render?</b> No.</li>
+<li><b>How do you type a custom hook?</b> Explicitly type its parameters and return value when that improves clarity.</li>
+<li><b>Can TypeScript validate API JSON?</b> Not by itself at runtime. Type declarations are erased; runtime validation needs actual validation code/library.</li>
+<li><b>Why use unknown instead of any?</b> unknown requires narrowing before unsafe operations and therefore preserves more type safety.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A Button component accepts label, disabled and onClick.</b><br>Create a Props interface/type with string, optional boolean and callback types.</li>
+<li><b>A component must render strings, numbers or React elements as children.</b><br>Use ReactNode for the children prop.</li>
+<li><b>You are building a reusable table for User and Product objects.</b><br>Use a generic Table&lt;T&gt; so the table preserves the row type.</li>
+<li><b>A component can be either a link or a button.</b><br>Use a discriminated union so each variant requires its correct props.</li>
+<li><b>An API response can be success or error.</b><br>Model it as a discriminated union with a status field and narrow before accessing variant-specific properties.</li>
+<li><b>An API returns unknown JSON.</b><br>Do not blindly trust the TypeScript interface; validate the runtime data if correctness/security requires it.</li>
+<li><b>A ref points to an input element.</b><br>Use useRef&lt;HTMLInputElement | null&gt;.</li>
+<li><b>A ref stores a timeout ID.</b><br>Type the ref according to the project's runtime environment, for example ReturnType&lt;typeof setTimeout&gt; | null.</li>
+<li><b>You need to update only part of a User object.</b><br>Use Partial&lt;User&gt; for a patch/update type when appropriate.</li>
+<li><b>You need a public user DTO without email.</b><br>Use Omit&lt;User, "email"&gt; or define a dedicated DTO if the contract is important.</li>
+<li><b>A reusable hook fetches different resource types.</b><br>Make the hook generic, such as useFetch&lt;T&gt;.</li>
+<li><b>A hook returns state and an action.</b><br>Define a tuple or object return type so consumers know the contract.</li>
+<li><b>An event handler receives an unknown error.</b><br>Use unknown and narrow with instanceof Error or another type guard.</li>
+<li><b>A developer uses any for every API response.</b><br>Replace it with proper types and runtime validation at the API boundary where necessary.</li>
+<li><b>React.FC is used everywhere by a team.</b><br>It is valid, but explain that it is not required and direct props typing is often simpler.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Props → interface/type.</li>
+<li>✔ ReactNode → broad children type.</li>
+<li>✔ Generic component → reusable + type-safe.</li>
+<li>✔ Partial → all optional.</li>
+<li>✔ Pick → choose properties.</li>
+<li>✔ Omit → remove properties.</li>
+<li>✔ Record → typed key/value object.</li>
+<li>✔ Union → one of multiple types.</li>
+<li>✔ Discriminated union → safe variant narrowing.</li>
+<li>✔ Type guard → runtime check + compile-time narrowing.</li>
+<li>✔ React.FC → optional component type.</li>
+<li>✔ ChangeEvent → input/select changes.</li>
+<li>✔ FormEvent → form submission.</li>
+<li>✔ MouseEvent → mouse interactions.</li>
+<li>✔ useRef&lt;HTMLInputElement | null&gt; → input DOM ref.</li>
+<li>✔ ref.current changes do not re-render.</li>
+<li>✔ Generic custom hooks → reusable typed logic.</li>
+<li>✔ unknown is safer than any.</li>
+<li>✔ TypeScript does not perform runtime validation.</li>
+</ul>
+</div>
+
+</body>
+</html>

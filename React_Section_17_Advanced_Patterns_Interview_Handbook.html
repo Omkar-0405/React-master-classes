@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Advanced Patterns - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#6d28d9;color:#fff;padding:28px;border-radius:12px}
+h2{color:#6d28d9}h3{color:#5b21b6}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ede9fe}
+code{background:#f5f3ff;padding:2px 5px;border-radius:4px}.note{background:#f5f3ff;border-left:4px solid #7c3aed;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 17 — Advanced React Patterns</h1>
+<p>Simple Interview Handbook • HOC • Render Props • Compound Components • Headless • Controlled/Uncontrolled • Slot • Provider • Context Selector</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is a React Pattern?</h2>
+<p>A pattern is a reusable way to structure components and communication. Patterns solve recurring design problems; they are not rules that every component must follow.</p>
+<div class="diagram">Problem
+  ↓
+Choose suitable pattern
+  ↓
+Reusable structure
+  ↓
+Less duplication / clearer API
+</div>
+<div class="note"><b>Interview idea:</b> The best pattern is usually the simplest one that solves the actual problem.</div>
+</div>
+
+<div class="card">
+<h2>2. HOC — Higher-Order Component</h2>
+<p>A <b>Higher-Order Component (HOC)</b> is a function that takes a component and returns an enhanced component.</p>
+<pre>function withLoading(Component) {
+  return function WithLoading({
+    loading,
+    ...props
+  }) {
+    if (loading) {
+      return &lt;p&gt;Loading...&lt;/p&gt;;
+    }
+
+    return &lt;Component {...props} /&gt;;
+  };
+}</pre>
+<pre>const UserListWithLoading =
+  withLoading(UserList);</pre>
+<p>The HOC adds behavior without modifying the original component.</p>
+</div>
+
+<div class="card">
+<h2>HOC Flow</h2>
+<div class="diagram">Original Component
+       ↓
+withLoading(Component)
+       ↓
+Enhanced Component
+       ↓
+Extra behavior
+       +
+Original UI
+</div>
+</div>
+
+<div class="card">
+<h2>HOC — Common Uses</h2>
+<ul>
+<li>Legacy cross-cutting behavior.</li>
+<li>Permission/auth checks.</li>
+<li>Loading/error wrappers.</li>
+<li>Analytics or instrumentation.</li>
+<li>Feature flags.</li>
+</ul>
+<div class="note">In modern function-component React, custom hooks and composition often provide a simpler alternative to many HOCs.</div>
+</div>
+
+<div class="card">
+<h2>3. Render Props</h2>
+<p>The <b>render prop pattern</b> passes a function as a prop. The component calls that function to decide what UI to render.</p>
+<pre>function MouseTracker({ render }) {
+  const [position, setPosition] =
+    useState({ x: 0, y: 0 });
+
+  return (
+    &lt;div&gt;
+      {render(position)}
+    &lt;/div&gt;
+  );
+}</pre>
+<pre>&lt;MouseTracker
+  render={({ x, y }) =&gt; (
+    &lt;p&gt;
+      {x}, {y}
+    &lt;/p&gt;
+  )}
+/&gt;</pre>
+<p>The component owns behavior; the consumer controls presentation.</p>
+</div>
+
+<div class="card">
+<h2>Render Props Flow</h2>
+<div class="diagram">Reusable behavior
+      ↓
+Component calculates data
+      ↓
+render(data)
+      ↓
+Consumer decides UI
+</div>
+</div>
+
+<div class="card">
+<h2>Render Props — Modern Alternative</h2>
+<pre>function useMousePosition() {
+  const [position, setPosition] =
+    useState({ x: 0, y: 0 });
+
+  // subscribe to mouse movement...
+
+  return position;
+}
+
+function App() {
+  const position = useMousePosition();
+
+  return &lt;p&gt;
+    {position.x}, {position.y}
+  &lt;/p&gt;;
+}</pre>
+<p>Custom hooks often provide the same behavior-sharing benefit with simpler composition.</p>
+</div>
+
+<div class="card">
+<h2>4. Compound Components</h2>
+<p><b>Compound components</b> are a group of components that work together through shared state/context.</p>
+<pre>&lt;Tabs&gt;
+  &lt;Tabs.List&gt;
+    &lt;Tabs.Tab value="profile"&gt;
+      Profile
+    &lt;/Tabs.Tab&gt;
+
+    &lt;Tabs.Tab value="settings"&gt;
+      Settings
+    &lt;/Tabs.Tab&gt;
+  &lt;/Tabs.List&gt;
+
+  &lt;Tabs.Panel value="profile"&gt;
+    Profile content
+  &lt;/Tabs.Panel&gt;
+&lt;/Tabs&gt;</pre>
+<p>The API reads naturally while the parent coordinates shared state.</p>
+</div>
+
+<div class="card">
+<h2>Compound Component Flow</h2>
+<div class="diagram">Tabs
+ ↓
+Context
+ ├── List
+ ├── Tab
+ └── Panel
+
+All consume shared tab state
+</div>
+</div>
+
+<div class="card">
+<h2>Compound Component Example</h2>
+<pre>const TabsContext =
+  createContext(null);
+
+function Tabs({ children }) {
+  const [value, setValue] =
+    useState("profile");
+
+  return (
+    &lt;TabsContext.Provider
+      value={{ value, setValue }}
+    &gt;
+      {children}
+    &lt;/TabsContext.Provider&gt;
+  );
+}
+
+function Tab({ value, children }) {
+  const context =
+    useContext(TabsContext);
+
+  return (
+    &lt;button
+      onClick={() =&gt;
+        context.setValue(value)
+      }
+    &gt;
+      {children}
+    &lt;/button&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>5. Headless Components</h2>
+<p>A <b>headless component</b> provides behavior/accessibility/state without imposing a visual design.</p>
+<div class="diagram">Headless Component
+ ├── state
+ ├── behavior
+ ├── keyboard logic
+ └── accessibility
+        ↓
+     Your UI
+        ↓
+Custom design
+</div>
+<p>This is useful when you want reusable interaction logic but need complete control over appearance.</p>
+</div>
+
+<div class="card">
+<h2>Headless Example</h2>
+<pre>function useDisclosure() {
+  const [open, setOpen] =
+    useState(false);
+
+  return {
+    open,
+    onOpen: () =&gt; setOpen(true),
+    onClose: () =&gt; setOpen(false),
+    onToggle: () =&gt; setOpen(v =&gt; !v)
+  };
+}</pre>
+<p>A design system can use this behavior with different visual components.</p>
+</div>
+
+<div class="card">
+<h2>6. Controlled Pattern</h2>
+<p>In a controlled component, the parent owns the important state and passes the current value plus a change handler.</p>
+<pre>function Input({
+  value,
+  onChange
+}) {
+  return (
+    &lt;input
+      value={value}
+      onChange={e =&gt;
+        onChange(e.target.value)
+      }
+    /&gt;
+  );
+}</pre>
+<pre>function App() {
+  const [value, setValue] = useState("");
+
+  return (
+    &lt;Input
+      value={value}
+      onChange={setValue}
+    /&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>Controlled Flow</h2>
+<div class="diagram">Parent state
+    ↓ value
+Child
+    ↓ onChange
+Parent updates state
+    ↓
+New value
+    ↓
+Child
+</div>
+<p><b>Benefit:</b> The parent has a single source of truth and can coordinate validation, formatting and other state.</p>
+</div>
+
+<div class="card">
+<h2>7. Uncontrolled Pattern</h2>
+<p>In an uncontrolled component, the DOM or component manages its own current value. A ref can be used to read the value when needed.</p>
+<pre>function Form() {
+  const inputRef =
+    useRef(null);
+
+  function submit() {
+    console.log(
+      inputRef.current?.value
+    );
+  }
+
+  return (
+    &lt;&gt;
+      &lt;input ref={inputRef} /&gt;
+      &lt;button onClick={submit}&gt;
+        Submit
+      &lt;/button&gt;
+    &lt;/&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>Controlled vs Uncontrolled</h2>
+<table>
+<tr><th>Controlled</th><th>Uncontrolled</th></tr>
+<tr><td>React state owns value.</td><td>DOM/component owns value.</td></tr>
+<tr><td>Easy to validate/transform on each change.</td><td>Can reduce state management for simple forms.</td></tr>
+<tr><td>More explicit.</td><td>Often simpler for basic uncontrolled inputs.</td></tr>
+<tr><td>Useful for synchronized UI.</td><td>Useful when React does not need every intermediate value.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>8. Slot Pattern</h2>
+<p>The <b>slot pattern</b> lets a component accept content from the parent and place that content into defined regions.</p>
+<pre>function Card({
+  header,
+  footer,
+  children
+}) {
+  return (
+    &lt;section&gt;
+      &lt;header&gt;{header}&lt;/header&gt;
+      &lt;main&gt;{children}&lt;/main&gt;
+      &lt;footer&gt;{footer}&lt;/footer&gt;
+    &lt;/section&gt;
+  );
+}</pre>
+<pre>&lt;Card
+  header={&lt;h2&gt;Profile&lt;/h2&gt;}
+  footer={&lt;button&gt;Save&lt;/button&gt;}
+&gt;
+  &lt;p&gt;Content&lt;/p&gt;
+&lt;/Card&gt;</pre>
+<p>React's composition model makes slot-like APIs straightforward using props and children.</p>
+</div>
+
+<div class="card">
+<h2>Slot Pattern — Benefit</h2>
+<div class="diagram">Reusable Layout
+ ├── header slot
+ ├── content slot
+ └── footer slot
+        ↑
+Parent supplies custom UI
+</div>
+<p>It avoids creating many specialized components such as <code>ProfileCard</code>, <code>ProductCard</code>, <code>OrderCard</code> when a generic composition API is enough.</p>
+</div>
+
+<div class="card">
+<h2>9. Provider Pattern</h2>
+<p>The <b>Provider Pattern</b> places shared data/behavior high in the tree so descendants can consume it without manually passing props through every level.</p>
+<pre>const AuthContext =
+  createContext(null);
+
+function App() {
+  return (
+    &lt;AuthContext.Provider
+      value={auth}
+    &gt;
+      &lt;Routes /&gt;
+    &lt;/AuthContext.Provider&gt;
+  );
+}</pre>
+<div class="diagram">Provider
+   ↓
+ Page
+   ↓
+ Feature
+   ↓
+ Button
+
+All can access shared context
+</div>
+</div>
+
+<div class="card">
+<h2>Provider Pattern — Common Uses</h2>
+<ul>
+<li>Authentication/session.</li>
+<li>Theme.</li>
+<li>Localization.</li>
+<li>Feature configuration.</li>
+<li>Shared UI state.</li>
+</ul>
+<div class="note">Avoid putting every application state into one huge context. Broad context updates can cause unnecessary re-renders and make dependencies unclear.</div>
+</div>
+
+<div class="card">
+<h2>10. Context Selector Pattern</h2>
+<p>The <b>context selector pattern</b> means a consumer subscribes to only the piece of context state it needs, rather than re-rendering for every context value change.</p>
+<div class="diagram">Context State
+ ├── user
+ ├── theme
+ ├── notifications
+ └── settings
+
+Consumer A → user only
+Consumer B → theme only
+Consumer C → notifications only
+</div>
+<p>Plain React <code>useContext</code> does not provide arbitrary selector subscriptions by itself. Selector behavior can be implemented with specialized libraries or external-store patterns.</p>
+</div>
+
+<div class="card">
+<h2>Why Context Selectors?</h2>
+<pre>// Conceptual API
+const user = useContextSelector(
+  AppContext,
+  state =&gt; state.user
+);</pre>
+<p>The important idea is selective subscription, not the exact hook name. This can reduce unnecessary work in large shared state trees.</p>
+</div>
+
+<div class="card">
+<h2>11. Pattern Selection Guide</h2>
+<table>
+<tr><th>Problem</th><th>Good candidate</th></tr>
+<tr><td>Add cross-cutting behavior to existing components.</td><td>HOC</td></tr>
+<tr><td>Share behavior while consumer controls UI.</td><td>Render Props / Custom Hook</td></tr>
+<tr><td>Build coordinated subcomponents.</td><td>Compound Components</td></tr>
+<tr><td>Share behavior without visual design.</td><td>Headless Component / Hook</td></tr>
+<tr><td>Parent must control state.</td><td>Controlled Pattern</td></tr>
+<tr><td>DOM should own simple form state.</td><td>Uncontrolled Pattern</td></tr>
+<tr><td>Inject custom regions into reusable layout.</td><td>Slot / Composition</td></tr>
+<tr><td>Share data deep in tree.</td><td>Provider / Context</td></tr>
+<tr><td>Subscribe selectively to shared state.</td><td>Context Selector / External Store</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. Patterns in Modern React</h2>
+<div class="diagram">Older / Common patterns
+ HOC
+ Render Props
+       ↓
+Modern composition
+ Custom Hooks
+ Context
+ Component composition
+ Headless components
+</div>
+<p>HOCs and render props are still valid. They are simply less common for many new React designs because hooks and composition often express the same ideas more directly.</p>
+</div>
+
+<div class="card">
+<h2>13. Avoid Overengineering</h2>
+<p>Patterns are tools, not goals.</p>
+<pre>// If a simple component is enough:
+function Button({ children }) {
+  return &lt;button&gt;{children}&lt;/button&gt;;
+}</pre>
+<p>Do not introduce HOCs, context, compound components or generic abstractions just to make a component look "advanced".</p>
+</div>
+
+<div class="card">
+<h2>14. Composition Over Inheritance</h2>
+<p>React commonly favors composition: build complex UI by combining smaller components and passing elements/functions as props.</p>
+<pre>function Layout({ sidebar, children }) {
+  return (
+    &lt;div&gt;
+      &lt;aside&gt;{sidebar}&lt;/aside&gt;
+      &lt;main&gt;{children}&lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+<p>This makes layout and behavior reusable without creating deep inheritance hierarchies.</p>
+</div>
+
+<div class="card">
+<h2>15. Pattern Combinations</h2>
+<p>Real applications often combine patterns.</p>
+<div class="diagram">Headless behavior
+      +
+Compound components
+      +
+Context
+      +
+Controlled / uncontrolled API
+      ↓
+Flexible component library
+</div>
+<p>For example, a Tabs component can use context internally, expose compound subcomponents, and optionally support a controlled selected value.</p>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is an HOC?</b> A function that takes a component and returns an enhanced component.</li>
+<li><b>Are HOCs still used?</b> Yes, especially in existing libraries/codebases and some cross-cutting concerns, but hooks/composition often provide simpler new designs.</li>
+<li><b>What is Render Props?</b> Passing a function prop so the consumer controls the rendered UI while the component owns behavior/data.</li>
+<li><b>Render Props vs Custom Hook?</b> Both can share behavior; hooks often provide simpler logic reuse while render props directly control rendering.</li>
+<li><b>What are Compound Components?</b> Coordinated components that share state/context and expose a declarative API such as Tabs.Tab and Tabs.Panel.</li>
+<li><b>What is a Headless Component?</b> A component/hook that provides behavior, state and often accessibility without imposing visual styling.</li>
+<li><b>Controlled vs uncontrolled?</b> Controlled state is owned by React/parent props; uncontrolled state is managed internally/DOM and read when needed.</li>
+<li><b>When use controlled inputs?</b> When the application needs to synchronize, validate, transform or coordinate the value continuously.</li>
+<li><b>When use uncontrolled inputs?</b> When React does not need every intermediate value and a simpler DOM-owned form is appropriate.</li>
+<li><b>What is the Slot Pattern?</b> Passing elements/children into named regions of a reusable component.</li>
+<li><b>What is the Provider Pattern?</b> Providing shared data/behavior high in the tree for descendants to consume through context or another provider mechanism.</li>
+<li><b>What problem does context selector solve?</b> It allows consumers to subscribe to selected state rather than broadly responding to unrelated context changes.</li>
+<li><b>Does useContext support selectors?</b> Plain useContext reads the context value as a whole; selective subscriptions need another approach/library.</li>
+<li><b>Why prefer composition?</b> It creates flexible relationships without deep inheritance and keeps responsibilities explicit.</li>
+<li><b>Can patterns be combined?</b> Yes. Compound components can use context, controlled APIs and headless behavior together.</li>
+<li><b>What is the biggest mistake with patterns?</b> Using a complex pattern when a simple component, hook or composition would solve the problem.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>Several old components need the same authorization wrapper.</b><br>A HOC can be appropriate, especially when working with an existing HOC-based architecture.</li>
+<li><b>You are building new shared behavior for function components.</b><br>Consider a custom hook before creating a new HOC.</li>
+<li><b>A reusable component owns keyboard/state logic but each product needs different styling.</b><br>Use a headless component or hook.</li>
+<li><b>You need Tabs with Tabs.List, Tabs.Tab and Tabs.Panel.</b><br>Compound components with shared context are a natural fit.</li>
+<li><b>The parent needs complete control over a dialog's open state.</b><br>Expose a controlled API such as open + onOpenChange.</li>
+<li><b>A simple form does not need live React state.</b><br>Consider an uncontrolled input and read its value on submit.</li>
+<li><b>A Card needs custom header, body and footer content.</b><br>Use composition/slots via props and children.</li>
+<li><b>Ten deeply nested components need the current theme.</b><br>Use a Theme Provider/context rather than prop drilling.</li>
+<li><b>A giant context causes many components to re-render.</b><br>Split contexts or use selective subscription/context-selector/external-store patterns where appropriate.</li>
+<li><b>A context contains user, theme and notifications.</b><br>Consider separate contexts or more selective state subscriptions if consumers are unrelated.</li>
+<li><b>A developer wants an HOC for a tiny one-off component.</b><br>Prefer the simplest solution; an HOC may add unnecessary indirection.</li>
+<li><b>A render prop creates deeply nested JSX.</b><br>Consider replacing it with a custom hook or simpler composition if the abstraction remains clear.</li>
+<li><b>A headless dropdown must support keyboard navigation.</b><br>The headless layer should own the interaction/accessibility behavior while the consumer controls presentation.</li>
+<li><b>A reusable component needs optional custom actions in its header.</b><br>Expose a slot-like prop such as actions or headerContent.</li>
+<li><b>A component library wants both controlled and uncontrolled usage.</b><br>Design the API carefully so controlled state has a clear source of truth and uncontrolled mode has internal state/default values.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ HOC = component enhancement function.</li>
+<li>✔ Render Props = function prop controls rendering.</li>
+<li>✔ Compound Components = coordinated subcomponents.</li>
+<li>✔ Headless = behavior without visual design.</li>
+<li>✔ Controlled = parent owns state.</li>
+<li>✔ Uncontrolled = DOM/internal component owns state.</li>
+<li>✔ Slot = custom content in defined regions.</li>
+<li>✔ Provider = share data/behavior down the tree.</li>
+<li>✔ Context selector = selective subscription idea.</li>
+<li>✔ useContext alone does not provide arbitrary selectors.</li>
+<li>✔ Hooks often replace many HOC/render-prop use cases.</li>
+<li>✔ Composition is a core React design approach.</li>
+<li>✔ Patterns can be combined.</li>
+<li>✔ Prefer the simplest pattern that solves the problem.</li>
+</ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Build Tools - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#0369a1;color:#fff;padding:28px;border-radius:12px}
+h2{color:#0369a1}h3{color:#075985}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#e0f2fe}
+code{background:#f0f9ff;padding:2px 5px;border-radius:4px}.note{background:#f0f9ff;border-left:4px solid #0284c7;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 20 — React Build Tools</h1>
+<p>Simple Interview Handbook • Webpack • Vite • Babel • SWC • Tree Shaking • Code Splitting • Source Maps • Environment Variables</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What Are Build Tools?</h2>
+<p>Build tools prepare application source code so it can run efficiently in development and production.</p>
+<div class="diagram">Source Code
+   ↓
+Build Tool
+ ├── Transform
+ ├── Bundle
+ ├── Optimize
+ ├── Split
+ └── Generate assets
+   ↓
+Production files
+   ↓
+Browser
+</div>
+<p>Modern tools combine several jobs: development server, module transformation, bundling, optimization and asset handling.</p>
+<div class="note"><b>Interview idea:</b> A build tool is not the same thing as a JavaScript compiler. Tools such as Vite and Webpack orchestrate many parts of the build process, while Babel and SWC are primarily code transformation tools.</div>
+</div>
+
+<div class="card">
+<h2>2. Webpack</h2>
+<p><b>Webpack</b> is a highly configurable module bundler. It builds a dependency graph starting from entry points and emits optimized assets.</p>
+<div class="diagram">entry
+  ↓
+Dependency Graph
+ ├── JS
+ ├── CSS
+ ├── Images
+ └── Other assets
+  ↓
+Loaders / Plugins
+  ↓
+Chunks
+  ↓
+Output assets
+</div>
+</div>
+
+<div class="card">
+<h2>Webpack Configuration</h2>
+<pre>module.exports = {
+  entry: "./src/main.js",
+
+  output: {
+    filename: "bundle.js"
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: "babel-loader"
+      }
+    ]
+  }
+};</pre>
+<p>Webpack uses <b>loaders</b> to transform module types and <b>plugins</b> to extend/build functionality.</p>
+</div>
+
+<div class="card">
+<h2>3. Webpack Loaders vs Plugins</h2>
+<table>
+<tr><th>Loaders</th><th>Plugins</th></tr>
+<tr><td>Transform modules/files during the build.</td><td>Extend the build process more broadly.</td></tr>
+<tr><td>Example: babel-loader.</td><td>Example: HtmlWebpackPlugin.</td></tr>
+<tr><td>Often configured in module.rules.</td><td>Configured in plugins.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>4. Vite</h2>
+<p><b>Vite</b> is a modern frontend build tool designed for fast development and production builds.</p>
+<div class="diagram">Development
+Source modules
+      ↓
+Native ESM in browser
+      +
+Fast transformation
+      ↓
+Very fast startup / HMR
+
+Production
+Source
+ ↓
+Production bundling/optimization
+ ↓
+Static assets
+</div>
+<p>Vite's development model avoids bundling the entire application before the dev server can start. It serves modules on demand and transforms them as needed.</p>
+</div>
+
+<div class="card">
+<h2>5. Vite vs Webpack</h2>
+<table>
+<tr><th>Vite</th><th>Webpack</th></tr>
+<tr><td>Fast development startup.</td><td>Highly mature and configurable bundler.</td></tr>
+<tr><td>Uses native ESM-oriented dev workflow.</td><td>Builds a module dependency graph for bundling.</td></tr>
+<tr><td>Uses fast transforms and modern tooling.</td><td>Large ecosystem of loaders/plugins.</td></tr>
+<tr><td>Simple defaults.</td><td>Deep customization options.</td></tr>
+</table>
+<div class="note">Modern Vite production builds use a bundling pipeline. The key difference is mainly the development workflow, not "Vite never bundles".</div>
+</div>
+
+<div class="card">
+<h2>6. Babel</h2>
+<p><b>Babel</b> is a JavaScript compiler/transformation tool. It can transform modern JavaScript/JSX/TypeScript syntax into forms required by a target environment.</p>
+<pre>// Input
+const greet = name =&gt; `Hello ${name}`;
+
+// Example transformed output
+var greet = function(name) {
+  return "Hello " + name;
+};</pre>
+<p>Babel itself is not a bundler. A bundler can invoke Babel as part of its transformation pipeline.</p>
+</div>
+
+<div class="card">
+<h2>7. Babel Presets</h2>
+<pre>{
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react"
+  ]
+}</pre>
+<p>Presets group commonly needed transformation plugins.</p>
+<div class="note"><b>React note:</b> JSX must be transformed before the browser can execute it as JavaScript. Modern React setups can use Babel or faster alternatives such as SWC depending on the toolchain.</div>
+</div>
+
+<div class="card">
+<h2>8. SWC</h2>
+<p><b>SWC</b> is a fast compiler/transformation tool implemented in Rust. It can transform JavaScript/TypeScript and JSX and is used by modern build frameworks.</p>
+<div class="diagram">JS / TS / JSX
+      ↓
+     SWC
+      ↓
+Transformed JavaScript
+      ↓
+Bundler / Browser
+</div>
+<p>Its speed is a major reason it appears in modern React tooling.</p>
+</div>
+
+<div class="card">
+<h2>9. Babel vs SWC</h2>
+<table>
+<tr><th>Babel</th><th>SWC</th></tr>
+<tr><td>JavaScript-based ecosystem.</td><td>Rust-based implementation.</td></tr>
+<tr><td>Huge plugin ecosystem.</td><td>Designed for high transformation speed.</td></tr>
+<tr><td>Highly customizable.</td><td>Strong modern framework/tool integration.</td></tr>
+<tr><td>Common in many mature toolchains.</td><td>Common in modern performance-focused toolchains.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>10. Tree Shaking</h2>
+<p><b>Tree shaking</b> removes code that is not reachable/used from the production bundle, especially with static ES module imports.</p>
+<pre>// utils.js
+export function add(a, b) {
+  return a + b;
+}
+
+export function multiply(a, b) {
+  return a * b;
+}
+
+// app.js
+import { add } from "./utils";</pre>
+<p>If <code>multiply</code> is unused and the toolchain can prove it has no required side effects, it may be removed from the production output.</p>
+</div>
+
+<div class="card">
+<h2>Tree Shaking Flow</h2>
+<div class="diagram">Modules
+  ↓
+Static import/export analysis
+  ↓
+Find reachable code
+  ↓
+Remove unused code
+  ↓
+Smaller bundle
+</div>
+<div class="note">Tree shaking is not simply "delete every unused-looking function". Side effects and module semantics matter.</div>
+</div>
+
+<div class="card">
+<h2>11. Code Splitting</h2>
+<p><b>Code splitting</b> divides JavaScript into multiple chunks that can be loaded when needed instead of shipping one large bundle initially.</p>
+<pre>const Settings =
+  lazy(() =&gt; import("./Settings"));
+
+&lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+  &lt;Settings /&gt;
+&lt;/Suspense&gt;</pre>
+<div class="diagram">Initial bundle
+   ↓
+App starts
+   ↓
+User opens Settings
+   ↓
+Load Settings chunk
+   ↓
+Render Settings
+</div>
+</div>
+
+<div class="card">
+<h2>12. Code Splitting vs Tree Shaking</h2>
+<table>
+<tr><th>Tree Shaking</th><th>Code Splitting</th></tr>
+<tr><td>Removes unused code.</td><td>Separates code into chunks.</td></tr>
+<tr><td>Reduces shipped code.</td><td>Controls when code is loaded.</td></tr>
+<tr><td>Mostly build-time optimization.</td><td>Build + runtime loading behavior.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>13. Source Maps</h2>
+<p><b>Source maps</b> connect generated/minified code back to original source files for debugging.</p>
+<div class="diagram">Original TypeScript / JSX
+        ↓
+Transformed + minified JS
+        ↓
+Browser executes generated code
+
+Source map:
+Generated position
+       ↕
+Original source position
+</div>
+<p>Without source maps, production stack traces can point to difficult-to-read minified code.</p>
+</div>
+
+<div class="card">
+<h2>Source Map Example</h2>
+<pre>// Bundle
+function a(){throw new Error("Failed")}
+
+// Source map tells tools that
+// this came from:
+// src/components/UserList.tsx</pre>
+<p>Source maps are extremely useful for debugging, but production source-map exposure should be considered carefully because maps can reveal source code and implementation details.</p>
+</div>
+
+<div class="card">
+<h2>14. Environment Variables</h2>
+<p>Environment variables let build/deployment configuration change without hardcoding every value in source code.</p>
+<pre># .env
+VITE_API_URL=https://api.example.com</pre>
+<pre>const apiUrl =
+  import.meta.env.VITE_API_URL;</pre>
+<p>With Vite, client-exposed variables use the <code>VITE_</code> prefix by default.</p>
+</div>
+
+<div class="card">
+<h2>15. Environment Variables Are Not Secrets</h2>
+<div class="diagram">VITE_API_URL
+     ↓
+Build
+     ↓
+JavaScript bundle
+     ↓
+Browser
+     ↓
+User can inspect it
+</div>
+<div class="note"><b>Critical:</b> Any environment variable embedded into a browser bundle should be treated as public. Never put private API keys, database passwords or server secrets into client-exposed variables.</div>
+</div>
+
+<div class="card">
+<h2>16. React Build Environment Example</h2>
+<pre>// .env.development
+VITE_API_URL=http://localhost:3000
+
+// .env.production
+VITE_API_URL=https://api.example.com</pre>
+<p>Exact environment-file loading and precedence depend on the build tool. Keep environment-specific configuration documented and avoid committing secrets.</p>
+</div>
+
+<div class="card">
+<h2>17. Development vs Production Build</h2>
+<table>
+<tr><th>Development</th><th>Production</th></tr>
+<tr><td>Fast rebuilds.</td><td>Optimization.</td></tr>
+<tr><td>Readable source/debugging.</td><td>Minification.</td></tr>
+<tr><td>Hot Module Replacement.</td><td>Code splitting.</td></tr>
+<tr><td>Detailed diagnostics.</td><td>Optimized assets.</td></tr>
+<tr><td>Less focus on final bundle size.</td><td>Focus on performance and delivery.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>18. HMR</h2>
+<p><b>Hot Module Replacement (HMR)</b> updates changed modules during development without requiring a full page reload in many cases.</p>
+<div class="diagram">Edit component
+     ↓
+Dev server detects change
+     ↓
+Transform module
+     ↓
+Send update
+     ↓
+Browser updates UI
+</div>
+<p>HMR improves development feedback speed. It is a development feature, not a production optimization.</p>
+</div>
+
+<div class="card">
+<h2>19. Build Pipeline</h2>
+<div class="diagram">React / TS / CSS source
+          ↓
+     Build tool
+          ↓
+   Transform / compile
+      ↙         ↘
+   Babel/SWC   CSS processing
+          ↓
+     Module graph
+          ↓
+ Tree shaking + splitting
+          ↓
+   Minification
+          ↓
+   Output assets
+          ↓
+       Browser
+</div>
+</div>
+
+<div class="card">
+<h2>20. Bundle Optimization</h2>
+<ul>
+<li>Remove unused dependencies.</li>
+<li>Use tree-shakeable ESM packages where practical.</li>
+<li>Split large routes/features.</li>
+<li>Lazy-load expensive features.</li>
+<li>Analyze bundle composition.</li>
+<li>Compress assets during delivery.</li>
+<li>Avoid importing large libraries for tiny utilities.</li>
+</ul>
+<div class="note">Optimization should be guided by measurements. A smaller bundle is useful, but loading strategy and runtime performance matter too.</div>
+</div>
+
+<div class="card">
+<h2>21. Common Build Tool Mistakes</h2>
+<ul>
+<li>Thinking Vite never uses bundling in production.</li>
+<li>Thinking Babel is a bundler.</li>
+<li>Assuming tree shaking removes all unused-looking code.</li>
+<li>Putting secrets in client environment variables.</li>
+<li>Disabling source maps without considering debugging needs.</li>
+<li>Code splitting every tiny component.</li>
+<li>Adding many plugins without understanding their cost.</li>
+<li>Optimizing bundle size without measuring real user performance.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>22. Quick Tool Relationship</h2>
+<div class="diagram">Vite / Webpack
+   ↓
+Build orchestration / dev server / bundling
+
+Babel / SWC
+   ↓
+Code transformation
+
+Tree Shaking
+   ↓
+Remove unused reachable modules/code
+
+Code Splitting
+   ↓
+Create separate loadable chunks
+
+Source Maps
+   ↓
+Map generated code → original code
+
+Environment Variables
+   ↓
+Build/deployment configuration
+</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is a build tool?</b> A toolchain that transforms, bundles, optimizes and serves application assets.</li>
+<li><b>What is Webpack?</b> A configurable module bundler that builds a dependency graph and emits optimized assets.</li>
+<li><b>What is Vite?</b> A modern frontend build tool with a fast development server and a production build pipeline.</li>
+<li><b>Vite vs Webpack?</b> Vite emphasizes fast ESM-based development and simple defaults; Webpack provides a mature, highly configurable bundling ecosystem.</li>
+<li><b>Is Vite a bundler?</b> Vite is a build tool. Its development server serves modules on demand, while its production build uses a bundling/optimization pipeline.</li>
+<li><b>What is Babel?</b> A JavaScript transformation/compiler tool that converts source syntax for target environments.</li>
+<li><b>Is Babel a bundler?</b> No. Babel transforms code; a bundler handles the module graph and asset/chunk output.</li>
+<li><b>What is SWC?</b> A fast Rust-based compiler/transformation tool for JavaScript/TypeScript and JSX.</li>
+<li><b>Babel vs SWC?</b> Both transform code, but SWC is designed for high speed and has a different ecosystem/implementation, while Babel has a very large plugin ecosystem.</li>
+<li><b>What is tree shaking?</b> Removing unused code from production output using static module analysis and side-effect information.</li>
+<li><b>What is code splitting?</b> Dividing an application into chunks that can be loaded separately.</li>
+<li><b>Tree shaking vs code splitting?</b> Tree shaking removes unused code; code splitting changes how code is divided and loaded.</li>
+<li><b>What are source maps?</b> Files that map generated/minified code back to original source for debugging.</li>
+<li><b>Should production source maps always be public?</b> Not necessarily. They improve debugging but can reveal source code; teams should choose an appropriate secure error-monitoring/source-map strategy.</li>
+<li><b>What are environment variables?</b> Configuration values supplied to the build/runtime environment.</li>
+<li><b>Are frontend environment variables secret?</b> No. If embedded in browser code, users can inspect them.</li>
+<li><b>What is HMR?</b> Hot Module Replacement updates changed modules during development without a full reload in many cases.</li>
+<li><b>How do you optimize a React bundle?</b> Measure first, then use tree shaking, code splitting, lazy loading, dependency analysis and appropriate asset compression.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>Your Vite app starts very quickly but production bundle is huge.</b><br>Analyze the production bundle, inspect dependencies, add route/feature code splitting and remove unnecessary imports.</li>
+<li><b>A developer says Babel bundles the React application.</b><br>Correct them: Babel transforms source code; a bundler/build tool creates the module graph and output chunks.</li>
+<li><b>A library import brings 500 KB into the bundle for one helper.</b><br>Inspect the package/import style and consider a smaller tree-shakeable import or a lighter utility.</li>
+<li><b>Unused functions remain in the production output.</b><br>Check whether they are actually reachable, whether modules have side effects, and whether the package/toolchain supports effective tree shaking.</li>
+<li><b>The dashboard is rarely used but slows initial loading.</b><br>Split the dashboard into a lazy-loaded route/chunk so it is loaded when needed.</li>
+<li><b>A user sees a minified production stack trace.</b><br>Use source maps in a controlled debugging/error-monitoring workflow to map generated locations back to original source.</li>
+<li><b>A developer puts an API secret into VITE_API_SECRET.</b><br>Remove it from the client configuration. Client-exposed variables are public; move secret operations to a trusted server.</li>
+<li><b>Environment variable changes do not appear after deployment.</b><br>Check when the variable is injected; many frontend variables are embedded at build time, so a new build may be required.</li>
+<li><b>HMR is slow after the project grows.</b><br>Inspect dependency graph/plugin costs and large module boundaries; avoid unnecessary transformations and optimize the dev setup.</li>
+<li><b>A team wants to code-split every component.</b><br>Explain that excessive splitting adds network/request and runtime overhead. Split meaningful routes or expensive features based on measurements.</li>
+<li><b>Webpack configuration has hundreds of lines.</b><br>Review whether all loaders/plugins are still required and consider a simpler build tool if the project's needs allow it.</li>
+<li><b>A package prevents tree shaking.</b><br>Inspect its module format and side-effect metadata; prefer an ESM/tree-shakeable alternative when appropriate.</li>
+<li><b>Production debugging is difficult but source maps are sensitive.</b><br>Upload source maps to a private error-monitoring service and avoid exposing them publicly if that matches the security policy.</li>
+<li><b>A build fails only in production.</b><br>Compare environment variables, build modes, dependency versions and production-only optimizations; reproduce with the production build locally.</li>
+<li><b>A developer wants to optimize without measuring.</b><br>Use bundle analyzers and real performance metrics first; optimize the largest/highest-impact problems rather than guessing.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Webpack = configurable module bundler.</li>
+<li>✔ Vite = modern frontend build tool + fast dev server.</li>
+<li>✔ Babel = code transformation.</li>
+<li>✔ SWC = fast Rust-based code transformation.</li>
+<li>✔ Tree shaking = remove unused code.</li>
+<li>✔ Code splitting = separate code into loadable chunks.</li>
+<li>✔ Source maps = generated code → original code.</li>
+<li>✔ HMR = fast development updates.</li>
+<li>✔ Client env variables are public.</li>
+<li>✔ Never put secrets in Vite client variables.</li>
+<li>✔ Vite development ≠ Vite production pipeline.</li>
+<li>✔ Babel ≠ bundler.</li>
+<li>✔ Tree shaking depends on module/static analysis and side effects.</li>
+<li>✔ Code splitting should be based on useful boundaries.</li>
+<li>✔ Source maps help debugging but may expose source.</li>
+<li>✔ Measure before optimizing.</li>
+</ul>
+</div>
+
+</body>
+</html>

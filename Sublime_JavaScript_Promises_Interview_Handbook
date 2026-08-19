@@ -1,0 +1,973 @@
+For a **3–5 years React.js Frontend Developer** interview, companies (product-based, fintech, SaaS, FAANG, startups) expect much more than React APIs. They evaluate how well you understand JavaScript, React internals, performance, architecture, browser behavior, rendering, state management, testing, accessibility, and system design.
+
+Below is a **complete React Frontend Interview Roadmap** organized exactly like an interview syllabus. It includes almost every topic repeatedly asked in interviews.
+
+---
+
+# SECTION 1 — JavaScript Fundamentals (Most Important)
+
+> React interviews are actually JavaScript interviews.
+
+## Execution Context
+
+* Global Execution Context
+* Function Execution Context
+* Call Stack
+* Memory Creation Phase
+* Execution Phase
+* Lexical Environment
+* Scope Chain
+
+---
+
+## Hoisting
+
+* var
+* let
+* const
+* Temporal Dead Zone
+* Function Hoisting
+* Function Expression
+* Arrow Function
+
+Interview Questions
+
+* Why does var become undefined?
+* TDZ explanation
+* Difference between function declaration and expression
+
+---
+
+## Closures
+
+* Closure Definition
+* Practical Use Cases
+* React Closures
+* Stale Closure
+* Closure inside useEffect
+* Closure inside setTimeout
+* Closure with Event Listeners
+
+---
+
+## Scope
+
+* Global Scope
+* Block Scope
+* Function Scope
+* Module Scope
+
+---
+
+## this Keyword
+
+* Global
+* Object
+* Function
+* Arrow Function
+* Event Handler
+* Class Component
+
+---
+
+## Event Loop
+
+* Call Stack
+* Callback Queue
+* Microtask Queue
+* Promise Queue
+* Macrotask Queue
+
+Interview Questions
+
+```
+console.log(1)
+
+setTimeout(()=>console.log(2))
+
+Promise.resolve().then(()=>console.log(3))
+
+console.log(4)
+```
+
+---
+
+## Promises
+
+* Promise States
+* Chaining
+* Promise.all
+* Promise.race
+* Promise.allSettled
+* Promise.any
+* async await
+* Error Handling
+
+---
+
+## Object & Array
+
+* Spread
+* Rest
+* Destructuring
+* Object.freeze
+* Object.seal
+* Object.assign
+* Deep Clone
+* Shallow Clone
+
+---
+
+## Functional Programming
+
+* Pure Functions
+* Immutability
+* Higher Order Functions
+* map
+* reduce
+* filter
+* some
+* every
+* find
+* flatMap
+
+---
+
+## ES6+
+
+* let const
+* Template Literal
+* Optional Chaining
+* Nullish Coalescing
+* Modules
+* Dynamic Import
+* Default Parameters
+
+---
+
+## Memory
+
+* Stack
+* Heap
+* Garbage Collection
+* Memory Leak
+
+---
+
+# SECTION 2 — Browser Fundamentals
+
+## Rendering Pipeline
+
+* DOM
+* CSSOM
+* Render Tree
+* Layout
+* Paint
+* Composite
+
+---
+
+## Browser Storage
+
+* Cookies
+* Local Storage
+* Session Storage
+* IndexedDB
+
+---
+
+## Event Propagation
+
+* Bubbling
+* Capturing
+* Delegation
+
+---
+
+## Reflow vs Repaint
+
+---
+
+## Debounce
+
+Implementation
+
+Use Cases
+
+---
+
+## Throttle
+
+Implementation
+
+Use Cases
+
+---
+
+## CORS
+
+* Same Origin Policy
+* Preflight Request
+* OPTIONS
+
+---
+
+## HTTP
+
+* GET
+* POST
+* PUT
+* PATCH
+* DELETE
+
+Status Codes
+
+---
+
+# SECTION 3 — React Fundamentals
+
+## React Introduction
+
+* Why React
+* Virtual DOM
+* Real DOM
+* JSX
+* Babel
+* ReactDOM
+
+---
+
+## JSX
+
+* Rules
+* Expressions
+* Fragments
+* Conditional Rendering
+* Lists
+
+---
+
+## Components
+
+* Functional Components
+* Class Components
+* Smart Components
+* Presentational Components
+* Higher Order Components
+* Compound Components
+
+---
+
+## Props
+
+* Passing Props
+* Children
+* Default Props
+* Prop Drilling
+
+---
+
+## State
+
+* Local State
+* Shared State
+* Derived State
+
+---
+
+## Rendering
+
+* Initial Render
+* Re-render
+* Reconciliation
+
+---
+
+## Keys
+
+* Why Keys
+* Stable Keys
+* Index Key Problems
+
+---
+
+# SECTION 4 — React Lifecycle
+
+## Functional Lifecycle
+
+Mount
+
+Update
+
+Unmount
+
+---
+
+## Class Lifecycle
+
+constructor
+
+render
+
+componentDidMount
+
+shouldComponentUpdate
+
+componentDidUpdate
+
+componentWillUnmount
+
+getSnapshotBeforeUpdate
+
+Error Boundary
+
+---
+
+# SECTION 5 — React Hooks (Most Important)
+
+## useState
+
+Everything
+
+* batching
+* updater function
+* lazy initialization
+
+---
+
+## useEffect
+
+Every Interview Topic
+
+* dependencies
+* cleanup
+* infinite loops
+* race conditions
+* AbortController
+* fetch inside effect
+* stale closure
+* multiple effects
+
+---
+
+## useLayoutEffect
+
+Difference with useEffect
+
+Execution Timing
+
+---
+
+## useMemo
+
+* Memoization
+* Expensive Computation
+* Dependency Array
+* Overuse
+
+---
+
+## useCallback
+
+* Stable Function
+* Child Rendering
+* Memo
+
+---
+
+## useRef
+
+* DOM Reference
+* Mutable Variable
+* Previous State
+* Timer
+* Focus
+
+---
+
+## useContext
+
+* Context API
+* Provider
+* Consumer
+* Performance Issues
+
+---
+
+## useReducer
+
+* Reducer Pattern
+* Dispatch
+* Complex State
+
+---
+
+## Custom Hooks
+
+* Rules
+* Reusability
+* Separation
+
+---
+
+## Advanced Hooks
+
+* useImperativeHandle
+* forwardRef
+* useDeferredValue
+* useTransition
+* useId
+* useSyncExternalStore
+* useInsertionEffect
+
+---
+
+# SECTION 6 — React Rendering Internals
+
+## Fiber Architecture
+
+* Fiber Node
+* Scheduler
+* Incremental Rendering
+
+---
+
+## Reconciliation
+
+* Tree Diffing
+* O(n)
+* Element Matching
+
+---
+
+## Virtual DOM
+
+* Creation
+* Diff
+* Commit Phase
+
+---
+
+## Concurrent Rendering
+
+* Interruptible Rendering
+* Priority Scheduling
+
+---
+
+## Automatic Batching
+
+React 18
+
+---
+
+## Strict Mode
+
+Double Rendering
+
+Why?
+
+---
+
+# SECTION 7 — React Performance
+
+Very Frequently Asked
+
+## React.memo
+
+---
+
+## useMemo
+
+---
+
+## useCallback
+
+---
+
+## Code Splitting
+
+* React.lazy
+* Suspense
+
+---
+
+## Bundle Optimization
+
+---
+
+## Lazy Loading
+
+---
+
+## Virtualization
+
+* react-window
+* react-virtualized
+
+---
+
+## Prevent Re-render
+
+---
+
+## State Colocation
+
+---
+
+## Memoization Strategy
+
+---
+
+## Performance Profiling
+
+React DevTools
+
+---
+
+# SECTION 8 — State Management
+
+## Context API
+
+---
+
+## Redux
+
+Everything
+
+* Store
+* Reducer
+* Action
+* Dispatch
+* Middleware
+
+---
+
+## Redux Toolkit
+
+* createSlice
+* createAsyncThunk
+* RTK Query
+
+---
+
+## Zustand
+
+---
+
+## MobX
+
+---
+
+## Recoil
+
+---
+
+## Jotai
+
+---
+
+## Signals
+
+---
+
+## React Query (TanStack Query)
+
+Everything
+
+* caching
+* invalidation
+* optimistic updates
+* staleTime
+* cacheTime/gcTime
+* mutations
+* infinite queries
+
+---
+
+# SECTION 9 — Forms
+
+## Controlled Components
+
+---
+
+## Uncontrolled Components
+
+---
+
+## Validation
+
+---
+
+## Formik
+
+---
+
+## React Hook Form
+
+---
+
+## Final Form
+
+---
+
+## Dynamic Forms
+
+---
+
+## Schema-driven Forms
+
+---
+
+# SECTION 10 — Routing
+
+## React Router
+
+* Nested Routes
+* Outlet
+* Params
+* Search Params
+* Lazy Routes
+* Loaders
+* Protected Routes
+
+---
+
+# SECTION 11 — API Integration
+
+## Fetch
+
+---
+
+## Axios
+
+---
+
+## AbortController
+
+---
+
+## Authentication
+
+* JWT
+* Refresh Token
+* Cookie
+* OAuth
+
+---
+
+## Error Handling
+
+---
+
+## Retry
+
+---
+
+## Pagination
+
+---
+
+## Infinite Scroll
+
+---
+
+# SECTION 12 — Styling
+
+* CSS Modules
+* Tailwind
+* Styled Components
+* Emotion
+* Material UI
+* Chakra UI
+* Ant Design
+* Theme Provider
+
+---
+
+# SECTION 13 — Accessibility (A11Y)
+
+* ARIA
+* Keyboard Navigation
+* Screen Readers
+* Semantic HTML
+* Focus Management
+* Color Contrast
+
+---
+
+# SECTION 14 — Testing
+
+## Jest
+
+---
+
+## React Testing Library
+
+---
+
+## Mocking
+
+---
+
+## Snapshot Testing
+
+---
+
+## Unit Testing
+
+---
+
+## Integration Testing
+
+---
+
+## E2E
+
+Cypress
+
+Playwright
+
+---
+
+# SECTION 15 — TypeScript with React
+
+* Props Interface
+* Generic Components
+* Utility Types
+* Union Types
+* Type Guards
+* React.FC
+* Event Types
+* Refs
+* Custom Hooks Typing
+
+---
+
+# SECTION 16 — Project Architecture
+
+* Folder Structure
+* Feature-based Architecture
+* Atomic Design
+* Modular Design
+* Separation of Concerns
+* Shared Components
+* Barrel Exports
+* Design Systems
+
+---
+
+# SECTION 17 — Advanced Patterns
+
+* HOC
+* Render Props
+* Compound Components
+* Headless Components
+* Controlled Pattern
+* Uncontrolled Pattern
+* Slot Pattern
+* Provider Pattern
+* Context Selector Pattern
+
+---
+
+# SECTION 18 — Error Handling
+
+* Error Boundaries
+* Suspense
+* Fallback UI
+* Retry UI
+* Logging
+
+---
+
+# SECTION 19 — Security
+
+* XSS
+* CSRF
+* CSP
+* DOMPurify
+* JWT Storage
+* HTTPS
+* Secure Cookies
+
+---
+
+# SECTION 20 — Build Tools
+
+* Webpack
+* Vite
+* Babel
+* SWC
+* Tree Shaking
+* Code Splitting
+* Source Maps
+* Environment Variables
+
+---
+
+# SECTION 21 — CI/CD
+
+* Git
+* GitHub Actions
+* Deployment
+* Docker Basics
+* Vercel
+* Netlify
+
+---
+
+# SECTION 22 — Browser Performance
+
+* Lighthouse
+* Core Web Vitals
+
+  * LCP
+  * CLS
+  * INP
+* Lazy Loading
+* Image Optimization
+* Bundle Analysis
+
+---
+
+# SECTION 23 — System Design (Frontend)
+
+Frequently asked for 4–5 years.
+
+* Design a Data Table
+* Design a File Explorer
+* Design a Dashboard
+* Design a Chat Application
+* Design an Infinite Scroll Feed
+* Design a Kanban Board
+* Design a Workflow Builder
+* Design a Form Builder
+* Design a Rich Text Editor
+* Design a Notification System
+* Design a Theme System
+* Design a Search Component
+* Design a Multi-step Form
+* Design a Large Enterprise Application
+
+Key concepts:
+
+* State placement
+* Component decomposition
+* Data flow
+* Caching strategy
+* Error handling
+* Loading states
+* Offline support
+* Optimistic updates
+* Scalability
+* Extensibility
+* Performance trade-offs
+
+---
+
+# SECTION 24 — React Interview Coding Problems
+
+* Todo App
+* Accordion
+* Tabs
+* Modal
+* Dropdown
+* Typeahead Search
+* Infinite Scroll
+* Pagination
+* Debounce Search
+* Drag & Drop
+* Kanban Board
+* Nested Comments
+* Tree View
+* Folder Explorer
+* Dynamic Form
+* Shopping Cart
+* Multi-select
+* Theme Switcher
+* Virtualized List
+* Data Table
+* File Upload
+* Image Gallery
+* OTP Input
+* Stepper
+* Calendar
+* Carousel
+
+---
+
+# SECTION 25 — Frequently Asked "Why?" Questions
+
+* Why Virtual DOM?
+* Why Keys?
+* Why useMemo?
+* Why useCallback?
+* Why Context can cause re-renders?
+* Why React is declarative?
+* Why reconciliation is O(n)?
+* Why React Fiber?
+* Why batching?
+* Why immutable state?
+* Why functional updates?
+* Why cleanup in useEffect?
+* Why useRef doesn't trigger re-render?
+* Why state updates are asynchronous?
+* Why React.memo sometimes doesn't work?
+* Why index should not be used as key?
+* Why StrictMode renders twice in development?
+* Why derived state is usually an anti-pattern?
+* Why React Query instead of Redux for server state?
+* Why Suspense improves UX?
+* Why concurrent rendering matters?
+
+---
+
+# SECTION 26 — Scenario-Based Interview Questions (3–5 Years)
+
+These evaluate practical engineering judgment rather than API knowledge.
+
+* A component re-renders 500 times. How do you debug it?
+* Your app becomes slow after adding Redux. What would you investigate?
+* A list of 50,000 items freezes the UI. How would you optimize it?
+* API requests are firing twice in development. Why?
+* How would you implement optimistic updates?
+* How would you prevent duplicate API calls?
+* How would you cancel an in-flight request when a component unmounts?
+* How would you implement role-based access control (RBAC)?
+* How would you design a reusable data table?
+* How would you implement dark mode across an application?
+* How would you share state between unrelated components?
+* How would you implement offline support?
+* How would you optimize a dashboard with multiple charts?
+* How would you manage forms with 100+ fields?
+* How would you migrate a large React application incrementally?
+* How would you handle feature flags?
+* How would you structure a monorepo with shared UI components?
+* How would you debug a memory leak in React?
+* How would you ensure accessibility in a complex form?
+* How would you profile and reduce bundle size?
+
+---
+
+## Suggested Study Order (Priority)
+
+1. JavaScript Fundamentals
+2. Browser Internals
+3. React Fundamentals
+4. Hooks (especially `useEffect`)
+5. Rendering & React Fiber
+6. Performance Optimization
+7. State Management (Redux Toolkit, Context, React Query)
+8. Routing & API Integration
+9. Forms & Validation
+10. TypeScript with React
+11. Testing
+12. Accessibility
+13. Security
+14. Project Architecture
+15. Frontend System Design
+16. Real-world coding exercises
+17. Scenario-based interview practice
+
+Covering these sections thoroughly will prepare you for the vast majority of React.js frontend interviews in the **3–5 years** experience range, including product companies, startups, and large enterprise organizations.

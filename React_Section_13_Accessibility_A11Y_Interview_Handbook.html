@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Accessibility A11Y - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#4338ca;color:#fff;padding:28px;border-radius:12px}
+h2{color:#4338ca}h3{color:#3730a3}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#e0e7ff}
+code{background:#eef2ff;padding:2px 5px;border-radius:4px}.note{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 13 — Accessibility (A11Y)</h1>
+<p>Simple Interview Handbook • ARIA • Keyboard Navigation • Screen Readers • Semantic HTML • Focus Management • Color Contrast</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is Accessibility?</h2>
+<p><b>Accessibility (A11Y)</b> means building applications that people with different abilities can use effectively.</p>
+<div class="diagram">User
+ ↓
+Browser
+ ↓
+Accessibility Tree
+ ↓
+Assistive Technology
+ ↓
+Accessible experience</div>
+<p>Accessibility benefits keyboard users, screen-reader users, people with low vision, users with motor difficulties and many others.</p>
+<div class="note"><b>Best rule:</b> Use native semantic HTML first. Add ARIA only when native HTML cannot express the required behavior.</div>
+</div>
+
+<div class="card">
+<h2>2. Semantic HTML</h2>
+<p>Semantic elements describe the meaning of content instead of only its visual appearance.</p>
+<pre>&lt;header&gt;...&lt;/header&gt;
+&lt;nav&gt;...&lt;/nav&gt;
+&lt;main&gt;
+  &lt;article&gt;...&lt;/article&gt;
+&lt;/main&gt;
+&lt;footer&gt;...&lt;/footer&gt;</pre>
+<p>Semantic HTML gives browsers and assistive technologies useful structure with less custom code.</p>
+</div>
+
+<div class="card">
+<h2>Semantic Button vs Div</h2>
+<pre>&lt;!-- Good --&gt;
+&lt;button onClick={save}&gt;
+  Save
+&lt;/button&gt;
+
+&lt;!-- Usually bad --&gt;
+&lt;div onClick={save}&gt;
+  Save
+&lt;/div&gt;</pre>
+<p>A native button already provides keyboard behavior, focus behavior and button semantics. A clickable div requires you to recreate many behaviors correctly.</p>
+</div>
+
+<div class="card">
+<h2>3. ARIA</h2>
+<p><b>ARIA</b> stands for Accessible Rich Internet Applications. It provides roles, states and properties that help assistive technologies understand custom UI.</p>
+<pre>&lt;button
+  aria-expanded={isOpen}
+  aria-controls="menu"
+  onClick={toggle}
+&gt;
+  Menu
+&lt;/button&gt;
+
+&lt;div id="menu"&gt;
+  ...
+&lt;/div&gt;</pre>
+<p>ARIA can describe relationships and states that are not automatically available from generic elements.</p>
+</div>
+
+<div class="card">
+<h2>ARIA Rule of Thumb</h2>
+<div class="diagram">Can native HTML express it?
+        ↓
+      YES → Use native HTML
+        ↓
+       NO
+        ↓
+Use appropriate ARIA + keyboard + focus behavior</div>
+<div class="note"><b>Important:</b> ARIA changes accessibility semantics; it does not automatically add keyboard behavior, focus management or interaction logic.</div>
+</div>
+
+<div class="card">
+<h2>Common ARIA Attributes</h2>
+<table>
+<tr><th>Attribute</th><th>Purpose</th></tr>
+<tr><td><code>aria-label</code></td><td>Provides an accessible name when visible text is not suitable.</td></tr>
+<tr><td><code>aria-labelledby</code></td><td>Uses another element's text as the accessible name.</td></tr>
+<tr><td><code>aria-describedby</code></td><td>Connects extra descriptive/help text.</td></tr>
+<tr><td><code>aria-expanded</code></td><td>Indicates whether expandable content is open.</td></tr>
+<tr><td><code>aria-controls</code></td><td>Identifies content controlled by an element.</td></tr>
+<tr><td><code>aria-hidden</code></td><td>Hides content from the accessibility tree when appropriate.</td></tr>
+<tr><td><code>aria-live</code></td><td>Marks a region where updates can be announced.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>4. Keyboard Navigation</h2>
+<p>A fully accessible UI should be usable without a mouse.</p>
+<div class="diagram">Tab
+ ↓
+Interactive element
+ ↓
+Enter / Space
+ ↓
+Action
+
+Shift + Tab
+ ↓
+Move backward</div>
+<p>Common keyboard controls include <b>Tab</b>, <b>Shift + Tab</b>, <b>Enter</b>, <b>Space</b> and <b>Escape</b>. Complex widgets may have additional keyboard patterns.</p>
+</div>
+
+<div class="card">
+<h2>Keyboard Focus</h2>
+<pre>button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}</pre>
+<p>Do not remove focus indicators without providing an equally usable replacement.</p>
+</div>
+
+<div class="card">
+<h2>5. Screen Readers</h2>
+<p>A screen reader converts accessible information into speech or other output.</p>
+<div class="diagram">HTML
+ ↓
+Browser accessibility tree
+ ↓
+Name + role + state + value
+ ↓
+Screen reader
+ ↓
+User</div>
+<p>Screen readers rely heavily on semantic elements, accessible names, states and relationships.</p>
+</div>
+
+<div class="card">
+<h2>Accessible Names</h2>
+<pre>&lt;button aria-label="Close dialog"&gt;
+  ✕
+&lt;/button&gt;</pre>
+<p>An icon-only button needs an accessible name. If visible text already gives the correct name, an extra aria-label may be unnecessary.</p>
+</div>
+
+<div class="card">
+<h2>6. Focus Management</h2>
+<p>Focus management means intentionally moving or restoring keyboard focus when UI changes make that necessary.</p>
+<p>Common cases:</p>
+<ul>
+<li>Opening a modal.</li>
+<li>Closing a modal and returning focus to its trigger.</li>
+<li>Navigating to a new page/view.</li>
+<li>Showing validation errors.</li>
+<li>Opening menus or popovers.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Modal Focus Example</h2>
+<pre>function Modal({ onClose }) {
+  const closeRef = useRef(null);
+
+  useEffect(() =&gt; {
+    closeRef.current?.focus();
+  }, []);
+
+  return (
+    &lt;div role="dialog" aria-modal="true"&gt;
+      &lt;h2&gt;Settings&lt;/h2&gt;
+
+      &lt;button ref={closeRef} onClick={onClose}&gt;
+        Close
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+<p>A production modal should also manage focus trapping and restore focus to the element that opened it.</p>
+</div>
+
+<div class="card">
+<h2>7. Color Contrast</h2>
+<p>Text and important UI elements need sufficient contrast so users can distinguish them.</p>
+<div class="diagram">Text
+  ↓
+Foreground color
+      +
+Background color
+  ↓
+Contrast ratio
+  ↓
+Accessible / insufficient</div>
+<p>WCAG contrast requirements depend on content and size. For normal text, a commonly referenced WCAG AA target is <b>4.5:1</b>; large text commonly uses <b>3:1</b>.</p>
+<div class="note">Do not communicate information through color alone. Combine color with text, icons, patterns or other cues when necessary.</div>
+</div>
+
+<div class="card">
+<h2>Bad vs Better Status UI</h2>
+<pre>&lt;!-- Bad: color alone --&gt;
+&lt;span className="red"&gt;●&lt;/span&gt;
+
+&lt;!-- Better --&gt;
+&lt;span&gt;
+  ● Error: Payment failed
+&lt;/span&gt;</pre>
+<p>The second version communicates the meaning even if the user cannot distinguish the colors.</p>
+</div>
+
+<div class="card">
+<h2>8. Accessible Forms</h2>
+<pre>&lt;label htmlFor="email"&gt;
+  Email
+&lt;/label&gt;
+
+&lt;input
+  id="email"
+  name="email"
+  type="email"
+  aria-describedby="email-help email-error"
+/&gt;
+
+&lt;p id="email-help"&gt;
+  Use your work email.
+&lt;/p&gt;
+
+&lt;p id="email-error"&gt;
+  Email is required.
+&lt;/p&gt;</pre>
+<p>Labels, descriptions and errors should be programmatically associated with the relevant field.</p>
+</div>
+
+<div class="card">
+<h2>9. Accessible Images</h2>
+<pre>&lt;img
+  src="/profile.jpg"
+  alt="Priya smiling"
+ /&gt;
+
+&lt;img
+  src="/decorative-line.svg"
+  alt=""
+ /&gt;</pre>
+<p>Meaningful images need useful alternative text. Purely decorative images can use empty alt text so assistive technology can ignore them.</p>
+</div>
+
+<div class="card">
+<h2>10. Headings</h2>
+<p>Use headings to create a logical document structure.</p>
+<pre>&lt;h1&gt;Products&lt;/h1&gt;
+
+&lt;h2&gt;Electronics&lt;/h2&gt;
+&lt;h3&gt;Laptops&lt;/h3&gt;
+
+&lt;h2&gt;Furniture&lt;/h2&gt;</pre>
+<p>Do not choose heading levels only because they look visually correct. Style them separately with CSS.</p>
+</div>
+
+<div class="card">
+<h2>11. Links vs Buttons</h2>
+<table>
+<tr><th>Use</th><th>Purpose</th></tr>
+<tr><td><code>&lt;a&gt;</code> / Link</td><td>Navigate to another location.</td></tr>
+<tr><td><code>&lt;button&gt;</code></td><td>Perform an action on the current interface.</td></tr>
+</table>
+<pre>&lt;a href="/settings"&gt;Settings&lt;/a&gt;
+
+&lt;button onClick={openModal}&gt;
+  Open Settings
+&lt;/button&gt;</pre>
+</div>
+
+<div class="card">
+<h2>12. Skip Links</h2>
+<p>A skip link lets keyboard users bypass repeated navigation and jump directly to the main content.</p>
+<pre>&lt;a className="skip-link" href="#main-content"&gt;
+  Skip to main content
+&lt;/a&gt;
+
+&lt;main id="main-content"&gt;
+  ...
+&lt;/main&gt;</pre>
+<p>It is especially useful on pages with large repeated navigation sections.</p>
+</div>
+
+<div class="card">
+<h2>13. Live Regions</h2>
+<p>Use live regions when dynamic content needs to be announced without moving focus.</p>
+<pre>&lt;div aria-live="polite"&gt;
+  {message}
+&lt;/div&gt;</pre>
+<p>Use live announcements carefully. Too many announcements can become noisy.</p>
+</div>
+
+<div class="card">
+<h2>14. React Accessibility</h2>
+<p>React supports normal HTML accessibility attributes, but custom components can accidentally break native behavior.</p>
+<pre>function IconButton({ label, onClick }) {
+  return (
+    &lt;button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+    &gt;
+      &lt;SaveIcon aria-hidden="true" /&gt;
+    &lt;/button&gt;
+  );
+}</pre>
+<p>Reusable React components should preserve semantics, keyboard behavior, labels and focus behavior.</p>
+</div>
+
+<div class="card">
+<h2>15. Common Accessibility Mistakes</h2>
+<ul>
+<li>Using clickable <code>div</code> instead of buttons.</li>
+<li>Removing focus outlines.</li>
+<li>Missing form labels.</li>
+<li>Icon-only buttons without accessible names.</li>
+<li>Using color as the only error indicator.</li>
+<li>Incorrect heading structure.</li>
+<li>Missing image alt text.</li>
+<li>Adding ARIA without implementing the required keyboard behavior.</li>
+<li>Moving focus unexpectedly.</li>
+<li>Building custom widgets without following established keyboard patterns.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>16. Accessibility Testing</h2>
+<p>Accessibility should be tested with both automated tools and real interaction.</p>
+<ul>
+<li>Keyboard-only navigation.</li>
+<li>Screen reader testing.</li>
+<li>Browser accessibility/DevTools inspection.</li>
+<li>Automated checks such as axe-based tooling.</li>
+<li>Color contrast testing.</li>
+<li>Zoom and responsive testing.</li>
+</ul>
+<div class="note"><b>Interview answer:</b> Automated tools catch many common issues, but they cannot prove that an application is fully accessible.</div>
+</div>
+
+<div class="card">
+<h2>17. A11Y Mental Model</h2>
+<div class="diagram">Semantic HTML
+      ↓
+Correct name + role + state
+      ↓
+Keyboard interaction
+      ↓
+Focus management
+      ↓
+Visible focus
+      ↓
+Contrast + non-color cues
+      ↓
+Accessible experience</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is A11Y?</b> A11Y is the abbreviation commonly used for accessibility, ensuring applications can be used by people with different abilities.</li>
+<li><b>What is semantic HTML?</b> HTML elements that communicate meaning and structure, such as button, nav, main, article and heading elements.</li>
+<li><b>What is ARIA?</b> A set of roles, states and properties that helps communicate custom UI semantics to assistive technologies.</li>
+<li><b>Should ARIA replace semantic HTML?</b> No. Prefer native semantic HTML whenever it can provide the required behavior.</li>
+<li><b>Does ARIA automatically make a div keyboard accessible?</b> No. ARIA changes semantics but does not automatically implement keyboard interaction or focus behavior.</li>
+<li><b>Why are buttons better than clickable divs?</b> Buttons provide built-in semantics, keyboard support and focus behavior.</li>
+<li><b>What is keyboard navigation?</b> The ability to operate the interface using keyboard controls without requiring a mouse.</li>
+<li><b>What is focus management?</b> Intentionally controlling/restoring keyboard focus when UI changes require it.</li>
+<li><b>How should a modal handle focus?</b> Move focus into the modal, keep focus within it while appropriate, and restore focus to the triggering element when it closes.</li>
+<li><b>What is a screen reader?</b> Assistive technology that presents accessible information from the browser, commonly through speech or other output.</li>
+<li><b>What is an accessible name?</b> The name assistive technology uses to identify a control, often from visible text, a label or an appropriate ARIA naming mechanism.</li>
+<li><b>What is color contrast?</b> The difference in luminance between foreground and background that affects readability and distinguishability.</li>
+<li><b>What is WCAG AA contrast for normal text?</b> A commonly used WCAG 2.x AA target is 4.5:1 for normal text and 3:1 for large text.</li>
+<li><b>Why should color not be the only indicator?</b> Users with color-vision differences or other visual limitations may not perceive the distinction.</li>
+<li><b>What is aria-live?</b> It identifies a region whose dynamic updates can be announced by assistive technology.</li>
+<li><b>How do you make a form accessible?</b> Use labels, correct input types, associated descriptions/errors, keyboard access and clear error feedback.</li>
+<li><b>How do you make an icon button accessible?</b> Give it an accessible name, usually with visible text or an appropriate aria-label, and hide purely decorative icons from the accessibility tree.</li>
+<li><b>How do you test accessibility?</b> Combine keyboard testing, screen readers, automated tools, contrast checks and browser accessibility inspection.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A designer made a clickable div for a Save button.</b><br>Replace it with a semantic button unless there is a strong reason not to.</li>
+<li><b>A modal opens but keyboard focus stays behind it.</b><br>Move focus into the modal and implement appropriate focus trapping/restoration.</li>
+<li><b>Closing a modal leaves focus at the top of the page.</b><br>Store the trigger element and return focus to it when the modal closes.</li>
+<li><b>An icon-only close button has no accessible name.</b><br>Add an accessible name such as aria-label="Close" and mark the decorative icon appropriately.</li>
+<li><b>A form error is shown visually but screen readers do not announce it.</b><br>Associate the error with the input using aria-describedby and use appropriate live announcements when necessary.</li>
+<li><b>Keyboard users cannot reach a custom dropdown.</b><br>Use a native select when possible; otherwise implement the correct keyboard and ARIA pattern.</li>
+<li><b>Focus disappears after pressing Tab.</b><br>Inspect CSS and DOM changes; ensure focusable elements remain reachable and focus indicators are visible.</li>
+<li><b>A developer removed outline: none to make the design cleaner.</b><br>Restore a visible focus indicator or provide an equally strong accessible replacement.</li>
+<li><b>Error messages are shown only in red.</b><br>Add text/icon/context so the error is not communicated by color alone.</li>
+<li><b>A heading is styled as h1 but the page has multiple unrelated h1 elements.</b><br>Review the document hierarchy and use headings based on structure, not appearance.</li>
+<li><b>An image contains important information but has alt="image".</b><br>Replace it with concise alternative text that conveys the meaningful information.</li>
+<li><b>A decorative background image is announced by the screen reader.</b><br>Ensure decorative content is excluded appropriately, for example with empty alt for decorative img elements.</li>
+<li><b>A success message appears after saving without moving focus.</b><br>Consider a polite live region so the update can be announced without disrupting the user's current position.</li>
+<li><b>A navigation menu uses ARIA but no keyboard behavior.</b><br>ARIA alone is insufficient; implement the interaction pattern or use a proven accessible component.</li>
+<li><b>An automated accessibility scan reports no errors.</b><br>Still test keyboard and screen-reader behavior because automated tools cannot detect every accessibility problem.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ A11Y = accessibility.</li>
+<li>✔ Semantic HTML first.</li>
+<li>✔ ARIA adds semantics; it does not create behavior.</li>
+<li>✔ Button for actions, link for navigation.</li>
+<li>✔ Keyboard access is mandatory for interactive UI.</li>
+<li>✔ Keep focus visible.</li>
+<li>✔ Manage focus when modals/views change.</li>
+<li>✔ Screen readers use the accessibility tree.</li>
+<li>✔ Give controls accessible names.</li>
+<li>✔ Associate labels and errors with form fields.</li>
+<li>✔ Do not use color as the only information.</li>
+<li>✔ Normal text WCAG AA target: 4.5:1.</li>
+<li>✔ Large text WCAG AA target: 3:1.</li>
+<li>✔ Use live regions carefully for dynamic updates.</li>
+<li>✔ Test with keyboard + screen reader + automated tools.</li>
+</ul>
+</div>
+
+</body>
+</html>

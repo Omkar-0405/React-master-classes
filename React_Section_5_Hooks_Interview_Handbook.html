@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Hooks - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#0f766e;color:#fff;padding:28px;border-radius:12px}
+h2{color:#0f766e}h3{color:#115e59}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ccfbf1}
+code{background:#ecfdf5;padding:2px 5px;border-radius:4px}
+.note{background:#f0fdfa;border-left:4px solid #0f766e;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 5 — React Hooks</h1>
+<p>Simple Interview Handbook • Most Important React Interview Topics</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>Hooks — Big Picture</h2>
+<p>Hooks let function components use state, effects, refs, context, memoization and other React features.</p>
+<div class="diagram">Component
+   │
+   ├── useState        → state
+   ├── useEffect       → external synchronization
+   ├── useMemo         → cached calculation
+   ├── useCallback     → cached function
+   ├── useRef          → persistent mutable reference
+   ├── useContext      → consume context
+   └── useReducer      → reducer-based state</div>
+<div class="note"><b>Core rule:</b> Hooks must be called at the top level of a function component or custom Hook, not inside loops, conditions or nested functions.</div>
+</div>
+
+<div class="card">
+<h2>1. useState — Basics</h2>
+<p><code>useState</code> adds local state to a function component.</p>
+<pre>const [count, setCount] = useState(0);
+
+return (
+  &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+    {count}
+  &lt;/button&gt;
+);</pre>
+<p>The setter schedules a state update. The component renders again with the new state.</p>
+</div>
+
+<div class="card">
+<h2>useState — Objects and Arrays</h2>
+<p>Do not mutate state directly. Create a new object or array.</p>
+<pre>const [user, setUser] = useState({
+  name: "Omkar",
+  age: 25
+});
+
+setUser(prev => ({
+  ...prev,
+  age: 26
+}));</pre>
+<pre>const [items, setItems] = useState([]);
+
+setItems(prev => [...prev, newItem]);</pre>
+</div>
+
+<div class="card">
+<h2>useState — Updater Function</h2>
+<p>When the next state depends on the previous state, use the updater form.</p>
+<pre>setCount(c => c + 1);
+setCount(c => c + 1);
+setCount(c => c + 1);</pre>
+<p>This correctly applies three updates based on the latest queued state.</p>
+<p>Prefer this form whenever the new value depends on the old value.</p>
+</div>
+
+<div class="card">
+<h2>useState — Batching</h2>
+<p>React can batch multiple state updates so they are processed together, reducing unnecessary renders.</p>
+<pre>function handleClick() {
+  setCount(c => c + 1);
+  setName("Omkar");
+  setOpen(true);
+}</pre>
+<p>In modern React, automatic batching also applies in many asynchronous contexts, not only React event handlers.</p>
+<div class="note"><b>Interview point:</b> Do not assume every setter immediately changes the current variable. The current render's state value remains fixed for that render.</div>
+</div>
+
+<div class="card">
+<h2>useState — Lazy Initialization</h2>
+<p>If initial state requires an expensive calculation, pass a function so React can initialize it lazily.</p>
+<pre>const [data, setData] = useState(() => {
+  return expensiveCalculation();
+});</pre>
+<p>Use <code>useState(createInitialState)</code>, not <code>useState(createInitialState())</code>, when you want the initializer function form.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Purpose</h2>
+<p><code>useEffect</code> is used to synchronize a component with an external system: network requests, subscriptions, timers, browser APIs, third-party widgets, etc.</p>
+<pre>useEffect(() => {
+  const connection = connect();
+
+  return () => {
+    connection.disconnect();
+  };
+}, []);</pre>
+<div class="diagram">Render
+  ↓
+DOM commit
+  ↓
+Effect setup
+  ↓
+Dependency changes
+  ↓
+Cleanup old effect
+  ↓
+Setup new effect</div>
+<p>Keep rendering itself pure; effects happen outside the render calculation.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Dependency Array</h2>
+<table>
+<tr><th>Code</th><th>Meaning</th></tr>
+<tr><td><code>useEffect(fn)</code></td><td>Runs after every committed render.</td></tr>
+<tr><td><code>useEffect(fn, [])</code></td><td>Setup after mount; cleanup on unmount. Development Strict Mode can perform an extra setup/cleanup cycle.</td></tr>
+<tr><td><code>useEffect(fn, [id])</code></td><td>Runs after mount and when id changes.</td></tr>
+</table>
+<p>Dependencies should include reactive values used by the effect, according to the effect's logic and the project's linting rules.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Cleanup</h2>
+<p>Cleanup prevents subscriptions, timers and listeners from remaining active.</p>
+<pre>useEffect(() => {
+  const onResize = () => console.log(window.innerWidth);
+
+  window.addEventListener("resize", onResize);
+
+  return () => {
+    window.removeEventListener("resize", onResize);
+  };
+}, []);</pre>
+<p>Cleanup also runs before an effect re-runs because its dependencies changed.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Infinite Loops</h2>
+<p>An effect can loop when it updates a value that causes the effect to run again.</p>
+<pre>// Problem
+const [count, setCount] = useState(0);
+
+useEffect(() => {
+  setCount(count + 1);
+}, [count]);</pre>
+<p>Each effect updates <code>count</code>, which triggers another effect. Avoid effects that derive state unnecessarily.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Stale Closure</h2>
+<p>An effect or callback can capture an older value from the render in which it was created.</p>
+<pre>useEffect(() => {
+  const id = setInterval(() => {
+    console.log(count);
+  }, 1000);
+
+  return () => clearInterval(id);
+}, []);</pre>
+<p>This interval keeps the value captured by the initial effect. Solutions depend on the goal: correct dependencies, functional state updates, or a ref for mutable latest values.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Fetch</h2>
+<pre>useEffect(() => {
+  let ignore = false;
+
+  async function load() {
+    const response = await fetch("/api/user");
+    const data = await response.json();
+
+    if (!ignore) {
+      setUser(data);
+    }
+  }
+
+  load();
+
+  return () => {
+    ignore = true;
+  };
+}, [userId]);</pre>
+<p>The cleanup prevents an older response from updating state after the component no longer wants that result.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — AbortController</h2>
+<p>For fetch requests, <code>AbortController</code> can cancel an in-flight request.</p>
+<pre>useEffect(() => {
+  const controller = new AbortController();
+
+  fetch(`/api/users/${userId}`, {
+    signal: controller.signal
+  })
+    .then(res => res.json())
+    .then(data => setUser(data))
+    .catch(error => {
+      if (error.name !== "AbortError") {
+        console.error(error);
+      }
+    });
+
+  return () => controller.abort();
+}, [userId]);</pre>
+<p>This is useful when a request becomes irrelevant because the dependency changed or the component unmounted.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Race Conditions</h2>
+<p>Suppose the user requests A, then quickly requests B. B may finish first, but A could finish later and overwrite B.</p>
+<div class="diagram">Request A ───────────────► response A
+Request B ─────► response B
+
+If A finishes last:
+old A could overwrite newer B  ❌</div>
+<p>Use cancellation with <code>AbortController</code> or an ignore/staleness strategy so only the relevant request updates state.</p>
+</div>
+
+<div class="card">
+<h2>useEffect — Multiple Effects</h2>
+<p>Use separate effects for unrelated synchronization concerns.</p>
+<pre>useEffect(() => {
+  document.title = title;
+}, [title]);
+
+useEffect(() => {
+  const id = setInterval(sync, 5000);
+  return () => clearInterval(id);
+}, []);</pre>
+<p>Multiple focused effects are often clearer than one large effect containing unrelated work.</p>
+</div>
+
+<div class="card">
+<h2>2. useLayoutEffect</h2>
+<p><code>useLayoutEffect</code> runs after DOM mutations but before the browser paints. It is useful when you must measure or synchronously adjust layout before the user sees the result.</p>
+<pre>useLayoutEffect(() => {
+  const rect = ref.current.getBoundingClientRect();
+  setWidth(rect.width);
+}, []);</pre>
+<table>
+<tr><th>useEffect</th><th>useLayoutEffect</th></tr>
+<tr><td>Normal effect/synchronization</td><td>Layout-sensitive work</td></tr>
+<tr><td>Does not block paint in the normal case</td><td>Runs before paint and can block it</td></tr>
+<tr><td>Preferred by default</td><td>Use only when timing requires it</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>3. useMemo</h2>
+<p><code>useMemo</code> caches the result of a calculation between renders until its dependencies change.</p>
+<pre>const filteredUsers = useMemo(() => {
+  return users.filter(user =>
+    user.name.includes(search)
+  );
+}, [users, search]);</pre>
+<p>It is useful when a calculation is genuinely expensive or when a stable value is important for another optimization.</p>
+<div class="note"><b>Do not use useMemo everywhere.</b> Memoization has its own cost and makes code more complex. Measure or reason about the optimization first.</div>
+</div>
+
+<div class="card">
+<h2>4. useCallback</h2>
+<p><code>useCallback</code> caches a function reference until dependencies change.</p>
+<pre>const handleSelect = useCallback((id) => {
+  setSelectedId(id);
+}, []);</pre>
+<p>This is mainly useful when passing a callback to a memoized child or when a stable function identity matters.</p>
+</div>
+
+<div class="card">
+<h2>useMemo + React.memo + useCallback</h2>
+<pre>const Child = React.memo(function Child({ onClick }) {
+  return &lt;button onClick={onClick}&gt;Click&lt;/button&gt;;
+});
+
+function Parent() {
+  const handleClick = useCallback(() => {
+    console.log("clicked");
+  }, []);
+
+  return &lt;Child onClick={handleClick} /&gt;;
+}</pre>
+<div class="diagram">Parent renders
+     ↓
+useCallback keeps same function reference
+     ↓
+React.memo child receives same props
+     ↓
+Child may skip its render</div>
+<p>All three tools are optimizations, not requirements.</p>
+</div>
+
+<div class="card">
+<h2>5. useRef</h2>
+<p><code>useRef</code> returns a persistent object whose <code>current</code> value can change without causing a re-render.</p>
+<pre>const inputRef = useRef(null);
+
+function focusInput() {
+  inputRef.current.focus();
+}
+
+return (
+  &lt;&gt;
+    &lt;input ref={inputRef} /&gt;
+    &lt;button onClick={focusInput}&gt;Focus&lt;/button&gt;
+  &lt;/&gt;
+);</pre>
+</div>
+
+<div class="card">
+<h2>useRef — Mutable Variable</h2>
+<pre>const timerRef = useRef(null);
+
+timerRef.current = setTimeout(() => {
+  console.log("done");
+}, 1000);</pre>
+<p>Changing <code>ref.current</code> does not cause a re-render.</p>
+</div>
+
+<div class="card">
+<h2>useRef — Previous State</h2>
+<pre>const previousCount = useRef();
+
+useEffect(() => {
+  previousCount.current = count;
+}, [count]);
+
+console.log(previousCount.current);</pre>
+<p>A ref can hold a value from the previous render, depending on when it is updated.</p>
+</div>
+
+<div class="card">
+<h2>6. useContext</h2>
+<p>Context lets components read shared values without passing props through every intermediate component.</p>
+<pre>const ThemeContext = createContext("light");
+
+function App() {
+  return (
+    &lt;ThemeContext.Provider value="dark"&gt;
+      &lt;Page /&gt;
+    &lt;/ThemeContext.Provider&gt;
+  );
+}
+
+function Button() {
+  const theme = useContext(ThemeContext);
+  return &lt;button&gt;{theme}&lt;/button&gt;;
+}</pre>
+<p>Context is useful for values such as theme, locale and application-level configuration.</p>
+</div>
+
+<div class="card">
+<h2>Context Performance</h2>
+<p>When a context value changes, components consuming that context can re-render.</p>
+<pre>const value = useMemo(() => ({
+  user,
+  logout
+}), [user, logout]);</pre>
+<p>Splitting contexts, stabilizing provider values where useful, and keeping providers appropriately scoped can reduce unnecessary work. Do not memoize blindly.</p>
+</div>
+
+<div class="card">
+<h2>7. useReducer</h2>
+<p><code>useReducer</code> manages state through a reducer function and dispatched actions.</p>
+<pre>function reducer(state, action) {
+  switch (action.type) {
+    case "increment":
+      return { count: state.count + 1 };
+    case "reset":
+      return { count: 0 };
+    default:
+      return state;
+  }
+}
+
+const [state, dispatch] = useReducer(reducer, {
+  count: 0
+});
+
+dispatch({ type: "increment" });</pre>
+<div class="diagram">User action
+   ↓
+dispatch(action)
+   ↓
+reducer(state, action)
+   ↓
+new state
+   ↓
+render</div>
+</div>
+
+<div class="card">
+<h2>When useReducer?</h2>
+<p>It is useful when state has multiple related fields, many transitions, or complex update rules.</p>
+<p>For a simple boolean or counter, <code>useState</code> is usually easier.</p>
+</div>
+
+<div class="card">
+<h2>8. Custom Hooks</h2>
+<p>A custom Hook is a function whose name starts with <code>use</code> and that can call other Hooks.</p>
+<pre>function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const update = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", update);
+
+    return () => {
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  return width;
+}</pre>
+<p>Custom Hooks share <b>logic</b>, not state itself. Each component calling the Hook gets its own Hook state.</p>
+</div>
+
+<div class="card">
+<h2>Custom Hook Rules</h2>
+<ul>
+<li>Name should start with <code>use</code>.</li>
+<li>Follow the Rules of Hooks.</li>
+<li>Call Hooks only at the top level.</li>
+<li>Call custom Hooks from function components or other Hooks.</li>
+<li>Extract reusable behavior, not arbitrary UI.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>9. useImperativeHandle</h2>
+<p>Lets a component customize what a parent receives through a ref.</p>
+<pre>function Input({ ref }) {
+  useImperativeHandle(ref, () => ({
+    focus() {
+      inputRef.current.focus();
+    }
+  }));
+
+  const inputRef = useRef(null);
+
+  return &lt;input ref={inputRef} /&gt;;
+}</pre>
+<p>Use it sparingly. Declarative props are usually preferred. It is useful when a parent genuinely needs an imperative action such as focus or scroll.</p>
+</div>
+
+<div class="card">
+<h2>10. forwardRef</h2>
+<p>Traditionally, <code>forwardRef</code> lets a ref pass through a function component to a DOM node or child.</p>
+<pre>const Input = forwardRef(function Input(props, ref) {
+  return &lt;input ref={ref} {...props} /&gt;;
+});</pre>
+<p><b>Modern React note:</b> In React 19, function components can receive <code>ref</code> as a prop, so new code may not need <code>forwardRef</code>. You will still encounter <code>forwardRef</code> in existing code and libraries.</p>
+</div>
+
+<div class="card">
+<h2>11. useDeferredValue</h2>
+<p><code>useDeferredValue</code> lets a non-urgent part of the UI lag behind an urgent value so interactions can stay responsive.</p>
+<pre>const deferredQuery = useDeferredValue(query);
+
+const results = useMemo(
+  () => filterLargeList(items, deferredQuery),
+  [items, deferredQuery]
+);</pre>
+<p>It does not debounce the value and does not delay the source update itself. It marks the derived UI as less urgent.</p>
+</div>
+
+<div class="card">
+<h2>12. useTransition</h2>
+<p><code>useTransition</code> lets you mark state updates as non-urgent transitions.</p>
+<pre>const [isPending, startTransition] = useTransition();
+
+function selectTab(tab) {
+  startTransition(() => {
+    setTab(tab);
+  });
+}</pre>
+<p><code>isPending</code> can be used to show feedback while the transition is being processed.</p>
+</div>
+
+<div class="card">
+<h2>useTransition vs useDeferredValue</h2>
+<table>
+<tr><th>useTransition</th><th>useDeferredValue</th></tr>
+<tr><td>Marks a state update as non-urgent.</td><td>Creates a deferred version of a value.</td></tr>
+<tr><td>You control the update with startTransition.</td><td>You defer a value already produced by another update.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>13. useId</h2>
+<p><code>useId</code> generates stable unique IDs useful for associating labels and form controls, especially when components can render in different environments.</p>
+<pre>function EmailField() {
+  const id = useId();
+
+  return (
+    &lt;&gt;
+      &lt;label htmlFor={id}&gt;Email&lt;/label&gt;
+      &lt;input id={id} /&gt;
+    &lt;/&gt;
+  );
+}</pre>
+<p>Do not use <code>useId</code> for list keys or general data IDs.</p>
+</div>
+
+<div class="card">
+<h2>14. useSyncExternalStore</h2>
+<p><code>useSyncExternalStore</code> is for subscribing to an external store in a way that integrates correctly with React's rendering model.</p>
+<pre>const value = useSyncExternalStore(
+  store.subscribe,
+  store.getSnapshot
+);</pre>
+<p>It is mainly useful for library authors or custom external-store integrations rather than ordinary component state.</p>
+</div>
+
+<div class="card">
+<h2>15. useInsertionEffect</h2>
+<p><code>useInsertionEffect</code> is mainly intended for CSS-in-JS library authors who need to insert styles before layout effects run.</p>
+<pre>useInsertionEffect(() => {
+  // Insert styles here in a CSS-in-JS library.
+}, []);</pre>
+<p>Application code should almost never need it. Prefer normal CSS or other appropriate styling approaches.</p>
+</div>
+
+<div class="card">
+<h2>Hook Comparison</h2>
+<table>
+<tr><th>Hook</th><th>Use</th></tr>
+<tr><td>useState</td><td>Simple local state</td></tr>
+<tr><td>useEffect</td><td>External synchronization</td></tr>
+<tr><td>useLayoutEffect</td><td>DOM/layout work before paint</td></tr>
+<tr><td>useMemo</td><td>Cache calculation result</td></tr>
+<tr><td>useCallback</td><td>Cache function reference</td></tr>
+<tr><td>useRef</td><td>Persistent mutable value / DOM ref</td></tr>
+<tr><td>useContext</td><td>Read context</td></tr>
+<tr><td>useReducer</td><td>Complex state transitions</td></tr>
+<tr><td>useImperativeHandle</td><td>Customize imperative ref API</td></tr>
+<tr><td>useDeferredValue</td><td>Defer non-urgent value-driven UI</td></tr>
+<tr><td>useTransition</td><td>Mark state updates as non-urgent</td></tr>
+<tr><td>useId</td><td>Stable unique UI IDs</td></tr>
+<tr><td>useSyncExternalStore</td><td>Subscribe to external stores</td></tr>
+<tr><td>useInsertionEffect</td><td>CSS-in-JS style insertion</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is useState?</b> A Hook for local component state.</li>
+<li><b>Why use the updater function?</b> When the next state depends on the previous state.</li>
+<li><b>What is batching?</b> React groups multiple state updates to reduce unnecessary rendering work.</li>
+<li><b>What is lazy initialization?</b> Passing an initializer function so initial state calculation is performed lazily.</li>
+<li><b>What is useEffect?</b> A Hook for synchronizing a component with external systems.</li>
+<li><b>What does the dependency array do?</b> It controls when an effect's setup is re-run based on its reactive dependencies.</li>
+<li><b>What is effect cleanup?</b> A function returned from the effect that removes/undoes external subscriptions or resources.</li>
+<li><b>What is a stale closure?</b> Code captures values from an older render and later uses those old values.</li>
+<li><b>How do you prevent fetch race conditions?</b> Cancel obsolete requests with AbortController or ignore stale results.</li>
+<li><b>useEffect vs useLayoutEffect?</b> useLayoutEffect runs before paint; useEffect is the normal choice for effects.</li>
+<li><b>useMemo vs useCallback?</b> useMemo caches a value; useCallback caches a function reference.</li>
+<li><b>Does useRef cause re-render?</b> No, changing ref.current does not trigger a render.</li>
+<li><b>When useReducer?</b> When state transitions are complex or strongly related.</li>
+<li><b>What is a custom Hook?</b> Reusable stateful logic packaged in a function that follows Hook rules.</li>
+<li><b>useTransition vs useDeferredValue?</b> Transition marks an update as non-urgent; deferred value creates a lower-priority version of a value.</li>
+<li><b>What is useId for?</b> Stable unique IDs for accessibility and related UI associations, not list keys.</li>
+<li><b>What is useSyncExternalStore?</b> A Hook for subscribing to external stores in a React-compatible way.</li>
+<li><b>Who normally uses useInsertionEffect?</b> Primarily CSS-in-JS library authors.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A counter increments based on its current value.</b><br>Use <code>setCount(c =&gt; c + 1)</code>.</li>
+<li><b>Three state updates depend on previous state.</b><br>Use updater functions so React can apply them sequentially to the queued state.</li>
+<li><b>Initial state requires an expensive calculation.</b><br>Use lazy initialization: <code>useState(() =&gt; expensive())</code>.</li>
+<li><b>A component subscribes to a WebSocket.</b><br>Use an Effect and return cleanup that unsubscribes/closes it.</li>
+<li><b>A fetch for user A finishes after user B's fetch.</b><br>Cancel or ignore the obsolete A request so it cannot overwrite B.</li>
+<li><b>A fetch should be cancelled when userId changes.</b><br>Use AbortController in the Effect cleanup.</li>
+<li><b>An effect keeps running forever.</b><br>Check whether it updates a dependency that causes itself to run again, and whether the effect is needed at all.</li>
+<li><b>An interval always logs an old state value.</b><br>Check for a stale closure; use correct dependencies, functional updates, or a ref depending on the requirement.</li>
+<li><b>You need two unrelated subscriptions.</b><br>Use separate focused Effects when that makes dependencies and cleanup clearer.</li>
+<li><b>A calculation filters 100,000 items and is genuinely expensive.</b><br>Consider useMemo if profiling/reasoning shows the calculation is a bottleneck.</li>
+<li><b>A memoized child keeps re-rendering because a callback prop changes every parent render.</b><br>Consider useCallback together with React.memo when the optimization is justified.</li>
+<li><b>You need to focus an input after clicking a button.</b><br>Use useRef to hold the DOM node.</li>
+<li><b>You need a mutable timer ID without causing renders.</b><br>Store it in a ref.</li>
+<li><b>Several components need the current theme.</b><br>Use Context when prop drilling would be unnecessary.</li>
+<li><b>A form has many related state transitions.</b><br>Consider useReducer for explicit actions and centralized transition logic.</li>
+<li><b>Two components need the same reusable subscription logic.</b><br>Create a custom Hook.</li>
+<li><b>A parent needs an imperative focus method from a child.</b><br>Use a ref with useImperativeHandle when a declarative prop is not suitable.</li>
+<li><b>A large list makes typing feel slow.</b><br>Consider useDeferredValue or useTransition to keep urgent interactions responsive.</li>
+<li><b>You need to mark a tab switch as non-urgent.</b><br>Wrap the state update in startTransition.</li>
+<li><b>You need a label/input ID that is unique across component instances.</b><br>Use useId.</li>
+<li><b>You are integrating an external state store.</b><br>Consider useSyncExternalStore for a React-compatible subscription.</li>
+<li><b>You are writing a CSS-in-JS library.</b><br>useInsertionEffect may be relevant; ordinary app code generally should not use it.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ useState = local state.</li>
+<li>✔ Updater = previous-state dependent update.</li>
+<li>✔ Lazy init = expensive initial calculation.</li>
+<li>✔ Batching = group state updates.</li>
+<li>✔ useEffect = external synchronization.</li>
+<li>✔ Cleanup = undo subscriptions/timers/resources.</li>
+<li>✔ AbortController = cancel fetch.</li>
+<li>✔ Stale closure = old render value captured.</li>
+<li>✔ useLayoutEffect = before paint.</li>
+<li>✔ useMemo = cached value.</li>
+<li>✔ useCallback = cached function reference.</li>
+<li>✔ useRef = persistent mutable reference.</li>
+<li>✔ useContext = consume shared context.</li>
+<li>✔ useReducer = complex state transitions.</li>
+<li>✔ Custom Hook = reusable logic.</li>
+<li>✔ useTransition = non-urgent update.</li>
+<li>✔ useDeferredValue = non-urgent value.</li>
+<li>✔ useId = accessible unique IDs.</li>
+<li>✔ useSyncExternalStore = external store subscription.</li>
+<li>✔ useInsertionEffect = mainly CSS-in-JS library work.</li>
+</ul>
+</div>
+
+</body></html>

@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Section 22 — Browser Performance Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#7c2d12;color:#fff;padding:28px;border-radius:12px}
+h2{color:#c2410c}h3{color:#9a3412}.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ffedd5}
+code{background:#fff7ed;padding:2px 5px;border-radius:4px}.note{background:#fff7ed;border-left:4px solid #ea580c;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 22 — Browser Performance</h1>
+<p>Simple Interview Handbook • Lighthouse • Core Web Vitals • LCP • CLS • INP • Lazy Loading • Image Optimization • Bundle Analysis</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is Web Performance?</h2>
+<p>Web performance is how quickly and smoothly a user can load, see, interact with and use a website.</p>
+<div class="diagram">User opens page
+      ↓
+HTML / CSS / JS / Images
+      ↓
+Browser processes resources
+      ↓
+Page becomes visible
+      ↓
+User interacts
+      ↓
+Browser responds
+</div>
+<div class="note"><b>Interview idea:</b> Performance is not only bundle size. Network latency, rendering, images, JavaScript execution, layout shifts and interaction responsiveness all matter.</div>
+</div>
+
+<div class="card">
+<h2>2. Lighthouse</h2>
+<p><b>Lighthouse</b> is a tool that audits web pages and provides performance-related diagnostics along with other categories such as accessibility and SEO.</p>
+<div class="diagram">Lighthouse
+   ↓
+Page audit
+ ├── Performance
+ ├── Accessibility
+ ├── Best Practices
+ └── SEO
+   ↓
+Scores + diagnostics
+   ↓
+Optimization opportunities
+</div>
+<p>Use Lighthouse to find opportunities, then validate improvements with real-user data where possible.</p>
+</div>
+
+<div class="card">
+<h2>3. Lighthouse — How to Use It</h2>
+<ol>
+<li>Open Chrome DevTools.</li>
+<li>Open the Lighthouse panel.</li>
+<li>Choose the page/device conditions.</li>
+<li>Run the audit.</li>
+<li>Inspect metrics and diagnostics.</li>
+<li>Fix high-impact issues.</li>
+<li>Measure again.</li>
+</ol>
+<div class="note">A Lighthouse score is a lab measurement, not a complete picture of real users. Network/device conditions and test variability can affect results.</div>
+</div>
+
+<div class="card">
+<h2>4. Core Web Vitals</h2>
+<p><b>Core Web Vitals</b> are Google's user-experience metrics focused on loading, visual stability and responsiveness.</p>
+<table>
+<tr><th>Metric</th><th>Measures</th></tr>
+<tr><td>LCP</td><td>Loading performance.</td></tr>
+<tr><td>CLS</td><td>Visual stability.</td></tr>
+<tr><td>INP</td><td>Interaction responsiveness.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>5. LCP — Largest Contentful Paint</h2>
+<p><b>LCP</b> measures when the largest relevant content element visible in the viewport is rendered.</p>
+<div class="diagram">Navigation
+   ↓
+HTML arrives
+   ↓
+CSS / fonts / images load
+   ↓
+Largest visible content appears
+   ↓
+LCP
+</div>
+<p>Common LCP elements include a large image, poster image, heading or block of text.</p>
+</div>
+
+<div class="card">
+<h2>LCP Targets</h2>
+<table>
+<tr><th>Result</th><th>LCP</th></tr>
+<tr><td>Good</td><td>≤ 2.5 seconds</td></tr>
+<tr><td>Needs improvement</td><td>&gt; 2.5s and ≤ 4.0s</td></tr>
+<tr><td>Poor</td><td>&gt; 4.0s</td></tr>
+</table>
+<p>These thresholds are evaluated at the 75th percentile for real-user Core Web Vitals assessment.</p>
+</div>
+
+<div class="card">
+<h2>6. How to Improve LCP</h2>
+<ul>
+<li>Improve server response time.</li>
+<li>Prioritize the LCP resource.</li>
+<li>Optimize the hero image.</li>
+<li>Use responsive image sizes.</li>
+<li>Reduce render-blocking resources.</li>
+<li>Reduce unnecessary JavaScript.</li>
+<li>Preload truly critical resources when appropriate.</li>
+<li>Use a CDN where useful.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>7. CLS — Cumulative Layout Shift</h2>
+<p><b>CLS</b> measures unexpected visual movement of page content during loading.</p>
+<div class="diagram">Page starts
+   ↓
+Text appears
+   ↓
+Image has no reserved space
+   ↓
+Image loads
+   ↓
+Content moves
+   ↓
+Layout shift ❌
+</div>
+<p>Example: a button moves just as the user tries to click it because an image above it suddenly appears.</p>
+</div>
+
+<div class="card">
+<h2>CLS Targets</h2>
+<table>
+<tr><th>Result</th><th>CLS</th></tr>
+<tr><td>Good</td><td>≤ 0.1</td></tr>
+<tr><td>Needs improvement</td><td>&gt; 0.1 and ≤ 0.25</td></tr>
+<tr><td>Poor</td><td>&gt; 0.25</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>8. How to Reduce CLS</h2>
+<ul>
+<li>Set width/height or aspect ratio for images and videos.</li>
+<li>Reserve space for dynamic content.</li>
+<li>Avoid inserting content above existing content unexpectedly.</li>
+<li>Use stable font-loading strategies.</li>
+<li>Animate with properties that do not cause unnecessary layout changes.</li>
+</ul>
+<pre>&lt;img
+  src="/hero.webp"
+  width="1200"
+  height="600"
+  alt="Hero"
+/&gt;</pre>
+<p>The browser can reserve the image's space before it loads.</p>
+</div>
+
+<div class="card">
+<h2>9. INP — Interaction to Next Paint</h2>
+<p><b>INP</b> measures interaction responsiveness by looking at how quickly the page responds visually after user interactions during the visit.</p>
+<div class="diagram">User click / tap / key press
+          ↓
+Event handler
+          ↓
+JavaScript work
+          ↓
+Rendering
+          ↓
+Next visual update
+          ↓
+INP
+</div>
+<p>Long JavaScript tasks can delay the browser from responding to user input.</p>
+</div>
+
+<div class="card">
+<h2>INP Targets</h2>
+<table>
+<tr><th>Result</th><th>INP</th></tr>
+<tr><td>Good</td><td>≤ 200 ms</td></tr>
+<tr><td>Needs improvement</td><td>&gt; 200ms and ≤ 500ms</td></tr>
+<tr><td>Poor</td><td>&gt; 500ms</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>10. How to Improve INP</h2>
+<ul>
+<li>Break up long JavaScript tasks.</li>
+<li>Reduce unnecessary re-renders.</li>
+<li>Virtualize very large lists.</li>
+<li>Defer non-critical work.</li>
+<li>Use memoization when it actually helps.</li>
+<li>Move heavy computation off the main thread when appropriate.</li>
+<li>Keep event handlers lightweight.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>11. Core Web Vitals Mental Model</h2>
+<div class="diagram">LCP
+ ↓
+"How fast did the main content appear?"
+
+CLS
+ ↓
+"Did the page stay visually stable?"
+
+INP
+ ↓
+"How quickly did the page respond to interaction?"
+</div>
+</div>
+
+<div class="card">
+<h2>12. Lazy Loading</h2>
+<p><b>Lazy loading</b> delays loading a resource until it is likely to be needed.</p>
+<pre>const Reports =
+  lazy(() =&gt; import("./Reports"));
+
+&lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+  &lt;Reports /&gt;
+&lt;/Suspense&gt;</pre>
+<p>Here the Reports code can be loaded when that part of the application is needed.</p>
+</div>
+
+<div class="card">
+<h2>Lazy Loading — Good Candidates</h2>
+<ul>
+<li>Large routes.</li>
+<li>Rarely used features.</li>
+<li>Heavy editors.</li>
+<li>Charts or reporting screens.</li>
+<li>Admin-only functionality.</li>
+<li>Below-the-fold images when appropriate.</li>
+</ul>
+<div class="note">Do not lazy-load everything. Critical above-the-fold content should usually remain immediately available.</div>
+</div>
+
+<div class="card">
+<h2>13. Image Optimization</h2>
+<p>Images can be one of the largest contributors to page weight.</p>
+<div class="diagram">Original image
+      ↓
+Choose correct dimensions
+      ↓
+Compress
+      ↓
+Modern format
+      ↓
+Responsive source
+      ↓
+Lazy-load if non-critical
+      ↓
+Browser
+</div>
+</div>
+
+<div class="card">
+<h2>14. Image Techniques</h2>
+<ul>
+<li>Use appropriately sized images.</li>
+<li>Prefer modern formats such as WebP/AVIF when supported.</li>
+<li>Use responsive images.</li>
+<li>Compress images.</li>
+<li>Reserve dimensions to reduce CLS.</li>
+<li>Lazy-load non-critical images.</li>
+<li>Do not lazy-load the main LCP image by default.</li>
+</ul>
+<pre>&lt;img
+  src="/product-800.webp"
+  srcSet="
+    /product-400.webp 400w,
+    /product-800.webp 800w,
+    /product-1200.webp 1200w"
+  sizes="(max-width: 600px) 100vw, 50vw"
+  width="1200"
+  height="800"
+  alt="Product"
+/&gt;</pre>
+</div>
+
+<div class="card">
+<h2>15. Image Priority</h2>
+<table>
+<tr><th>Image</th><th>Typical strategy</th></tr>
+<tr><td>Hero/LCP image</td><td>Prioritize appropriately; avoid unnecessary lazy loading.</td></tr>
+<tr><td>Below-the-fold image</td><td>Lazy-load when beneficial.</td></tr>
+<tr><td>Small icon</td><td>Use an efficient asset or SVG where appropriate.</td></tr>
+<tr><td>Large gallery</td><td>Responsive sizing + lazy loading + optimized formats.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>16. Bundle Analysis</h2>
+<p><b>Bundle analysis</b> shows what contributes to JavaScript bundle size.</p>
+<div class="diagram">Production bundle
+      ↓
+Bundle analyzer
+ ├── React
+ ├── UI library
+ ├── chart library
+ ├── date library
+ └── application code
+      ↓
+Find large dependencies
+      ↓
+Optimize
+</div>
+</div>
+
+<div class="card">
+<h2>17. Why Bundle Analysis?</h2>
+<p>A bundle may be large because of:</p>
+<ul>
+<li>Heavy dependencies.</li>
+<li>Duplicate packages.</li>
+<li>Unused modules.</li>
+<li>Large icon imports.</li>
+<li>Large chart/editor libraries.</li>
+<li>Application code loaded too early.</li>
+</ul>
+<p>Bundle analysis turns "the app is slow" into measurable candidates for optimization.</p>
+</div>
+
+<div class="card">
+<h2>18. Bundle Optimization Example</h2>
+<pre>// Potentially broad import
+import * as Icons from "large-icon-library";
+
+// Prefer a targeted import when supported
+import { Search } from "large-icon-library";</pre>
+<p>The exact effect depends on the library's module format and bundler tree-shaking behavior. Measure the resulting bundle rather than assuming.</p>
+</div>
+
+<div class="card">
+<h2>19. Browser Main Thread</h2>
+<p>The browser's main thread handles important work including JavaScript execution, style/layout and painting. Long tasks can delay interaction and rendering.</p>
+<div class="diagram">Main Thread
+ ├── JavaScript
+ ├── Style calculation
+ ├── Layout
+ ├── Paint
+ └── Event handling
+
+Long JS task
+      ↓
+Browser cannot respond quickly
+      ↓
+Poor INP / jank
+</div>
+</div>
+
+<div class="card">
+<h2>20. React Performance Connection</h2>
+<table>
+<tr><th>Problem</th><th>Possible React solution</th></tr>
+<tr><td>Unnecessary re-renders</td><td>State colocation, memoization where justified.</td></tr>
+<tr><td>Huge list</td><td>Virtualization.</td></tr>
+<tr><td>Heavy initial JS</td><td>Code splitting/lazy loading.</td></tr>
+<tr><td>Expensive computation</td><td>Optimize algorithm / memoize when useful / move work off main thread when appropriate.</td></tr>
+<tr><td>Large images</td><td>Responsive images + compression + correct loading priority.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>21. Performance Investigation Flow</h2>
+<div class="diagram">User reports "slow"
+       ↓
+Reproduce
+       ↓
+Measure
+ ├── Lighthouse
+ ├── DevTools Performance
+ ├── Network
+ ├── Core Web Vitals
+ └── Bundle analyzer
+       ↓
+Find bottleneck
+       ↓
+Optimize
+       ↓
+Measure again
+</div>
+<div class="note"><b>Golden rule:</b> Measure before and after. Performance optimization without measurement is often guesswork.</div>
+</div>
+
+<div class="card">
+<h2>22. Lab vs Real-User Data</h2>
+<table>
+<tr><th>Lab Data</th><th>Real-User Data</th></tr>
+<tr><td>Controlled test conditions.</td><td>Actual devices/networks/users.</td></tr>
+<tr><td>Useful for debugging.</td><td>Useful for understanding real experience.</td></tr>
+<tr><td>Lighthouse is an example.</td><td>Field/Core Web Vitals data is an example.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is Lighthouse?</b> A web auditing tool that provides performance diagnostics and other audits such as accessibility and SEO.</li>
+<li><b>What are Core Web Vitals?</b> User-experience metrics focused on loading, visual stability and responsiveness: LCP, CLS and INP.</li>
+<li><b>What is LCP?</b> Largest Contentful Paint measures when the largest relevant visible content element is rendered.</li>
+<li><b>What is a good LCP?</b> At the 75th percentile, ≤ 2.5 seconds is considered good.</li>
+<li><b>What is CLS?</b> Cumulative Layout Shift measures unexpected visual layout movement.</li>
+<li><b>What is a good CLS?</b> At the 75th percentile, ≤ 0.1 is considered good.</li>
+<li><b>What is INP?</b> Interaction to Next Paint measures responsiveness to user interactions across a page visit.</li>
+<li><b>What is a good INP?</b> At the 75th percentile, ≤ 200 ms is considered good.</li>
+<li><b>How do you improve LCP?</b> Improve server response, prioritize the LCP resource, optimize images, reduce blocking resources and reduce unnecessary JS.</li>
+<li><b>How do you reduce CLS?</b> Reserve space for media/dynamic content and avoid unexpected insertion/layout changes.</li>
+<li><b>How do you improve INP?</b> Reduce long tasks, unnecessary renders and heavy event-handler work.</li>
+<li><b>What is lazy loading?</b> Loading a resource when it is likely to be needed instead of immediately.</li>
+<li><b>Should the LCP image be lazy-loaded?</b> Usually not; the main LCP resource generally needs priority rather than being delayed.</li>
+<li><b>How do you optimize images?</b> Use correct dimensions, responsive sources, compression, modern formats and appropriate loading priority.</li>
+<li><b>What is bundle analysis?</b> Inspecting bundle contents and sizes to identify large or unnecessary dependencies.</li>
+<li><b>Why is bundle size important?</b> More JavaScript can increase download, parse, compile and execution work, especially on slower devices/networks.</li>
+<li><b>Does a high Lighthouse score guarantee a fast app?</b> No. It is a lab audit; real-user conditions and runtime behavior also matter.</li>
+<li><b>How do you approach a performance problem?</b> Measure, identify the bottleneck, make a targeted change, then measure again.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>LCP is 5 seconds because of a large hero image.</b><br>Resize/compress the image, use an efficient format and responsive source, ensure it is not unnecessarily lazy-loaded, and prioritize its loading.</li>
+<li><b>Users click a button but it reacts slowly.</b><br>Profile the interaction, look for long main-thread tasks and reduce/block less JavaScript work.</li>
+<li><b>CLS is high because images push content downward.</b><br>Reserve image dimensions using width/height or aspect ratio.</li>
+<li><b>A dashboard loads a 2 MB charting library before the user opens Reports.</b><br>Split/lazy-load the Reports feature so the heavy library is not part of the initial path when it is not needed.</li>
+<li><b>The page has excellent Lighthouse scores but real users report slowness.</b><br>Check real-user metrics, device/network distributions and production behavior; lab conditions may not represent users.</li>
+<li><b>A page loads 30 below-the-fold images immediately.</b><br>Use lazy loading and responsive image sizes where appropriate.</li>
+<li><b>Mobile users have poor INP after opening a large table.</b><br>Virtualize the table, reduce rendering work and avoid expensive synchronous handlers.</li>
+<li><b>A 3000-row table makes scrolling slow.</b><br>Use list/table virtualization so only visible rows need rendering.</li>
+<li><b>A bundle analyzer shows a huge dependency used for one tiny feature.</b><br>Consider a lighter library, targeted import or lazy-loading that feature.</li>
+<li><b>A developer wants to memoize every component.</b><br>Do not blindly memoize. Profile first and use memoization where it prevents meaningful repeated work.</li>
+<li><b>Images are small on desktop but huge on mobile.</b><br>Use responsive images so the browser can choose a suitable source for the viewport.</li>
+<li><b>Text moves when a web font loads.</b><br>Review font loading and fallback metrics; aim to minimize layout shifts and avoid unexpected content movement.</li>
+<li><b>A lazy-loaded route shows a blank screen for several seconds.</b><br>Provide a meaningful Suspense fallback and investigate chunk size/network/loading bottlenecks.</li>
+<li><b>The developer says reducing bundle size will fix every performance issue.</b><br>Explain that performance is broader: server response, images, rendering, main-thread work, layout and interactions all matter.</li>
+<li><b>A performance optimization makes the bundle smaller but interaction slower.</b><br>Measure the actual user impact; optimize for overall experience rather than one metric in isolation.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Lighthouse = lab audit + diagnostics.</li>
+<li>✔ Core Web Vitals = LCP + CLS + INP.</li>
+<li>✔ LCP = loading.</li>
+<li>✔ Good LCP ≤ 2.5s.</li>
+<li>✔ CLS = visual stability.</li>
+<li>✔ Good CLS ≤ 0.1.</li>
+<li>✔ INP = interaction responsiveness.</li>
+<li>✔ Good INP ≤ 200ms.</li>
+<li>✔ Lazy loading delays non-critical resources.</li>
+<li>✔ Do not unnecessarily lazy-load the LCP resource.</li>
+<li>✔ Optimize image size, format and priority.</li>
+<li>✔ Reserve image space to prevent CLS.</li>
+<li>✔ Bundle analysis identifies large dependencies.</li>
+<li>✔ Long JS tasks can hurt INP.</li>
+<li>✔ Virtualization helps huge lists.</li>
+<li>✔ Lab data ≠ real-user data.</li>
+<li>✔ Measure before optimizing.</li>
+<li>✔ Measure again after optimizing.</li>
+</ul>
+</div>
+
+</body>
+</html>

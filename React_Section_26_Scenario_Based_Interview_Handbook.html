@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Section 26 — Scenario-Based Interview Questions</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1150px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#1d4ed8;color:#fff;padding:30px;border-radius:12px}
+h2{color:#1d4ed8}h3{color:#1e40af}.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#dbeafe}
+code{background:#eff6ff;padding:2px 5px;border-radius:4px}.note{background:#eff6ff;border-left:4px solid #2563eb;padding:10px 14px}
+.answer{background:#f8fafc;border-left:4px solid #64748b;padding:12px 15px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 26 — Scenario-Based Interview Questions</h1>
+<p>React • 3–5 Years Experience • Practical Engineering Judgment</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>How to Answer Scenario Questions</h2>
+<div class="diagram">Problem
+  ↓
+Reproduce
+  ↓
+Measure / collect evidence
+  ↓
+Find root cause
+  ↓
+Choose smallest safe fix
+  ↓
+Validate
+  ↓
+Monitor
+</div>
+<p>At 3–5 years, interviewers usually want to see <b>how you think</b>, not just which API you remember.</p>
+<div class="note"><b>Strong answer pattern:</b> "First I would measure and isolate the problem. Then I would identify the root cause, choose a targeted fix, validate it with metrics/tests, and consider the trade-offs."</div>
+</div>
+
+<div class="card">
+<h2>1. A Component Re-renders 500 Times. How Do You Debug It?</h2>
+<div class="answer"><b>Answer:</b> First reproduce the issue and use React DevTools Profiler to identify which component is rendering and what triggered it. Then inspect state updates, parent renders, Context changes and unstable object/function props. I would look for effects that update state repeatedly, changing dependencies and unnecessary derived state. I would fix the root cause before adding memoization.</div>
+<div class="diagram">Profiler
+  ↓
+Which component?
+  ↓
+Why did it render?
+ ├── Parent
+ ├── State
+ ├── Context
+ └── Props
+  ↓
+Fix source
+  ↓
+Measure again
+</div>
+<pre>// Suspicious effect
+useEffect(() =&gt; {
+  setData({ ...data });
+}, [data]); // creates a new object → update → effect → loop</pre>
+</div>
+
+<div class="card">
+<h2>2. Your App Becomes Slow After Adding Redux. What Investigate?</h2>
+<div class="answer"><b>Answer:</b> I would not assume Redux itself is the problem. I would profile renders and inspect selectors, subscriptions, large store updates and state placement. I would check whether components subscribe to a large slice when they need only one field, whether reducers create unnecessary new references, and whether frequently changing UI state was moved into global state unnecessarily.</div>
+<ul>
+<li>React Profiler.</li>
+<li>Redux DevTools.</li>
+<li>Selector granularity.</li>
+<li>Large/normalized state.</li>
+<li>Unnecessary global UI state.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>3. A List of 50,000 Items Freezes the UI. How Optimize?</h2>
+<div class="answer"><b>Answer:</b> I would avoid rendering all 50,000 DOM nodes. First I would virtualize the list. If the dataset is remote, I would also use server-side pagination/cursor fetching. Then I would profile row rendering and reduce unnecessary calculations/re-renders.</div>
+<div class="diagram">50,000 records
+      ↓
+Server pagination/cursor
+      ↓
+Visible subset
+      ↓
+Virtualized rendering
+      ↓
+~visible rows only
+</div>
+<div class="note">Do not solve a large-list problem by simply adding React.memo to every row. Rendering fewer rows is usually the bigger win.</div>
+</div>
+
+<div class="card">
+<h2>4. API Requests Fire Twice in Development. Why?</h2>
+<div class="answer"><b>Answer:</b> In React development with StrictMode, effects can be intentionally re-run through extra setup/cleanup checks. This can expose code that is not resilient to remounting. I would make the effect correctly clean up and make the request logic safe rather than disabling StrictMode just to hide the symptom.</div>
+<pre>useEffect(() =&gt; {
+  const controller = new AbortController();
+
+  fetch("/api/users", {
+    signal: controller.signal
+  });
+
+  return () =&gt; controller.abort();
+}, []);</pre>
+<p>Also verify that the duplicate call is actually from StrictMode and not from changing dependencies, multiple component instances or an accidental render/effect loop.</p>
+</div>
+
+<div class="card">
+<h2>5. How Would You Implement Optimistic Updates?</h2>
+<div class="answer"><b>Answer:</b> Update the UI immediately, send the mutation, then confirm the result. If the server rejects it, restore the previous state and show an error. I would also consider whether the operation is safe to perform optimistically and how concurrent changes are reconciled.</div>
+<div class="diagram">User action
+   ↓
+Save previous state
+   ↓
+Update UI immediately
+   ↓
+API mutation
+ ├── Success → Confirm/invalidate
+ └── Failure → Rollback + error
+</div>
+</div>
+
+<div class="card">
+<h2>6. How Would You Prevent Duplicate API Calls?</h2>
+<div class="answer"><b>Answer:</b> It depends on why the duplicate occurs. I would first identify whether it comes from multiple renders, StrictMode, repeated clicks, duplicate component instances or concurrent requests. Then I would use the appropriate solution: request deduplication/cache, disabled submission state, AbortController, a query library, or server-side idempotency for critical mutations.</div>
+<table>
+<tr><th>Problem</th><th>Possible solution</th></tr>
+<tr><td>Repeated GET</td><td>Cache/query deduplication.</td></tr>
+<tr><td>Double submit</td><td>Disable/guard + server idempotency.</td></tr>
+<tr><td>Stale request</td><td>Abort/cancel or ignore stale result.</td></tr>
+<tr><td>Multiple consumers</td><td>Shared server-state cache.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. Cancel an In-flight Request When a Component Unmounts</h2>
+<div class="answer"><b>Answer:</b> Use AbortController and abort the request during effect cleanup. Also handle AbortError separately so normal cancellation is not treated as a real application error.</div>
+<pre>useEffect(() =&gt; {
+  const controller = new AbortController();
+
+  async function load() {
+    try {
+      const response = await fetch("/api/data", {
+        signal: controller.signal
+      });
+
+      const data = await response.json();
+      setData(data);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setError(error);
+      }
+    }
+  }
+
+  load();
+
+  return () =&gt; controller.abort();
+}, []);</pre>
+</div>
+
+<div class="card">
+<h2>8. How Would You Implement RBAC?</h2>
+<div class="answer"><b>Answer:</b> Keep authorization decisions on the server. The frontend can use user roles/permissions to hide or disable UI and protect routes for user experience, but it must never be the final security boundary.</div>
+<div class="diagram">User
+ ↓
+Authentication
+ ↓
+Session + permissions
+ ↓
+Frontend
+ ├── Hide/disable UI
+ └── Route guards
+        +
+       Backend
+        ↓
+Authoritative authorization
+</div>
+<pre>const canEdit =
+  permissions.includes("project:edit");</pre>
+<div class="note"><b>Critical:</b> Never trust a hidden button as authorization.</div>
+</div>
+
+<div class="card">
+<h2>9. How Would You Design a Reusable Data Table?</h2>
+<div class="answer"><b>Answer:</b> Separate the table engine from feature-specific data. Define a column configuration, stable row IDs, sorting/filtering models, pagination and selection. For large datasets, support server-side operations and virtualization. Keep cell rendering extensible.</div>
+<div class="diagram">DataTable
+├── Columns config
+├── Header
+├── Filters
+├── Virtualized rows
+├── Selection
+├── Pagination
+└── Cell renderers
+        ↓
+Feature data/API
+</div>
+</div>
+
+<div class="card">
+<h2>10. How Would You Implement Dark Mode Across an Application?</h2>
+<div class="answer"><b>Answer:</b> Use semantic design tokens/CSS variables rather than hardcoding colors inside components. Keep the selected theme at an application-level boundary, persist the preference if needed, and initialize it early enough to reduce theme flashing.</div>
+<pre>:root {
+  --bg: #ffffff;
+  --text: #111827;
+}
+
+[data-theme="dark"] {
+  --bg: #111827;
+  --text: #f9fafb;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}</pre>
+</div>
+
+<div class="card">
+<h2>11. How Would You Share State Between Unrelated Components?</h2>
+<div class="answer"><b>Answer:</b> First identify whether the state is actually shared client state or server state. For small local sharing, lift state to a common parent. For distant components, Context or a state store can be appropriate. For server data, use a server-state/cache solution rather than treating API data as ordinary global state.</div>
+<div class="note">Avoid globalizing state simply because prop drilling is inconvenient. Choose the smallest appropriate ownership boundary.</div>
+</div>
+
+<div class="card">
+<h2>12. How Would You Implement Offline Support?</h2>
+<div class="answer"><b>Answer:</b> Define what should work offline first. Cache important read data locally, persist drafts, queue supported mutations and synchronize when connectivity returns. For collaborative or conflicting data, define conflict-resolution rules.</div>
+<div class="diagram">Online
+ ↓
+API + local cache
+ ↓
+Offline
+ ↓
+Local reads / queued writes
+ ↓
+Network restored
+ ↓
+Sync
+ ↓
+Resolve conflicts
+</div>
+</div>
+
+<div class="card">
+<h2>13. How Would You Optimize a Dashboard with Multiple Charts?</h2>
+<div class="answer"><b>Answer:</b> Treat each widget independently. Fetch/cache data per widget, render independent loading/error states, lazy-load heavy charting code and avoid rendering charts that are not visible. I would profile chart rendering and reduce unnecessary updates.</div>
+<ul>
+<li>Independent queries.</li>
+<li>Shared server-state cache.</li>
+<li>Code splitting for heavy charts.</li>
+<li>Visibility-based rendering where useful.</li>
+<li>Memoization only after profiling.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>14. How Would You Manage Forms with 100+ Fields?</h2>
+<div class="answer"><b>Answer:</b> Avoid making the entire form re-render on every keystroke. Use a form library with efficient subscriptions, keep field components isolated, use schema-driven validation and consider sections/virtualization for very large forms.</div>
+<div class="diagram">Large Form
+├── Section A
+├── Section B
+├── Section C
+└── Section D
+      ↓
+Field-level subscriptions
+      ↓
+Only affected fields update
+</div>
+</div>
+
+<div class="card">
+<h2>15. How Would You Migrate a Large React Application Incrementally?</h2>
+<div class="answer"><b>Answer:</b> Avoid a big-bang rewrite. First define boundaries and target architecture, then migrate feature by feature. Keep old and new implementations interoperable, add tests around critical behavior, and measure each migration.</div>
+<div class="diagram">Legacy app
+   ↓
+Boundary
+   ↓
+Migrate Feature A
+   ↓
+Migrate Feature B
+   ↓
+Migrate Feature C
+   ↓
+Remove legacy boundary
+</div>
+</div>
+
+<div class="card">
+<h2>16. How Would You Handle Feature Flags?</h2>
+<div class="answer"><b>Answer:</b> Centralize flag evaluation and keep flags typed/documented. Decide whether each flag is build-time or runtime. For important releases, support gradual rollout and quick rollback. Remove temporary flags after the feature is stable.</div>
+<pre>if (flags.newDashboard) {
+  return &lt;NewDashboard /&gt;;
+}
+
+return &lt;OldDashboard /&gt;;</pre>
+<div class="note">Feature flags are temporary architecture. Unused flags should not remain forever.</div>
+</div>
+
+<div class="card">
+<h2>17. How Would You Structure a Monorepo with Shared UI Components?</h2>
+<div class="answer"><b>Answer:</b> Separate applications and reusable packages with clear dependency boundaries.</div>
+<pre>repo/
+├── apps/
+│   ├── admin/
+│   └── customer/
+├── packages/
+│   ├── ui/
+│   ├── eslint-config/
+│   ├── tsconfig/
+│   └── utils/
+└── package.json</pre>
+<p>The shared UI package should contain reusable primitives, while business-specific components should remain in the relevant application/feature package.</p>
+</div>
+
+<div class="card">
+<h2>18. How Would You Debug a Memory Leak in React?</h2>
+<div class="answer"><b>Answer:</b> Reproduce the issue and use browser memory tools and React profiling. Look for effects that leave event listeners, timers, subscriptions, observers or sockets active. Check whether objects remain referenced after unmount and verify cleanup.</div>
+<pre>useEffect(() =&gt; {
+  const handler = () =&gt; {};
+  window.addEventListener("resize", handler);
+
+  return () =&gt; {
+    window.removeEventListener("resize", handler);
+  };
+}, []);</pre>
+<div class="note">A growing heap is not automatically a leak. Confirm retained objects and repeated growth over controlled cycles.</div>
+</div>
+
+<div class="card">
+<h2>19. How Would You Ensure Accessibility in a Complex Form?</h2>
+<div class="answer"><b>Answer:</b> Start with semantic HTML and native controls. Give every field an accessible name, connect errors to inputs, preserve logical keyboard order, manage focus after validation/step changes, and test with keyboard and screen-reader tooling.</div>
+<pre>&lt;label htmlFor="email"&gt;Email&lt;/label&gt;
+&lt;input
+  id="email"
+  aria-describedby="email-error"
+  aria-invalid={!!error}
+/&gt;
+{error && (
+  &lt;p id="email-error"&gt;{error}&lt;/p&gt;
+)}</pre>
+</div>
+
+<div class="card">
+<h2>20. How Would You Profile and Reduce Bundle Size?</h2>
+<div class="answer"><b>Answer:</b> Measure the production bundle first using a bundle analyzer and inspect which dependencies/chunks are large. Then remove unnecessary dependencies, improve imports, enable tree shaking, split heavy routes/features and lazy-load non-critical code. Finally verify the result with performance metrics.</div>
+<div class="diagram">Build
+ ↓
+Bundle analyzer
+ ↓
+Find largest chunks
+ ↓
+Dependency analysis
+ ↓
+Tree shaking / splitting / lazy loading
+ ↓
+Rebuild
+ ↓
+Measure again
+</div>
+</div>
+
+<div class="card">
+<h2>21. Cross-Scenario Engineering Principles</h2>
+<table>
+<tr><th>Principle</th><th>What to say in an interview</th></tr>
+<tr><td>Measure first</td><td>Use evidence instead of guessing.</td></tr>
+<tr><td>Smallest ownership</td><td>Keep state close to where it is used.</td></tr>
+<tr><td>Server state ≠ client state</td><td>Use caching/synchronization strategies for API data.</td></tr>
+<tr><td>Cleanup</td><td>Remove timers, listeners, subscriptions and requests.</td></tr>
+<tr><td>Stable identity</td><td>Use stable keys and IDs.</td></tr>
+<tr><td>Large data</td><td>Paginate, virtualize and fetch only what is needed.</td></tr>
+<tr><td>Security</td><td>Frontend checks improve UX; backend authorization is authoritative.</td></tr>
+<tr><td>Resilience</td><td>Design loading, error, retry, offline and rollback behavior.</td></tr>
+<tr><td>Scalability</td><td>Prefer clear boundaries and extensible interfaces.</td></tr>
+<tr><td>Trade-offs</td><td>Explain cost, complexity and why the choice fits the requirement.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>22. Most Important Follow-up Questions</h2>
+<ol>
+<li>How would you measure whether your solution improved performance?</li>
+<li>What happens if the API fails?</li>
+<li>What happens if the user clicks twice?</li>
+<li>What happens if the network disconnects?</li>
+<li>What happens when the component unmounts?</li>
+<li>How does this scale to 100,000 records?</li>
+<li>How would you test this?</li>
+<li>What is the accessibility behavior?</li>
+<li>What happens if two users modify the same data?</li>
+<li>How would you roll back a bad deployment?</li>
+<li>What state belongs locally and what belongs globally?</li>
+<li>What would you cache?</li>
+<li>What would you lazy-load?</li>
+<li>What would you monitor in production?</li>
+<li>What trade-off did you make?</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>23. Quick Revision</h2>
+<ul>
+<li>✔ Profile before optimizing.</li>
+<li>✔ Find the root cause before adding memoization.</li>
+<li>✔ 50,000 rows → virtualization + server-side data strategy.</li>
+<li>✔ StrictMode can expose duplicate-effect behavior in development.</li>
+<li>✔ Optimistic update → update → request → confirm/rollback.</li>
+<li>✔ Duplicate requests → identify cause, then dedupe/guard/cancel.</li>
+<li>✔ AbortController → cancel obsolete fetch work.</li>
+<li>✔ RBAC → frontend UX + backend authorization.</li>
+<li>✔ Reusable table → configuration + stable IDs + extensible renderers.</li>
+<li>✔ Dark mode → design tokens/CSS variables.</li>
+<li>✔ Unrelated state → lift, Context/store, or server-state cache as appropriate.</li>
+<li>✔ Offline → cache + queue + sync + conflict strategy.</li>
+<li>✔ Dashboard → independent widgets + caching + lazy charts.</li>
+<li>✔ 100+ fields → field-level subscriptions/efficient form architecture.</li>
+<li>✔ Migration → incremental feature-by-feature approach.</li>
+<li>✔ Feature flags → centralized, documented, removable.</li>
+<li>✔ Monorepo → apps + shared packages + boundaries.</li>
+<li>✔ Memory leak → inspect retained objects and missing cleanup.</li>
+<li>✔ Accessibility → semantic HTML + labels + errors + keyboard + focus.</li>
+<li>✔ Bundle → analyze → optimize → measure again.</li>
+</ul>
+</div>
+
+</body>
+</html>

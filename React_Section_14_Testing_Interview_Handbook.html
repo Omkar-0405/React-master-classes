@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Testing - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#7c2d12;color:#fff;padding:28px;border-radius:12px}
+h2{color:#9a3412}h3{color:#c2410c}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ffedd5}
+code{background:#fff7ed;padding:2px 5px;border-radius:4px}.note{background:#fff7ed;border-left:4px solid #ea580c;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 14 — React Testing</h1>
+<p>Simple Interview Handbook • Jest • React Testing Library • Mocking • Snapshots • Unit • Integration • E2E • Cypress • Playwright</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Why Do We Test?</h2>
+<p>Testing gives confidence that software behaves correctly and continues to behave correctly after changes.</p>
+<div class="diagram">Code change
+   ↓
+Run tests
+   ↓
+Pass → confidence
+Fail → investigate
+   ↓
+Fix / improve
+</div>
+<p>Good tests focus on important behavior rather than implementation details.</p>
+<div class="note"><b>Interview idea:</b> A strong test suite usually has many focused unit/component tests, fewer integration tests, and a smaller number of critical E2E tests.</div>
+</div>
+
+<div class="card">
+<h2>2. Testing Pyramid</h2>
+<div class="diagram">        /\
+       /E2E\
+      /------\
+     / Integr.\
+    /----------\
+   / Unit/Comp. \
+  /--------------\
+
+More tests → lower layers
+Fewer tests → expensive upper layers
+</div>
+<p>This is a useful mental model, not a strict rule. Modern teams may use different testing distributions depending on the product.</p>
+</div>
+
+<div class="card">
+<h2>3. Jest</h2>
+<p><b>Jest</b> is a JavaScript testing framework with test runners, assertions, mocking utilities and coverage support.</p>
+<pre>function add(a, b) {
+  return a + b;
+}
+
+test("adds two numbers", () =&gt; {
+  expect(add(2, 3)).toBe(5);
+});</pre>
+<p>Jest can test JavaScript logic and can be used with React projects alongside a UI testing library.</p>
+</div>
+
+<div class="card">
+<h2>Jest — Common Matchers</h2>
+<pre>expect(value).toBe(10);
+
+expect(obj).toEqual({
+  id: 1,
+  name: "Omkar"
+});
+
+expect(items).toContain("React");
+
+expect(result).toBeTruthy();
+expect(result).toBeFalsy();
+
+expect(fn).toHaveBeenCalled();
+
+expect(() =&gt; risky()).toThrow();</pre>
+<p><code>toBe</code> is generally for exact/primitive equality; <code>toEqual</code> compares object/array contents.</p>
+</div>
+
+<div class="card">
+<h2>4. React Testing Library</h2>
+<p><b>React Testing Library (RTL)</b> encourages testing React components the way users interact with them.</p>
+<pre>import {
+  render,
+  screen
+} from "@testing-library/react";
+
+test("shows heading", () =&gt; {
+  render(&lt;Welcome name="Omkar" /&gt;);
+
+  expect(
+    screen.getByRole("heading", {
+      name: /welcome/i
+    })
+  ).toBeInTheDocument();
+});</pre>
+<div class="note"><b>Core philosophy:</b> Prefer accessible/user-facing queries over selectors tied to implementation details.</div>
+</div>
+
+<div class="card">
+<h2>5. RTL Queries</h2>
+<table>
+<tr><th>Query</th><th>Typical use</th></tr>
+<tr><td><code>getByRole</code></td><td>Preferred for accessible interactive/UI elements.</td></tr>
+<tr><td><code>getByLabelText</code></td><td>Form controls with labels.</td></tr>
+<tr><td><code>getByText</code></td><td>Visible text.</td></tr>
+<tr><td><code>getByPlaceholderText</code></td><td>When placeholder is the useful available identifier.</td></tr>
+<tr><td><code>getByTestId</code></td><td>Fallback when a suitable user-facing query is not available.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>get vs query vs find</h2>
+<table>
+<tr><th>Query</th><th>Behavior</th></tr>
+<tr><td><code>getBy...</code></td><td>Returns immediately; throws if not found.</td></tr>
+<tr><td><code>queryBy...</code></td><td>Returns null if not found; useful for asserting absence.</td></tr>
+<tr><td><code>findBy...</code></td><td>Returns a Promise and waits for an async element to appear.</td></tr>
+</table>
+<pre>expect(
+  screen.queryByText("Error")
+).not.toBeInTheDocument();
+
+const user = await screen.findByText("Omkar");</pre>
+</div>
+
+<div class="card">
+<h2>6. User Interactions</h2>
+<p>Use <b>user-event</b> for realistic user interactions when possible.</p>
+<pre>import userEvent from "@testing-library/user-event";
+
+test("user can type email", async () =&gt; {
+  const user = userEvent.setup();
+
+  render(&lt;Login /&gt;);
+
+  await user.type(
+    screen.getByLabelText(/email/i),
+    "a@example.com"
+  );
+
+  expect(
+    screen.getByDisplayValue("a@example.com")
+  ).toBeInTheDocument();
+});</pre>
+</div>
+
+<div class="card">
+<h2>7. Mocking</h2>
+<p><b>Mocking</b> replaces a real dependency with controlled test behavior.</p>
+<div class="diagram">Component
+   ↓
+Real API ❌
+   ↓
+Mock API / Mock function
+   ↓
+Predictable test
+</div>
+<p>Mocking is useful for network requests, timers, modules, functions and external services.</p>
+</div>
+
+<div class="card">
+<h2>Jest Function Mock</h2>
+<pre>const onSave = jest.fn();
+
+render(&lt;Form onSave={onSave} /&gt;);
+
+await user.click(
+  screen.getByRole("button", { name: /save/i })
+);
+
+expect(onSave).toHaveBeenCalledTimes(1);</pre>
+</div>
+
+<div class="card">
+<h2>8. Mocking API Requests</h2>
+<p>For UI tests, a network-mocking tool such as <b>Mock Service Worker (MSW)</b> can intercept requests while allowing the application to use its normal API code.</p>
+<pre>server.use(
+  http.get("/api/users", () =&gt; {
+    return HttpResponse.json([
+      { id: 1, name: "Omkar" }
+    ]);
+  })
+);</pre>
+<p>This avoids tightly coupling component tests to a particular HTTP client implementation.</p>
+</div>
+
+<div class="card">
+<h2>9. Snapshot Testing</h2>
+<p>Snapshot testing stores a serialized representation of output and compares future test runs against it.</p>
+<pre>expect(container.firstChild)
+  .toMatchSnapshot();</pre>
+<p>If output changes, the snapshot test fails until the difference is reviewed.</p>
+<div class="note"><b>Important:</b> Do not blindly update snapshots. A passing snapshot only means the output matches the stored snapshot, not that the UI is correct.</div>
+</div>
+
+<div class="card">
+<h2>Snapshot Testing — Pros & Cons</h2>
+<table>
+<tr><th>Pros</th><th>Cons</th></tr>
+<tr><td>Quick way to detect unexpected output changes.</td><td>Large snapshots can become noisy.</td></tr>
+<tr><td>Useful for stable serialized structures.</td><td>Developers may update snapshots without reviewing behavior.</td></tr>
+<tr><td>Can document expected structure.</td><td>Often less behavior-focused than user-oriented tests.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>10. Unit Testing</h2>
+<p>A unit test focuses on a small piece of logic in isolation.</p>
+<pre>function calculateTotal(price, tax) {
+  return price + price * tax;
+}
+
+test("calculates total", () =&gt; {
+  expect(calculateTotal(100, 0.1))
+    .toBe(110);
+});</pre>
+<p>Unit tests are fast and useful for pure functions, reducers, utilities and business logic.</p>
+</div>
+
+<div class="card">
+<h2>11. Component Testing</h2>
+<p>A component test checks a React component's rendered behavior, interaction and state changes.</p>
+<pre>test("increments count", async () =&gt; {
+  const user = userEvent.setup();
+
+  render(&lt;Counter /&gt;);
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /increment/i
+    })
+  );
+
+  expect(
+    screen.getByText("1")
+  ).toBeInTheDocument();
+});</pre>
+</div>
+
+<div class="card">
+<h2>12. Integration Testing</h2>
+<p>Integration tests verify that multiple pieces work together.</p>
+<div class="diagram">Login Component
+      +
+Form Validation
+      +
+API Mock
+      +
+Auth State
+      ↓
+Integration Test
+      ↓
+Expected user behavior
+</div>
+<p>Example: render a login form, type credentials, submit, mock the API response and verify that the user sees the authenticated UI.</p>
+</div>
+
+<div class="card">
+<h2>Unit vs Integration</h2>
+<table>
+<tr><th>Unit</th><th>Integration</th></tr>
+<tr><td>Small isolated behavior.</td><td>Multiple parts working together.</td></tr>
+<tr><td>Fast.</td><td>Usually slower.</td></tr>
+<tr><td>Mocks more dependencies when needed.</td><td>Often uses fewer internal mocks.</td></tr>
+<tr><td>Great for pure logic.</td><td>Great for realistic application flows within the frontend.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>13. E2E Testing</h2>
+<p><b>End-to-end (E2E)</b> tests verify an application through a real browser-like flow, often across frontend and backend boundaries.</p>
+<div class="diagram">Browser
+  ↓
+React App
+  ↓
+API
+  ↓
+Database / services
+  ↓
+Real user flow
+</div>
+<p>E2E tests are powerful but generally slower and more expensive to maintain than unit/component tests.</p>
+</div>
+
+<div class="card">
+<h2>14. Cypress</h2>
+<p><b>Cypress</b> is a browser-based testing framework commonly used for E2E and component testing.</p>
+<pre>describe("login", () =&gt; {
+  it("logs in", () =&gt; {
+    cy.visit("/login");
+
+    cy.get("[name=email]")
+      .type("user@example.com");
+
+    cy.get("[name=password]")
+      .type("secret");
+
+    cy.contains("button", "Login")
+      .click();
+
+    cy.url()
+      .should("include", "/dashboard");
+  });
+});</pre>
+<p>Cypress provides automatic waiting, browser tooling and an interactive runner.</p>
+</div>
+
+<div class="card">
+<h2>15. Playwright</h2>
+<p><b>Playwright</b> is a browser automation/testing framework with support for Chromium, Firefox and WebKit.</p>
+<pre>import { test, expect } from "@playwright/test";
+
+test("user can log in", async ({ page }) =&gt; {
+  await page.goto("/login");
+
+  await page.getByLabel("Email")
+    .fill("user@example.com");
+
+  await page.getByLabel("Password")
+    .fill("secret");
+
+  await page.getByRole("button", {
+    name: "Login"
+  }).click();
+
+  await expect(page).toHaveURL(/dashboard/);
+});</pre>
+</div>
+
+<div class="card">
+<h2>Cypress vs Playwright</h2>
+<table>
+<tr><th>Cypress</th><th>Playwright</th></tr>
+<tr><td>Strong interactive developer experience.</td><td>Strong cross-browser automation.</td></tr>
+<tr><td>Runs closely with the browser/application.</td><td>Automates browser contexts through Playwright APIs.</td></tr>
+<tr><td>Popular for component/E2E testing.</td><td>Popular for E2E and multi-browser testing.</td></tr>
+<tr><td>Different architecture and tradeoffs.</td><td>Supports Chromium, Firefox and WebKit.</td></tr>
+</table>
+<p>Choose based on team needs and project architecture rather than assuming one is universally better.</p>
+</div>
+
+<div class="card">
+<h2>16. Test Doubles</h2>
+<table>
+<tr><th>Type</th><th>Meaning</th></tr>
+<tr><td>Mock</td><td>Controlled replacement that can also verify interactions.</td></tr>
+<tr><td>Stub</td><td>Provides predefined behavior/data.</td></tr>
+<tr><td>Spy</td><td>Observes calls to a function while potentially retaining behavior.</td></tr>
+<tr><td>Fake</td><td>Working lightweight implementation used instead of the real dependency.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>17. Testing Async UI</h2>
+<pre>test("loads user", async () =&gt; {
+  render(&lt;User /&gt;);
+
+  expect(
+    screen.getByText(/loading/i)
+  ).toBeInTheDocument();
+
+  expect(
+    await screen.findByText("Omkar")
+  ).toBeInTheDocument();
+});</pre>
+<p>For async UI, wait for observable behavior rather than adding arbitrary delays.</p>
+</div>
+
+<div class="card">
+<h2>18. What Should You Test?</h2>
+<ul>
+<li>Important user-visible behavior.</li>
+<li>Business rules.</li>
+<li>Critical interactions.</li>
+<li>Error and loading states.</li>
+<li>Authentication/authorization flows.</li>
+<li>Regression-prone areas.</li>
+<li>Important edge cases.</li>
+</ul>
+<div class="note">Avoid testing implementation details such as private component state when the same behavior can be verified through the UI.</div>
+</div>
+
+<div class="card">
+<h2>19. Good Test Example</h2>
+<pre>// Behavior-focused
+test("shows validation error for empty email", async () =&gt; {
+  const user = userEvent.setup();
+
+  render(&lt;LoginForm /&gt;);
+
+  await user.click(
+    screen.getByRole("button", { name: /login/i })
+  );
+
+  expect(
+    screen.getByText("Email is required")
+  ).toBeInTheDocument();
+});</pre>
+<p>The test describes what the user experiences rather than how the component internally stores the error.</p>
+</div>
+
+<div class="card">
+<h2>20. Test Independence</h2>
+<p>Tests should normally be independent so the result of one test does not depend on another test's execution order.</p>
+<pre>beforeEach(() =&gt; {
+  // reset mocks/state/test data
+});
+
+afterEach(() =&gt; {
+  // cleanup resources
+});</pre>
+<p>Shared mutable state is a common cause of flaky tests.</p>
+</div>
+
+<div class="card">
+<h2>21. Flaky Tests</h2>
+<p>A flaky test sometimes passes and sometimes fails without a relevant code change.</p>
+<ul>
+<li>Waiting for arbitrary timeouts.</li>
+<li>Race conditions.</li>
+<li>Shared test state.</li>
+<li>Unstable external services.</li>
+<li>Non-deterministic data.</li>
+<li>Incorrect async handling.</li>
+</ul>
+<div class="note"><b>Fix:</b> Wait for real conditions, isolate state, control dependencies and make test data deterministic.</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is Jest?</b> A JavaScript testing framework with a runner, assertions, mocking and coverage features.</li>
+<li><b>What is React Testing Library?</b> A UI testing library focused on testing React behavior through user-facing interactions and accessible queries.</li>
+<li><b>Why use getByRole?</b> It encourages tests based on accessible semantics and how users/assistive technology identify elements.</li>
+<li><b>getBy vs queryBy vs findBy?</b> get throws immediately if missing, query returns null if missing, find waits asynchronously for the element.</li>
+<li><b>What is mocking?</b> Replacing a dependency with controlled behavior for a test.</li>
+<li><b>What is a snapshot test?</b> A test that compares serialized output with a stored snapshot.</li>
+<li><b>What is unit testing?</b> Testing a small piece of logic in isolation.</li>
+<li><b>What is integration testing?</b> Testing multiple parts working together.</li>
+<li><b>What is E2E testing?</b> Testing a complete user flow through a browser and application stack.</li>
+<li><b>Cypress vs Playwright?</b> Both support browser testing; Cypress emphasizes its interactive browser-based experience, while Playwright provides broad cross-browser automation including Chromium, Firefox and WebKit.</li>
+<li><b>Should every component have a snapshot?</b> No. Prefer meaningful behavior tests; use snapshots selectively.</li>
+<li><b>Should implementation details be tested?</b> Usually no; test observable behavior.</li>
+<li><b>How do you test API calls?</b> Mock/intercept network behavior and verify UI behavior rather than relying on live external services.</li>
+<li><b>What is MSW?</b> A tool that intercepts network requests and returns controlled responses for tests.</li>
+<li><b>How do you test async components?</b> Use async queries such as findBy or waitFor around observable state changes.</li>
+<li><b>What causes flaky tests?</b> Timing assumptions, shared state, race conditions, unstable dependencies and incorrect async handling.</li>
+<li><b>Why should tests be independent?</b> So order and parallel execution do not change the result.</li>
+<li><b>What is test coverage?</b> A measurement of which code/branches/statements are exercised by tests; high coverage does not automatically mean high-quality tests.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A button works only when a specific internal state variable changes.</b><br>Prefer testing the user action and resulting UI rather than inspecting that state variable directly.</li>
+<li><b>An API test fails when the internet is unavailable.</b><br>Mock/intercept the network so the test is deterministic and does not depend on external services.</li>
+<li><b>A component shows loading, then data.</b><br>Assert the loading state and await the data using findBy/waitFor based on the actual behavior.</li>
+<li><b>getByText fails because the element is split across nested elements.</b><br>Use a more appropriate semantic query such as getByRole or a carefully chosen text/function matcher.</li>
+<li><b>You need to assert that an error is absent.</b><br>Use queryBy and assert that the result is null/not in the document.</li>
+<li><b>A test passes locally but fails in CI because of timing.</b><br>Remove arbitrary sleeps, wait for actual conditions and investigate race conditions/environment differences.</li>
+<li><b>Ten tests modify the same global mock.</b><br>Reset/restore mocks between tests and avoid shared mutable state.</li>
+<li><b>A snapshot changed because a CSS class changed.</b><br>Review whether the change affects behavior; do not automatically update the snapshot.</li>
+<li><b>A 100-line snapshot changes every week.</b><br>Prefer smaller behavior-focused assertions that verify meaningful user-visible outcomes.</li>
+<li><b>You need to test a pure currency calculation.</b><br>Write a unit test with several normal and edge cases.</li>
+<li><b>You need to test login form + API + auth state.</b><br>Use an integration-style test with mocked network behavior.</li>
+<li><b>You need to verify a real checkout flow.</b><br>Use a focused E2E test because the flow spans multiple application layers.</li>
+<li><b>You need to test the same checkout flow in multiple browsers.</b><br>Playwright is a strong option because it supports Chromium, Firefox and WebKit.</li>
+<li><b>A team wants E2E tests for every tiny utility.</b><br>Explain that unit tests are cheaper and faster for isolated logic; reserve E2E for important cross-system user journeys.</li>
+<li><b>A test clicks a div with onClick.</b><br>Consider whether the production component should be a button; test accessible behavior rather than preserving an inaccessible implementation.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Jest = JS testing framework.</li>
+<li>✔ RTL = user-focused React UI testing.</li>
+<li>✔ Prefer accessible queries such as getByRole.</li>
+<li>✔ getBy = immediate/throws.</li>
+<li>✔ queryBy = null if absent.</li>
+<li>✔ findBy = async wait.</li>
+<li>✔ Mock = controlled dependency.</li>
+<li>✔ Snapshot = compare serialized output.</li>
+<li>✔ Unit = isolated logic.</li>
+<li>✔ Integration = multiple parts together.</li>
+<li>✔ E2E = complete browser/user flow.</li>
+<li>✔ Cypress = browser testing with strong interactive DX.</li>
+<li>✔ Playwright = cross-browser automation.</li>
+<li>✔ Test behavior, not implementation details.</li>
+<li>✔ Avoid arbitrary timeouts.</li>
+<li>✔ Keep tests independent.</li>
+<li>✔ Coverage measures exercised code, not test quality.</li>
+</ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Rendering Internals - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#1d4ed8;color:#fff;padding:28px;border-radius:12px}
+h2{color:#1d4ed8}h3{color:#1e40af}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#dbeafe}
+code{background:#eff6ff;padding:2px 5px;border-radius:4px}.note{background:#eff6ff;border-left:4px solid #2563eb;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 6 — React Rendering Internals</h1>
+<p>Simple Interview Handbook • Fiber • Reconciliation • Virtual DOM • Concurrent Rendering • Batching • Strict Mode</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Big Picture</h2>
+<p>React rendering can be understood as two major jobs: <b>render</b> and <b>commit</b>.</p>
+<div class="diagram">State / Props / Context change
+              ↓
+          RENDER PHASE
+     Calculate next UI tree
+              ↓
+        Reconciliation
+              ↓
+          COMMIT PHASE
+     Apply necessary DOM changes
+              ↓
+           Browser
+              ↓
+            Screen</div>
+<div class="note"><b>Important:</b> Rendering is mainly calculation. The commit phase is where React applies the required changes to the host environment, such as the browser DOM.</div>
+</div>
+
+<div class="card">
+<h2>2. Fiber Architecture</h2>
+<p><b>Fiber</b> is React's internal architecture for representing work on the component tree and managing that work over time.</p>
+<p>A <b>Fiber node</b> stores information React needs about a component/element, including its type, relationships in the tree, pending work and other bookkeeping.</p>
+<div class="diagram">Fiber tree
+
+        App
+       /   \
+   Header   Main
+            /  \
+         List  Sidebar
+
+Each node is represented internally by a Fiber.
+</div>
+<p>Fiber made it possible for React to organize rendering work into smaller units and support interruptible/concurrent rendering behavior.</p>
+</div>
+
+<div class="card">
+<h2>Fiber Node — Simple View</h2>
+<p>You do not need to memorize every internal field for most interviews. Know the concept.</p>
+<table>
+<tr><th>Concept</th><th>Simple meaning</th></tr>
+<tr><td>Fiber</td><td>A unit/node of React's internal work representation.</td></tr>
+<tr><td>Child</td><td>Reference to the first child Fiber.</td></tr>
+<tr><td>Sibling</td><td>Reference to another child at the same level.</td></tr>
+<tr><td>Return</td><td>Reference toward the parent Fiber.</td></tr>
+<tr><td>Props / type</td><td>Information used to describe what the node represents.</td></tr>
+<tr><td>Pending work</td><td>Information React uses to track work that needs processing.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>3. Scheduler</h2>
+<p>React needs to decide <b>when</b> rendering work should be performed. Its scheduling system helps React prioritize and coordinate work instead of treating every update as equally urgent.</p>
+<div class="diagram">Updates arrive
+     ↓
+React assigns priority
+     ↓
+Work is scheduled
+     ↓
+Higher-priority work can be handled first
+     ↓
+Render
+     ↓
+Commit</div>
+<p>Think of the scheduler as a traffic controller for rendering work, not as the code that directly updates the DOM.</p>
+</div>
+
+<div class="card">
+<h2>4. Incremental Rendering</h2>
+<p>Fiber lets React break rendering work into smaller units rather than treating a large render as one indivisible operation.</p>
+<div class="diagram">Large render
+     ↓
+[Work 1] → [Work 2] → [Work 3] → [Work 4]
+              ↑
+       React can manage work
+       between units</div>
+<p>This architecture is important for React's concurrent rendering capabilities.</p>
+</div>
+
+<div class="card">
+<h2>5. Reconciliation</h2>
+<p><b>Reconciliation</b> is React's process of comparing the previous React element tree with the next one and determining what needs to change.</p>
+<div class="diagram">Previous tree          Next tree
+     │                     │
+     └────── Compare ──────┘
+               ↓
+        Determine changes
+               ↓
+        Commit required work</div>
+</div>
+
+<div class="card">
+<h2>6. Tree Diffing</h2>
+<p>React uses heuristics to compare trees efficiently rather than performing a general-purpose minimum-edit-tree algorithm.</p>
+<ul>
+<li>If element types differ, React generally replaces the old subtree.</li>
+<li>If the same element type remains, React updates relevant props/attributes and continues comparing children.</li>
+<li>Keys help React match items in collections.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>7. Why O(n)?</h2>
+<p>A naive comparison of arbitrary trees can be very expensive. React uses practical assumptions and heuristics to make reconciliation approximately <b>O(n)</b> for common tree comparisons.</p>
+<div class="diagram">General tree diff
+Potentially expensive
+
+React assumptions
+  ↓
+Different types → replace subtree
+Same type → compare/update
+Keys → match list children
+  ↓
+Practical near-linear reconciliation</div>
+<p><b>Interview answer:</b> React achieves practical O(n)-style reconciliation by making assumptions about element types and using keys to identify children.</p>
+</div>
+
+<div class="card">
+<h2>8. Element Matching</h2>
+<p>React needs to know which old element corresponds to which new element.</p>
+<pre>// Stable identity
+items.map(item => (
+  &lt;Row key={item.id} item={item} /&gt;
+));</pre>
+<p>A stable key tells React that an item is the same logical item across renders even when its position changes.</p>
+</div>
+
+<div class="card">
+<h2>9. Virtual DOM</h2>
+<p>The <b>Virtual DOM</b> is a simplified way to describe React's in-memory representation of UI elements. React creates element descriptions during rendering, compares the new result with the previous one, and commits necessary host changes.</p>
+<div class="diagram">JSX
+ ↓
+React elements
+ ↓
+Fiber / internal tree
+ ↓
+Reconciliation
+ ↓
+Commit
+ ↓
+Real DOM</div>
+<p><b>Important:</b> Virtual DOM is not a magical faster DOM. Its value is that React can calculate UI changes declaratively and coordinate rendering work.</p>
+</div>
+
+<div class="card">
+<h2>10. Creation → Diff → Commit</h2>
+<pre>function App({ count }) {
+  return &lt;h1&gt;Count: {count}&lt;/h1&gt;;
+}</pre>
+<div class="diagram">1. Creation
+JSX → React element description
+
+2. Diff / Reconciliation
+Previous result ↔ Next result
+
+3. Commit
+Apply required host changes
+
+4. Browser
+Paints updated pixels</div>
+</div>
+
+<div class="card">
+<h2>11. Concurrent Rendering</h2>
+<p><b>Concurrent rendering</b> means React can work on rendering without necessarily blocking the browser for the entire calculation. Rendering work can be paused, resumed, restarted or abandoned before it commits.</p>
+<div class="note"><b>Important:</b> Concurrent rendering does not mean React renders everything simultaneously on multiple threads.</div>
+</div>
+
+<div class="card">
+<h2>12. Interruptible Rendering</h2>
+<div class="diagram">Start rendering low-priority work
+              ↓
+        Work for a while
+              ↓
+      Urgent update arrives
+              ↓
+      Pause / switch work
+              ↓
+ Handle urgent update
+              ↓
+ Continue or restart previous work</div>
+<p>This helps React keep urgent interactions responsive when expensive UI work is happening.</p>
+</div>
+
+<div class="card">
+<h2>13. Priority Scheduling</h2>
+<p>Not every update has the same urgency.</p>
+<table>
+<tr><th>Example</th><th>Typical idea</th></tr>
+<tr><td>Typing / direct interaction</td><td>Should remain responsive.</td></tr>
+<tr><td>Showing a large filtered result</td><td>May be treated as less urgent.</td></tr>
+<tr><td>Transition between screens/tabs</td><td>Can often be marked as a transition.</td></tr>
+</table>
+<p><code>startTransition</code> is one API developers use to mark updates as non-urgent.</p>
+</div>
+
+<div class="card">
+<h2>14. Automatic Batching — React 18</h2>
+<p>React 18 expanded automatic batching so updates from more asynchronous contexts can be batched when using the modern React root API.</p>
+<pre>setTimeout(() => {
+  setCount(c => c + 1);
+  setName("Omkar");
+}, 1000);</pre>
+<p>React can process these updates together rather than necessarily causing a separate render for each setter.</p>
+<div class="note"><b>Interview point:</b> Batching reduces rendering work. It does not mean state variables immediately change after calling a setter.</div>
+</div>
+
+<div class="card">
+<h2>15. Before vs React 18 Batching</h2>
+<table>
+<tr><th>Situation</th><th>Older React behavior</th><th>React 18+</th></tr>
+<tr><td>React event handler</td><td>Batching existed</td><td>Batching exists</td></tr>
+<tr><td>Timeout / promise callback</td><td>Often not automatically batched</td><td>Automatically batched in modern roots</td></tr>
+</table>
+<p>React 18 introduced broader automatic batching as part of its concurrent rendering architecture.</p>
+</div>
+
+<div class="card">
+<h2>16. Strict Mode</h2>
+<p><code>&lt;StrictMode&gt;</code> is a development-time tool that helps identify unsafe patterns and accidental side effects.</p>
+<pre>import { StrictMode } from "react";
+
+createRoot(document.getElementById("root")).render(
+  &lt;StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/StrictMode&gt;
+);</pre>
+<p>Strict Mode does not affect production behavior in the same way. Some development-only checks intentionally invoke rendering/effect setup patterns more than once.</p>
+</div>
+
+<div class="card">
+<h2>17. Why Does Strict Mode "Double Render"?</h2>
+<p>In development, React may call component rendering logic more than once to expose accidental side effects inside render.</p>
+<div class="diagram">Development Strict Mode
+
+Render
+  ↓
+Render again
+  ↓
+Check for unsafe side effects
+  ↓
+Normal development flow</div>
+<p>For Effects, React can also perform an extra setup → cleanup → setup cycle in development. This helps reveal missing cleanup.</p>
+<p><b>Why?</b> To make impure rendering and unsafe Effects easier to detect before production.</p>
+</div>
+
+<div class="card">
+<h2>18. Strict Mode Example</h2>
+<pre>function App() {
+  console.log("render");
+
+  useEffect(() => {
+    console.log("effect");
+
+    return () => {
+      console.log("cleanup");
+    };
+  }, []);
+
+  return &lt;h1&gt;Hello&lt;/h1&gt;;
+}</pre>
+<p>With development Strict Mode, you may see extra render/effect lifecycle activity. Do not "fix" this by adding random flags; make rendering pure and Effect cleanup correct.</p>
+</div>
+
+<div class="card">
+<h2>19. Render Phase vs Commit Phase</h2>
+<table>
+<tr><th>Render Phase</th><th>Commit Phase</th></tr>
+<tr><td>Calculates what UI should look like.</td><td>Applies necessary host changes.</td></tr>
+<tr><td>Can be interrupted/restarted in concurrent rendering.</td><td>Committed changes are applied as a coordinated step.</td></tr>
+<tr><td>Must be pure.</td><td>DOM mutations happen here.</td></tr>
+<tr><td>Do not perform side effects here.</td><td>Effects are scheduled according to their lifecycle timing.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>20. Complete Mental Model</h2>
+<div class="diagram">                UPDATE
+                   ↓
+             React schedules work
+                   ↓
+             ┌──────────────┐
+             │   RENDER     │
+             │              │
+             │ Fiber work   │
+             │ Reconcile    │
+             │ Diff trees   │
+             └──────┬───────┘
+                    ↓
+             Can be interruptible
+             in concurrent rendering
+                    ↓
+             ┌──────────────┐
+             │   COMMIT     │
+             │              │
+             │ DOM changes  │
+             └──────┬───────┘
+                    ↓
+                 Browser
+                    ↓
+                  Screen</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is Fiber?</b> React's internal architecture that represents rendering work as units and enables scheduling and concurrent rendering capabilities.</li>
+<li><b>What is a Fiber node?</b> An internal node containing information React needs to process a component/element and its relationships/work.</li>
+<li><b>Why was Fiber introduced?</b> To make rendering work more flexible, schedulable and interruptible.</li>
+<li><b>What is reconciliation?</b> Comparing previous and next React trees to determine necessary changes.</li>
+<li><b>Why is React reconciliation approximately O(n)?</b> React uses heuristics such as element type comparison and keys rather than arbitrary expensive tree matching.</li>
+<li><b>Why are keys important?</b> They provide stable identity so React can match children correctly.</li>
+<li><b>What is the Virtual DOM?</b> An in-memory representation/description of UI that React uses during rendering and reconciliation.</li>
+<li><b>What are render and commit phases?</b> Render calculates the next UI; commit applies the required host changes.</li>
+<li><b>What is concurrent rendering?</b> A rendering model where React can schedule and interrupt rendering work before committing it.</li>
+<li><b>Can concurrent rendering run on multiple threads?</b> No. It does not mean React is automatically rendering components on multiple CPU threads.</li>
+<li><b>What is incremental rendering?</b> Breaking rendering work into manageable units that React can schedule rather than treating all work as one indivisible operation.</li>
+<li><b>What is automatic batching?</b> React groups multiple state updates into fewer rendering passes when batching applies.</li>
+<li><b>What changed with automatic batching in React 18?</b> Batching was expanded to more asynchronous contexts when using the modern root API.</li>
+<li><b>Why does Strict Mode render components twice?</b> In development, extra checks help reveal impure rendering and unsafe side effects.</li>
+<li><b>Does Strict Mode double render in production?</b> The development-only checks are not performed the same way in production.</li>
+<li><b>Why does Strict Mode run Effect setup/cleanup more than once in development?</b> To expose Effects that are missing or incorrectly handling cleanup.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A component has an expensive render and the user starts typing.</b><br>Concurrent rendering and priority mechanisms can help React keep urgent interaction responsive; consider transitions for non-urgent work.</li>
+<li><b>A low-priority UI update is running when an urgent update arrives.</b><br>React can interrupt/reprioritize rendering work before committing the lower-priority result.</li>
+<li><b>A developer thinks Fiber means every component runs in a separate thread.</b><br>Incorrect. Fiber is an internal work architecture; concurrent rendering does not automatically mean multithreaded rendering.</li>
+<li><b>A list is reordered and component state appears attached to the wrong item.</b><br>Check the list keys. Use stable item identity rather than indexes.</li>
+<li><b>A completely different element type replaces another element.</b><br>React generally treats the subtree as a replacement rather than trying to update it as the same type.</li>
+<li><b>Two state setters inside a timeout cause multiple renders in React 18.</b><br>With the modern React root, React 18 can automatically batch them.</li>
+<li><b>A state variable does not show its new value immediately after setState.</b><br>State updates schedule a future render; the current render's state value does not mutate immediately.</li>
+<li><b>A developer performs an API call directly inside component render.</b><br>Move the side effect out of render. Render should be pure, especially because concurrent rendering can restart rendering.</li>
+<li><b>An Effect runs twice in development.</b><br>Check Strict Mode. Development Strict Mode intentionally performs extra setup/cleanup checks.</li>
+<li><b>An Effect opens a WebSocket but never closes it.</b><br>Add cleanup. Strict Mode may expose this problem during development.</li>
+<li><b>A developer removes StrictMode because of duplicate logs.</b><br>Do not use removal as the fix. Make render pure and Effect cleanup correct; the extra development checks are intentional.</li>
+<li><b>A parent re-renders but the DOM does not visibly change.</b><br>React can re-render/calculates a new tree and then reconcile it without making unnecessary DOM changes.</li>
+<li><b>A developer says Virtual DOM is always faster than direct DOM.</b><br>That is too broad. Virtual DOM is an abstraction that lets React declaratively calculate and coordinate updates; performance depends on the workload.</li>
+<li><b>A large UI update blocks interaction.</b><br>Consider whether the update can be marked as non-urgent with startTransition and whether expensive rendering can be optimized.</li>
+<li><b>You need to explain Fiber in one sentence.</b><br>Fiber is React's internal architecture for breaking rendering work into units that can be scheduled and managed over time.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Fiber = React's internal work architecture.</li>
+<li>✔ Fiber node = unit of internal tree/work information.</li>
+<li>✔ Scheduler = coordinates rendering work and priority.</li>
+<li>✔ Incremental rendering = work can be managed in smaller units.</li>
+<li>✔ Reconciliation = compare previous and next trees.</li>
+<li>✔ React uses heuristics for practical O(n)-style reconciliation.</li>
+<li>✔ Keys = stable child identity.</li>
+<li>✔ Virtual DOM = in-memory UI representation.</li>
+<li>✔ Render phase = calculate.</li>
+<li>✔ Commit phase = apply changes.</li>
+<li>✔ Concurrent rendering = rendering can be interruptible.</li>
+<li>✔ It does not mean multithreaded React.</li>
+<li>✔ React 18 expanded automatic batching.</li>
+<li>✔ Strict Mode extra checks are development-only.</li>
+<li>✔ Strict Mode helps find impure rendering and missing Effect cleanup.</li>
+</ul>
+</div>
+
+</body>
+</html>

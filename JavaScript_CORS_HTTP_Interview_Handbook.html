@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CORS & HTTP - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1050px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#0f766e;color:#fff;padding:26px;border-radius:12px}h2{color:#0f766e}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#ccfbf1}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+
+<header><h1>CORS & HTTP</h1><p>Simple Interview Handbook • Same-Origin Policy • Preflight • OPTIONS • HTTP Methods • Status Codes</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>1. Same-Origin Policy</h2>
+<p>The <b>Same-Origin Policy (SOP)</b> is a browser security rule that restricts how a page from one origin can interact with resources from another origin.</p>
+<div class="diagram">Origin = Protocol + Host + Port
+
+https://example.com:443
+  │          │       │
+protocol    host    port</div>
+<p>Two URLs have the same origin only when protocol, host and port all match.</p>
+<table><tr><th>URL A</th><th>URL B</th><th>Same Origin?</th></tr>
+<tr><td>https://app.com</td><td>https://app.com/users</td><td>Yes</td></tr>
+<tr><td>https://app.com</td><td>http://app.com</td><td>No</td></tr>
+<tr><td>https://app.com</td><td>https://api.app.com</td><td>No</td></tr>
+<tr><td>https://app.com:443</td><td>https://app.com:3000</td><td>No</td></tr></table>
+</div>
+
+<div class="card"><h2>2. What is CORS?</h2>
+<p><b>CORS (Cross-Origin Resource Sharing)</b> is a browser mechanism that allows a server to declare which cross-origin requests a browser may allow a web page to make.</p>
+<div class="diagram">Frontend
+https://app.com
+      │
+      │ cross-origin request
+      ▼
+API
+https://api.com
+      │
+      │ CORS response headers
+      ▼
+Browser decides whether JS gets response</div>
+<p>CORS is primarily enforced by browsers. Server-to-server requests are not blocked by browser CORS rules.</p>
+</div>
+
+<div class="card"><h2>3. Simple Request</h2>
+<p>Some cross-origin requests can be sent without a CORS preflight. The browser still checks the server's CORS response before exposing the response to JavaScript.</p>
+<pre>fetch("https://api.example.com/users");</pre>
+<p>For a permitted request, the server may return:</p>
+<pre>Access-Control-Allow-Origin: https://app.example.com</pre>
+</div>
+
+<div class="card"><h2>4. Preflight Request</h2>
+<p>A <b>preflight</b> is a browser-generated request sent before certain cross-origin requests to ask the server whether the actual request is allowed.</p>
+<div class="diagram">Browser
+   │
+   │ OPTIONS /users
+   │ Origin: https://app.com
+   │ Access-Control-Request-Method: PUT
+   │ Access-Control-Request-Headers: Authorization
+   ▼
+Server
+   │
+   │ Permission headers
+   ▼
+Browser
+   │
+   │ actual PUT
+   ▼
+Server</div>
+<p>Preflight commonly occurs for requests that are not CORS-safelisted, such as certain methods or custom/request headers.</p>
+</div>
+
+<div class="card"><h2>5. OPTIONS Method</h2>
+<p><code>OPTIONS</code> asks what communication options are available for a resource. Browsers use it for CORS preflight.</p>
+<pre>OPTIONS /users HTTP/1.1
+Origin: https://app.com
+Access-Control-Request-Method: PUT
+Access-Control-Request-Headers: Authorization</pre>
+<p>A server can respond with headers such as:</p>
+<pre>Access-Control-Allow-Origin: https://app.com
+Access-Control-Allow-Methods: GET, POST, PUT
+Access-Control-Allow-Headers: Authorization, Content-Type</pre>
+</div>
+
+<div class="card"><h2>6. Common CORS Headers</h2>
+<table><tr><th>Header</th><th>Purpose</th></tr>
+<tr><td>Access-Control-Allow-Origin</td><td>Allowed origin(s).</td></tr>
+<tr><td>Access-Control-Allow-Methods</td><td>Allowed methods for a preflighted request.</td></tr>
+<tr><td>Access-Control-Allow-Headers</td><td>Allowed request headers.</td></tr>
+<tr><td>Access-Control-Allow-Credentials</td><td>Allows credentials for cross-origin requests when the request also opts in.</td></tr>
+<tr><td>Access-Control-Max-Age</td><td>How long a preflight result may be cached.</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>7. Credentials & CORS</h2>
+<pre>fetch("https://api.example.com/user", {
+  credentials: "include"
+});</pre>
+<p>When credentials are included, the server must explicitly allow credentials and cannot use <code>*</code> as the allowed origin.</p>
+<pre>Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Credentials: true</pre>
+</div>
+
+<div class="card"><h2>8. HTTP Methods</h2>
+<table><tr><th>Method</th><th>Typical Use</th></tr>
+<tr><td>GET</td><td>Read/fetch a resource.</td></tr>
+<tr><td>POST</td><td>Create a resource or trigger an operation.</td></tr>
+<tr><td>PUT</td><td>Replace the representation of a resource.</td></tr>
+<tr><td>PATCH</td><td>Partially modify a resource.</td></tr>
+<tr><td>DELETE</td><td>Delete a resource.</td></tr>
+<tr><td>OPTIONS</td><td>Ask about supported communication options; used for CORS preflight.</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>GET</h2>
+<p>Used to retrieve data. It should not intentionally change server state.</p>
+<pre>GET /users/42</pre>
+<p>GET requests are commonly cacheable and are intended to be safe.</p></div>
+
+<div class="card"><h2>POST</h2>
+<p>Often used to create a resource or submit data for processing.</p>
+<pre>POST /users
+Content-Type: application/json
+
+{"name":"Omkar"}</pre>
+</div>
+
+<div class="card"><h2>PUT vs PATCH</h2>
+<pre>PUT /users/42
+{"name":"Omkar","email":"new@example.com"}</pre>
+<p>PUT commonly represents replacement of a resource representation.</p>
+<pre>PATCH /users/42
+{"email":"new@example.com"}</pre>
+<p>PATCH is intended for partial modifications.</p>
+</div>
+
+<div class="card"><h2>DELETE</h2>
+<pre>DELETE /users/42</pre>
+<p>Requests deletion of a resource.</p></div>
+
+<div class="card"><h2>9. HTTP Status Codes</h2>
+<table><tr><th>Range</th><th>Meaning</th></tr>
+<tr><td>1xx</td><td>Informational</td></tr>
+<tr><td>2xx</td><td>Success</td></tr>
+<tr><td>3xx</td><td>Redirection</td></tr>
+<tr><td>4xx</td><td>Client error</td></tr>
+<tr><td>5xx</td><td>Server error</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>Important 2xx Codes</h2>
+<table><tr><th>Code</th><th>Meaning</th></tr>
+<tr><td>200</td><td>OK</td></tr>
+<tr><td>201</td><td>Created</td></tr>
+<tr><td>202</td><td>Accepted for processing</td></tr>
+<tr><td>204</td><td>No Content</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>Important 3xx Codes</h2>
+<table><tr><th>Code</th><th>Meaning</th></tr>
+<tr><td>301</td><td>Moved Permanently</td></tr>
+<tr><td>302</td><td>Found / temporary redirect semantics in common usage</td></tr>
+<tr><td>304</td><td>Not Modified; cache can be used</td></tr>
+<tr><td>307</td><td>Temporary Redirect; method is preserved</td></tr>
+<tr><td>308</td><td>Permanent Redirect; method is preserved</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>Important 4xx Codes</h2>
+<table><tr><th>Code</th><th>Meaning</th></tr>
+<tr><td>400</td><td>Bad Request</td></tr>
+<tr><td>401</td><td>Unauthenticated / authentication required</td></tr>
+<tr><td>403</td><td>Forbidden</td></tr>
+<tr><td>404</td><td>Not Found</td></tr>
+<tr><td>405</td><td>Method Not Allowed</td></tr>
+<tr><td>409</td><td>Conflict</td></tr>
+<tr><td>422</td><td>Unprocessable Content</td></tr>
+<tr><td>429</td><td>Too Many Requests</td></tr>
+</table>
+<p><b>Easy distinction:</b> 401 is about authentication; 403 means the server understood the request but refuses to authorize it.</p>
+</div>
+
+<div class="card"><h2>Important 5xx Codes</h2>
+<table><tr><th>Code</th><th>Meaning</th></tr>
+<tr><td>500</td><td>Internal Server Error</td></tr>
+<tr><td>501</td><td>Not Implemented</td></tr>
+<tr><td>502</td><td>Bad Gateway</td></tr>
+<tr><td>503</td><td>Service Unavailable</td></tr>
+<tr><td>504</td><td>Gateway Timeout</td></tr>
+</table>
+</div>
+
+<div class="card"><h2>React / Frontend Connection</h2>
+<pre>fetch("https://api.example.com/users", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ name: "Omkar" })
+});</pre>
+<p>The browser may perform a CORS preflight depending on the request. Your backend must return the appropriate CORS headers.</p>
+</div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>What is Same-Origin Policy?</b> A browser security rule restricting cross-origin web interactions.</li>
+<li><b>What is CORS?</b> A browser mechanism for controlled cross-origin resource sharing.</li>
+<li><b>What is an origin?</b> Scheme/protocol + host + port.</li>
+<li><b>What is a preflight request?</b> A browser OPTIONS request that checks whether a cross-origin request is permitted.</li>
+<li><b>Why is OPTIONS used?</b> It asks the server about supported communication options and is used for CORS preflight.</li>
+<li><b>Does every cross-origin request trigger preflight?</b> No. Some requests are CORS-safelisted.</li>
+<li><b>Can CORS be fixed only from React?</b> No. The server must provide appropriate CORS headers.</li>
+<li><b>GET vs POST?</b> GET retrieves; POST commonly creates/submits data.</li>
+<li><b>PUT vs PATCH?</b> PUT commonly replaces; PATCH partially modifies.</li>
+<li><b>401 vs 403?</b> 401 relates to authentication; 403 means access is forbidden.</li>
+<li><b>404 vs 500?</b> 404 means resource not found; 500 indicates an internal server error.</li>
+<li><b>What is 429?</b> Too Many Requests, usually indicating rate limiting.</li>
+</ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>React calls another domain and the browser reports a CORS error.</b><br>Configure the API server's CORS policy; frontend code alone cannot grant permission.</li>
+<li><b>A PUT request sends Authorization and triggers OPTIONS.</b><br>This is likely a CORS preflight because the request is not safelisted.</li>
+<li><b>Backend supports GET but frontend sends DELETE.</b><br>Ensure DELETE is allowed by the API and, for CORS, included in Access-Control-Allow-Methods.</li>
+<li><b>OPTIONS returns 204 before the actual request.</b><br>That can be a successful preflight response; the browser may then send the actual request.</li>
+<li><b>You need to create a new user.</b><br>Typically use POST.</li>
+<li><b>You want to replace a user's complete resource.</b><br>Typically use PUT.</li>
+<li><b>You want to update only the email.</b><br>Typically use PATCH.</li>
+<li><b>You want to retrieve a user.</b><br>Use GET.</li>
+<li><b>You want to delete a user.</b><br>Use DELETE.</li>
+<li><b>API returns 401.</b><br>Check authentication credentials/token rather than treating it as a permission-only error.</li>
+<li><b>API returns 403.</b><br>The request is understood but access is not allowed; check authorization/permissions.</li>
+<li><b>API returns 503.</b><br>The service is currently unavailable; retry strategy and server health may be relevant.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ SOP = browser cross-origin security rule.</li>
+<li>✔ CORS = controlled cross-origin access.</li>
+<li>✔ Origin = protocol + host + port.</li>
+<li>✔ Preflight = browser sends OPTIONS first.</li>
+<li>✔ GET = read.</li>
+<li>✔ POST = create/submit.</li>
+<li>✔ PUT = replace.</li>
+<li>✔ PATCH = partial update.</li>
+<li>✔ DELETE = delete.</li>
+<li>✔ 2xx = success.</li>
+<li>✔ 3xx = redirect/cache.</li>
+<li>✔ 4xx = client/request problem.</li>
+<li>✔ 5xx = server problem.</li>
+</ul></div>
+
+</body></html>

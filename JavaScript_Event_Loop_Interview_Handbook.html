@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript Event Loop Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#222;max-width:1050px;margin:auto;padding:24px;line-height:1.7}
+header{background:#0f766e;color:#fff;padding:22px;border-radius:10px}
+.card{background:#fff;padding:18px;margin:18px 0;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+h2{color:#0f766e}
+pre{background:#1e1e1e;color:#d4d4d4;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre}
+button{background:#0f766e;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px}
+th{background:#ccfbf1}
+@media print{button{display:none}.card{box-shadow:none;border:1px solid #ddd}}
+</style>
+<script>
+function printPDF(){window.print();}
+</script>
+</head>
+<body>
+<header>
+<h1>JavaScript Event Loop</h1>
+<p>Simple Interview Notes • Print Ready</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>What is the Event Loop?</h2>
+<p>JavaScript can execute only <b>one task at a time</b>. The Event Loop checks whether the Call Stack is empty and decides which queued task should run next.</p>
+<div class="diagram">
+Call Stack Empty?
+      │
+      ├── No → Wait
+      │
+      └── Yes
+           │
+           ▼
+Move Microtask
+      │
+      ▼
+Move Macrotask
+</div>
+</div>
+
+<div class="card">
+<h2>Call Stack</h2>
+<p>The Call Stack stores the currently executing functions.</p>
+<pre>
+function one(){ two(); }
+function two(){ console.log("Hello"); }
+one();
+</pre>
+<div class="diagram">
+Top
+two()
+one()
+Global
+</div>
+</div>
+
+<div class="card">
+<h2>Callback Queue (Macrotask Queue)</h2>
+<p>Tasks from <code>setTimeout</code>, <code>setInterval</code> and DOM events wait here until the Call Stack becomes empty.</p>
+<div class="diagram">
+setTimeout()
+      │
+      ▼
+Macrotask Queue
+      │
+      ▼
+Call Stack
+</div>
+</div>
+
+<div class="card">
+<h2>Microtask Queue (Promise Queue)</h2>
+<p>Promises, <code>queueMicrotask()</code> and <code>MutationObserver</code> are placed here.</p>
+<p><b>Microtasks always run before Macrotasks.</b></p>
+<div class="diagram">
+Promise.then()
+      │
+      ▼
+Microtask Queue
+      │
+      ▼
+Call Stack
+</div>
+</div>
+
+<div class="card">
+<h2>Promise Queue vs Macrotask Queue</h2>
+<table>
+<tr><th>Microtask Queue</th><th>Macrotask Queue</th></tr>
+<tr><td>Promise.then()</td><td>setTimeout()</td></tr>
+<tr><td>queueMicrotask()</td><td>setInterval()</td></tr>
+<tr><td>Runs First</td><td>Runs After Microtasks</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Interview Example</h2>
+<pre>
+console.log(1);
+
+setTimeout(()=>console.log(2));
+
+Promise.resolve().then(()=>console.log(3));
+
+console.log(4);
+</pre>
+
+<h3>Step-by-Step</h3>
+<div class="diagram">
+1. console.log(1) → Output 1
+
+2. setTimeout()
+   ↓
+Macrotask Queue
+
+3. Promise.then()
+   ↓
+Microtask Queue
+
+4. console.log(4) → Output 4
+
+5. Call Stack Empty
+
+6. Run Microtask → 3
+
+7. Run Macrotask → 2
+</div>
+
+<h3>Output</h3>
+<pre>
+1
+4
+3
+2
+</pre>
+</div>
+
+<div class="card">
+<h2>Complete Flow</h2>
+<div class="diagram">
+          JS Code
+             │
+             ▼
+        Call Stack
+             │
+      ┌──────┴──────┐
+      │             │
+Microtask Queue  Macrotask Queue
+      │             │
+      └──────┬──────┘
+             ▼
+         Event Loop
+             │
+             ▼
+         Call Stack
+</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li>What is the Event Loop?</li>
+<li>Why is JavaScript called single-threaded?</li>
+<li>What is the Call Stack?</li>
+<li>What is the Callback Queue?</li>
+<li>What is the Microtask Queue?</li>
+<li>Which runs first: Promise or setTimeout?</li>
+<li>Why does <code>Promise.then()</code> execute before <code>setTimeout()</code>?</li>
+<li>What is the difference between Microtasks and Macrotasks?</li>
+<li>How does the Event Loop work?</li>
+<li>Predict the output of asynchronous JavaScript code.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Call Stack executes synchronous code.</li>
+<li>✔ Promise callbacks go to the Microtask Queue.</li>
+<li>✔ setTimeout callbacks go to the Macrotask Queue.</li>
+<li>✔ Microtasks execute before Macrotasks.</li>
+<li>✔ Event Loop moves tasks only when the Call Stack is empty.</li>
+</ul>
+</div>
+
+</body>
+</html>

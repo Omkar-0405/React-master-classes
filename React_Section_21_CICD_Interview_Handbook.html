@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Section 21 — CI/CD Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#14532d;color:#fff;padding:28px;border-radius:12px}
+h2{color:#166534}h3{color:#15803d}.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#dcfce7}
+code{background:#f0fdf4;padding:2px 5px;border-radius:4px}.note{background:#f0fdf4;border-left:4px solid #16a34a;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 21 — CI/CD</h1>
+<p>Simple Interview Handbook • Git • GitHub Actions • Deployment • Docker Basics • Vercel • Netlify</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is CI/CD?</h2>
+<p><b>CI</b> means Continuous Integration: automatically build and test code when changes are pushed or merged.</p>
+<p><b>CD</b> means Continuous Delivery/Deployment: automatically prepare or release validated changes to an environment.</p>
+<div class="diagram">Developer
+   ↓
+git push
+   ↓
+CI pipeline
+ ├── Install
+ ├── Lint
+ ├── Test
+ └── Build
+   ↓
+Deploy
+   ↓
+Environment
+</div>
+<div class="note"><b>Interview idea:</b> CI/CD reduces manual steps and catches problems earlier. A good pipeline should be repeatable, observable and safe.</div>
+</div>
+
+<div class="card">
+<h2>2. Git</h2>
+<p><b>Git</b> is a distributed version control system. It tracks changes and lets developers work safely with branches, commits and merges.</p>
+<div class="diagram">Working tree
+    ↓ git add
+Staging area
+    ↓ git commit
+Local repository
+    ↓ git push
+Remote repository
+</div>
+</div>
+
+<div class="card">
+<h2>3. Important Git Commands</h2>
+<pre>git clone &lt;repo&gt;
+git status
+git add .
+git commit -m "Add login"
+git pull
+git push
+git switch -c feature/login
+git merge feature/login
+git log
+git diff</pre>
+<p>Know what each command does rather than memorizing commands only.</p>
+</div>
+
+<div class="card">
+<h2>4. Branching</h2>
+<div class="diagram">main
+ ├── feature/login
+ ├── feature/dashboard
+ └── fix/header
+        ↓
+     Pull Request
+        ↓
+      Review
+        ↓
+      Merge
+        ↓
+       main
+</div>
+<p>A team can protect the main branch so changes must pass review and CI before merging.</p>
+</div>
+
+<div class="card">
+<h2>5. Merge vs Rebase</h2>
+<table>
+<tr><th>Merge</th><th>Rebase</th></tr>
+<tr><td>Combines histories with a merge commit when needed.</td><td>Replays commits onto another base.</td></tr>
+<tr><td>Preserves branch history.</td><td>Creates a cleaner linear history.</td></tr>
+<tr><td>Does not rewrite existing commits.</td><td>Rewrites commit history being rebased.</td></tr>
+</table>
+<div class="note">Never casually rebase shared/public history. A practical team rule is to rebase your own local feature work before sharing when appropriate.</div>
+</div>
+
+<div class="card">
+<h2>6. Pull Request Flow</h2>
+<div class="diagram">Feature branch
+     ↓
+Push
+     ↓
+Pull Request
+     ↓
+CI checks
+ ├── lint
+ ├── tests
+ └── build
+     ↓
+Code review
+     ↓
+Merge
+</div>
+</div>
+
+<div class="card">
+<h2>7. GitHub Actions</h2>
+<p><b>GitHub Actions</b> is GitHub's automation platform. A workflow is defined in YAML and can run on events such as pushes or pull requests.</p>
+<pre>name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build</pre>
+</div>
+
+<div class="card">
+<h2>8. Workflow → Job → Step</h2>
+<div class="diagram">Workflow
+  ↓
+Job
+ ├── Step 1: checkout
+ ├── Step 2: setup Node
+ ├── Step 3: install
+ ├── Step 4: test
+ └── Step 5: build
+</div>
+<p>A workflow can contain multiple jobs, and jobs can run sequentially or in parallel depending on dependencies.</p>
+</div>
+
+<div class="card">
+<h2>9. GitHub Actions Secrets</h2>
+<p>Secrets should not be hardcoded into workflow files or source code.</p>
+<pre>steps:
+  - run: npm run deploy
+    env:
+      DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}</pre>
+<div class="note">Secrets should be stored using the platform's secret-management mechanism. Also avoid printing secret values into logs.</div>
+</div>
+
+<div class="card">
+<h2>10. CI Pipeline for React</h2>
+<div class="diagram">Pull Request
+    ↓
+Checkout
+    ↓
+Install dependencies
+    ↓
+Lint
+    ↓
+Unit tests
+    ↓
+Build
+    ↓
+Optional E2E/security checks
+    ↓
+Approve + Merge
+</div>
+<p>The pipeline should fail early when a required quality check fails.</p>
+</div>
+
+<div class="card">
+<h2>11. Deployment</h2>
+<p><b>Deployment</b> means making an application version available in an environment such as development, staging or production.</p>
+<table>
+<tr><th>Environment</th><th>Purpose</th></tr>
+<tr><td>Development</td><td>Local development and rapid experimentation.</td></tr>
+<tr><td>Staging</td><td>Pre-production validation.</td></tr>
+<tr><td>Production</td><td>Real users and live traffic.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. Deployment Flow</h2>
+<div class="diagram">Code
+ ↓
+Git
+ ↓
+CI
+ ↓
+Build
+ ↓
+Artifact
+ ↓
+Staging
+ ↓
+Validation
+ ↓
+Production
+ ↓
+Monitoring
+</div>
+</div>
+
+<div class="card">
+<h2>13. Build Artifact</h2>
+<p>A <b>build artifact</b> is the output produced by the build process that can be deployed.</p>
+<pre>npm run build
+
+dist/
+├── index.html
+├── assets/
+│   ├── index-xxxxx.js
+│   └── index-xxxxx.css
+└── ...</pre>
+<p>For a static React app, the <code>dist</code> directory commonly contains the deployable static assets.</p>
+</div>
+
+<div class="card">
+<h2>14. Docker Basics</h2>
+<p><b>Docker</b> packages an application and its dependencies into a container image that can run consistently across environments.</p>
+<div class="diagram">Dockerfile
+    ↓
+docker build
+    ↓
+Image
+    ↓
+docker run
+    ↓
+Container
+</div>
+<p>An image is a packaged template; a container is a running instance of an image.</p>
+</div>
+
+<div class="card">
+<h2>15. Dockerfile Example — React App</h2>
+<pre># Build stage
+FROM node:20-alpine AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Runtime stage
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html</pre>
+<p>This is a common multi-stage pattern: Node builds the application, while a small web server image serves the generated static files.</p>
+</div>
+
+<div class="card">
+<h2>16. Image vs Container</h2>
+<table>
+<tr><th>Image</th><th>Container</th></tr>
+<tr><td>Packaged, immutable template.</td><td>Running instance of an image.</td></tr>
+<tr><td>Built from a Dockerfile or another image.</td><td>Created/run from an image.</td></tr>
+<tr><td>Can be stored in a registry.</td><td>Has runtime state/processes.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>17. Docker Commands</h2>
+<pre>docker build -t my-react-app .
+docker images
+docker run -p 8080:80 my-react-app
+docker ps
+docker stop &lt;container&gt;
+docker rm &lt;container&gt;
+docker rmi &lt;image&gt;</pre>
+</div>
+
+<div class="card">
+<h2>18. Why Multi-Stage Docker Builds?</h2>
+<div class="diagram">Large build image
+ Node + npm + source
+        ↓
+     Build
+        ↓
+Only dist/
+        ↓
+Small runtime image
+ Nginx + static files
+</div>
+<p>The final image does not need the complete Node toolchain just to serve static files, reducing image size and attack surface.</p>
+</div>
+
+<div class="card">
+<h2>19. Vercel</h2>
+<p><b>Vercel</b> is a deployment platform commonly used for frontend applications and frameworks such as Next.js.</p>
+<div class="diagram">Git repository
+     ↓
+Vercel detects change
+     ↓
+Install dependencies
+     ↓
+Build
+     ↓
+Deploy
+     ↓
+CDN / Edge delivery
+</div>
+<p>It can create preview deployments for changes so teams can review a version before production.</p>
+</div>
+
+<div class="card">
+<h2>20. Netlify</h2>
+<p><b>Netlify</b> is a platform for deploying web applications and static sites with build automation, previews and CDN-based delivery.</p>
+<div class="diagram">Git push
+   ↓
+Netlify build
+   ↓
+Build command
+   ↓
+Publish directory
+   ↓
+Deployment
+</div>
+<p>For a Vite React app, the typical build output is <code>dist</code>, although the exact configuration depends on the project.</p>
+</div>
+
+<div class="card">
+<h2>21. Vercel vs Netlify</h2>
+<table>
+<tr><th>Vercel</th><th>Netlify</th></tr>
+<tr><td>Strong integration with Next.js and modern frontend deployments.</td><td>Strong static/frontend deployment workflow.</td></tr>
+<tr><td>Preview deployments and Git integration.</td><td>Preview deployments and Git integration.</td></tr>
+<tr><td>CDN/edge-oriented platform features.</td><td>CDN/serverless-oriented platform features.</td></tr>
+<tr><td>Excellent choice for many Next.js projects.</td><td>Excellent choice for many static/Jamstack projects.</td></tr>
+</table>
+<div class="note">The best platform depends on the framework, runtime needs, team workflow, pricing and required platform features.</div>
+</div>
+
+<div class="card">
+<h2>22. SPA Routing on Static Hosting</h2>
+<p>React Router client-side routes need the host to return the application's entry HTML for routes that are not physical files.</p>
+<div class="diagram">/dashboard
+   ↓
+Server looks for /dashboard
+   ↓
+No physical file
+   ↓
+SPA fallback → index.html
+   ↓
+React Router handles /dashboard
+</div>
+<p>Without the correct rewrite/fallback configuration, refreshing a nested route may return a server 404.</p>
+</div>
+
+<div class="card">
+<h2>23. Environment Variables in CI/CD</h2>
+<pre>CI/CD secret/config
+        ↓
+Build step
+        ↓
+Frontend bundle
+        ↓
+Browser</pre>
+<div class="note"><b>Important:</b> Client-side environment variables are not secrets. Any value embedded in a browser bundle can be inspected by users.</div>
+</div>
+
+<div class="card">
+<h2>24. Deployment Strategies</h2>
+<table>
+<tr><th>Strategy</th><th>Simple idea</th></tr>
+<tr><td>Rolling</td><td>Gradually replace old instances with new ones.</td></tr>
+<tr><td>Blue-Green</td><td>Keep two environments and switch traffic between them.</td></tr>
+<tr><td>Canary</td><td>Release to a small percentage of users first.</td></tr>
+</table>
+<p>Static frontend platforms may abstract these details, but the concepts are useful in interviews and production systems.</p>
+</div>
+
+<div class="card">
+<h2>25. Rollback</h2>
+<p>A <b>rollback</b> returns production to a previously known-good version.</p>
+<div class="diagram">Version 101
+   ↓
+Production
+   ↓
+Bug discovered
+   ↓
+Rollback
+   ↓
+Version 100
+   ↓
+Stable
+</div>
+<p>Fast rollback is one reason immutable builds and versioned deployments are valuable.</p>
+</div>
+
+<div class="card">
+<h2>26. CI vs CD vs Deployment</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>CI</td><td>Automatically integrate and validate code changes.</td></tr>
+<tr><td>Continuous Delivery</td><td>Keep validated changes ready for release.</td></tr>
+<tr><td>Continuous Deployment</td><td>Automatically release validated changes to production.</td></tr>
+<tr><td>Deployment</td><td>The act of making a version available in an environment.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>27. Good CI/CD Pipeline</h2>
+<ul>
+<li>Fast feedback.</li>
+<li>Deterministic dependency installation.</li>
+<li>Linting and tests.</li>
+<li>Production build verification.</li>
+<li>Secure secrets.</li>
+<li>Preview/staging validation.</li>
+<li>Observability after deployment.</li>
+<li>Simple rollback path.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>28. Common CI/CD Mistakes</h2>
+<ul>
+<li>Deploying without running tests/build.</li>
+<li>Using <code>npm install</code> when reproducible CI should use <code>npm ci</code> with a lockfile.</li>
+<li>Hardcoding secrets in YAML or source.</li>
+<li>Using huge Docker images unnecessarily.</li>
+<li>Ignoring failed deployments.</li>
+<li>No rollback strategy.</li>
+<li>Assuming a successful build means the app is functionally correct.</li>
+<li>Forgetting SPA rewrite configuration.</li>
+<li>Putting frontend secrets into environment variables.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is CI/CD?</b> Automated integration, validation and delivery/deployment of software changes.</li>
+<li><b>What is Git?</b> A distributed version control system for tracking source changes and collaborating through commits and branches.</li>
+<li><b>What is a branch?</b> A separate line of development pointing to a sequence of commits.</li>
+<li><b>Merge vs rebase?</b> Merge combines histories; rebase replays commits onto a new base and rewrites the rebased history.</li>
+<li><b>What is GitHub Actions?</b> GitHub's automation platform for running workflows based on repository events or schedules.</li>
+<li><b>What is a workflow?</b> A YAML-defined automation containing one or more jobs.</li>
+<li><b>What is a job?</b> A group of steps executed on a runner.</li>
+<li><b>Why use npm ci in CI?</b> It installs from the lockfile in a clean, reproducible manner and is designed for automated environments.</li>
+<li><b>What is a deployment artifact?</b> The output of a build that can be released, such as a React <code>dist</code> directory or container image.</li>
+<li><b>What is Docker?</b> A containerization platform used to package and run applications consistently.</li>
+<li><b>Image vs container?</b> Image is the packaged template; container is a running instance.</li>
+<li><b>Why multi-stage Docker builds?</b> To keep build tools out of the final runtime image and reduce size/attack surface.</li>
+<li><b>What is Vercel?</b> A deployment platform commonly used for modern frontend frameworks and web applications.</li>
+<li><b>What is Netlify?</b> A platform for deploying web applications/static sites with build automation and previews.</li>
+<li><b>How does a React SPA handle direct nested routes?</b> The host must usually rewrite unknown application routes to the SPA entry HTML so the client router can handle them.</li>
+<li><b>What is rollback?</b> Returning production to a previously known-good version.</li>
+<li><b>What is continuous delivery vs deployment?</b> Delivery keeps validated changes ready for release; continuous deployment automatically releases them.</li>
+<li><b>How do you secure CI/CD?</b> Protect secrets, use least privilege, pin/lock dependencies where appropriate, review workflows, restrict deployment permissions and avoid exposing credentials in logs.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A PR passes locally but CI fails.</b><br>Compare Node/package-manager versions, lockfile state, environment variables and CI-specific commands. Reproduce the CI environment locally where possible.</li>
+<li><b>A developer commits an API secret to Git.</b><br>Revoke/rotate the secret immediately, remove it from active use and clean the repository/history as required by the incident process.</li>
+<li><b>The React build succeeds but production shows a blank page.</b><br>Check browser console/network errors, asset paths, deployment output and environment variables. A successful build does not guarantee correct runtime behavior.</li>
+<li><b>Refreshing /users/123 returns 404.</b><br>Configure the hosting platform's SPA fallback/rewrite to serve index.html for client-side routes.</li>
+<li><b>A Docker image is 1.5 GB for a static React site.</b><br>Use a multi-stage build and a small runtime image such as Nginx rather than shipping Node build dependencies.</li>
+<li><b>Production deployment breaks login.</b><br>Check production environment configuration, API URL, cookie domain/SameSite/Secure settings, CORS and authentication callback URLs.</li>
+<li><b>A GitHub Actions workflow prints a secret.</b><br>Remove the logging, rotate the exposed secret if necessary and audit the workflow for other credential leaks.</li>
+<li><b>A team deploys directly from a developer laptop.</b><br>Move deployment into a repeatable CI/CD process so the same build and checks are used consistently.</li>
+<li><b>A bad release reaches production.</b><br>Rollback to the known-good version, investigate the failure and then fix/retest before redeploying.</li>
+<li><b>Every PR waits 30 minutes for CI.</b><br>Parallelize independent jobs, cache safe dependencies, remove redundant work and keep expensive E2E/security stages appropriately separated.</li>
+<li><b>Two branches modify the same file.</b><br>Git may report a merge conflict. Resolve it carefully, run tests and commit the resolved result.</li>
+<li><b>A developer rebases a shared branch and teammates lose their history.</b><br>Explain that rebase rewrites commit history. Avoid rewriting shared history unless the team explicitly coordinates it.</li>
+<li><b>A frontend environment variable contains a private database password.</b><br>It must not be exposed to the browser. Move the secret operation to a backend/server-side environment.</li>
+<li><b>Vercel preview works but production does not.</b><br>Compare production environment variables, domain configuration, build settings, API/CORS configuration and production-only behavior.</li>
+<li><b>A Netlify deployment succeeds but assets return 404.</b><br>Inspect the publish directory and generated asset paths, then verify the deployment configuration matches the build output.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ CI = automatically build/test/validate changes.</li>
+<li>✔ CD = automatically deliver or deploy validated changes.</li>
+<li>✔ Git = version control.</li>
+<li>✔ PR = review + automated checks before merge.</li>
+<li>✔ GitHub Actions = workflow automation.</li>
+<li>✔ Workflow → jobs → steps.</li>
+<li>✔ Use secrets manager for credentials.</li>
+<li>✔ npm ci = reproducible CI installation with lockfile.</li>
+<li>✔ Artifact = deployable build output.</li>
+<li>✔ Docker image = package/template.</li>
+<li>✔ Container = running image.</li>
+<li>✔ Multi-stage builds reduce runtime image size.</li>
+<li>✔ Vercel and Netlify automate frontend deployment.</li>
+<li>✔ SPA routes need correct host fallback configuration.</li>
+<li>✔ Rollback = return to known-good version.</li>
+<li>✔ Client env variables are public.</li>
+<li>✔ Build success ≠ runtime correctness.</li>
+<li>✔ Secure CI/CD with least privilege and protected secrets.</li>
+</ul>
+</div>
+
+</body>
+</html>

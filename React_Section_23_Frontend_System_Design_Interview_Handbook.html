@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Section 23 — Frontend System Design Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1150px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#312e81;color:#fff;padding:30px;border-radius:12px}
+h2{color:#4338ca}h3{color:#3730a3}.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#e0e7ff}
+code{background:#eef2ff;padding:2px 5px;border-radius:4px}.note{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px}
+.small{font-size:.94em;color:#475569}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 23 — Frontend System Design</h1>
+<p>Simple Interview Handbook • React • Architecture • State • Data • Performance • Scalability</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is Frontend System Design?</h2>
+<p>Frontend system design is the process of deciding <b>how a large UI should be structured</b> so it remains understandable, fast, reliable and easy to extend.</p>
+<div class="diagram">Requirements
+    ↓
+Architecture
+    ↓
+Components + State
+    ↓
+Data/API layer
+    ↓
+Caching + Error handling
+    ↓
+Performance + Scalability
+    ↓
+Monitoring + Testing
+</div>
+<div class="note"><b>Interview rule:</b> Do not start by drawing 20 components. First clarify requirements, users, scale, data, interactions and constraints.</div>
+</div>
+
+<div class="card">
+<h2>2. A Simple Interview Framework</h2>
+<ol>
+<li><b>Clarify requirements</b> — functional + non-functional.</li>
+<li><b>Define scale</b> — users, records, requests, update frequency.</li>
+<li><b>Sketch architecture</b> — UI, state, API/data, cache.</li>
+<li><b>Decompose components</b> — page → feature → reusable components.</li>
+<li><b>Define state placement</b> — local, shared, server/cache, URL.</li>
+<li><b>Define data flow</b> — where data enters and who owns it.</li>
+<li><b>Handle loading/error/empty states</b>.</li>
+<li><b>Discuss performance</b> — virtualization, memoization, code splitting.</li>
+<li><b>Discuss reliability</b> — retries, optimistic updates, offline strategy.</li>
+<li><b>Discuss extensibility</b> — plugins, configuration, design system.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>3. Generic Frontend Architecture</h2>
+<div class="diagram">                    Browser
+                       │
+              ┌────────▼────────┐
+              │     Router      │
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │     Pages       │
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │    Features     │
+              └───────┬─┬───────┘
+                      │ │
+             ┌────────▼─▼────────┐
+             │ UI / Local State  │
+             └────────┬──────────┘
+                      │
+             ┌────────▼──────────┐
+             │ Server State/Cache│
+             └────────┬──────────┘
+                      │
+             ┌────────▼──────────┐
+             │ API / WebSocket   │
+             └───────────────────┘
+</div>
+</div>
+
+<div class="card">
+<h2>4. State Placement</h2>
+<p>The most important question is: <b>"Who needs this state?"</b></p>
+<table>
+<tr><th>State</th><th>Good location</th></tr>
+<tr><td>Input value</td><td>Component/local form state.</td></tr>
+<tr><td>Modal open/closed</td><td>Nearest common component.</td></tr>
+<tr><td>Theme</td><td>Context/provider or app-level state.</td></tr>
+<tr><td>Current filters</td><td>Local state or URL search params if shareable.</td></tr>
+<tr><td>API response</td><td>Server-state/cache layer.</td></tr>
+<tr><td>Authentication session</td><td>App-level auth/session mechanism.</td></tr>
+<tr><td>Global notification queue</td><td>Shared store/provider.</td></tr>
+</table>
+<div class="note">Avoid putting everything in Redux/global state. Keep state as close as practical to the components that own and use it.</div>
+</div>
+
+<div class="card">
+<h2>5. State Categories</h2>
+<div class="diagram">Application state
+├── Local UI state
+│   └── modal, input, dropdown
+├── Shared client state
+│   └── selected workspace, preferences
+├── Server state
+│   └── users, orders, projects
+├── URL state
+│   └── filters, page, search
+└── Persistent state
+    └── settings, drafts, offline data
+</div>
+</div>
+
+<div class="card">
+<h2>6. Data Flow</h2>
+<div class="diagram">API
+ ↓
+Query / Data layer
+ ↓
+Cache
+ ↓
+Feature container
+ ↓
+Presentational components
+ ↓
+User action
+ ↓
+Mutation
+ ↓
+API
+ ↓
+Cache update / invalidation
+</div>
+<p>Prefer predictable one-directional data flow. Components should not independently duplicate the same server state unless there is a clear reason.</p>
+</div>
+
+<div class="card">
+<h2>7. Caching Strategy</h2>
+<p>For server data, decide:</p>
+<ul>
+<li>How long data can be considered fresh.</li>
+<li>When it should refetch.</li>
+<li>How it is invalidated after mutations.</li>
+<li>Whether stale data is acceptable.</li>
+<li>How pagination/infinite queries are cached.</li>
+</ul>
+<div class="diagram">Request
+ ↓
+Cache hit? ── Yes → Return cached data
+    │
+    No
+    ↓
+Fetch API
+    ↓
+Store cache
+    ↓
+Render
+</div>
+</div>
+
+<div class="card">
+<h2>8. Loading, Error and Empty States</h2>
+<div class="diagram">Request
+ ├── Loading → Skeleton / Spinner
+ ├── Success + data → Content
+ ├── Success + no data → Empty state
+ └── Error → Error UI + recovery
+</div>
+<p>A production feature should design all four states, not just the success state.</p>
+</div>
+
+<div class="card">
+<h2>9. Optimistic Updates</h2>
+<p>With an optimistic update, the UI changes immediately and the server operation completes in the background.</p>
+<div class="diagram">User clicks Like
+      ↓
+UI immediately shows Like ✓
+      ↓
+Send API request
+   ↙       ↘
+Success    Failure
+  ↓          ↓
+Keep UI   Roll back + show error
+</div>
+<p>Use it when the action is likely to succeed and the UI can safely recover if it fails.</p>
+</div>
+
+<div class="card">
+<h2>10. Offline Support</h2>
+<p>Offline support means the application remains useful when the network is unavailable or unreliable.</p>
+<div class="diagram">User action
+    ↓
+Network available?
+ ├── Yes → API
+ └── No
+      ↓
+Local queue/cache
+      ↓
+Network returns
+      ↓
+Sync
+</div>
+<p>For complex offline apps, conflict resolution becomes a major design decision.</p>
+</div>
+
+<div class="card">
+<h2>11. Performance Trade-offs</h2>
+<table>
+<tr><th>Technique</th><th>Benefit</th><th>Trade-off</th></tr>
+<tr><td>Memoization</td><td>Can avoid repeated work.</td><td>Memory + complexity.</td></tr>
+<tr><td>Code splitting</td><td>Smaller initial JS.</td><td>Extra chunk loading.</td></tr>
+<tr><td>Virtualization</td><td>Handles huge lists.</td><td>More complex scrolling/measurement.</td></tr>
+<tr><td>Prefetching</td><td>Faster future navigation.</td><td>Extra network/bandwidth.</td></tr>
+<tr><td>Caching</td><td>Fewer requests/faster UI.</td><td>Stale data/invalidation complexity.</td></tr>
+<tr><td>Optimistic UI</td><td>Feels instant.</td><td>Rollback/conflict handling.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. Design a Data Table</h2>
+<p>Requirements might include sorting, filtering, pagination, selection, column resizing, virtualization, export and server-side queries.</p>
+<div class="diagram">DataTable
+├── Toolbar
+│   ├── Search
+│   ├── Filters
+│   └── Export
+├── Header
+│   ├── Sort
+│   └── Resize
+├── Virtualized Body
+│   └── Row → Cell
+└── Pagination
+</div>
+<p><b>Key design:</b> For large datasets, prefer server-side filtering/sorting/pagination and row virtualization instead of rendering every row.</p>
+<pre>const query = {
+  page,
+  pageSize,
+  sort,
+  filters
+};
+
+useQuery({
+  queryKey: ["users", query],
+  queryFn: () => fetchUsers(query)
+});</pre>
+</div>
+
+<div class="card">
+<h2>Data Table — Important Decisions</h2>
+<ul>
+<li>Client-side vs server-side operations.</li>
+<li>Virtualization for large row counts.</li>
+<li>Stable row IDs.</li>
+<li>Column configuration model.</li>
+<li>URL persistence for shareable filters.</li>
+<li>Debounced search.</li>
+<li>Cache per query.</li>
+<li>Export on client or server depending on data size.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>13. Design a File Explorer</h2>
+<div class="diagram">FileExplorer
+├── Toolbar
+├── Breadcrumbs
+├── Tree
+│   └── Folder
+│       ├── Folder
+│       └── File
+├── File Grid/List
+└── Context Menu
+</div>
+<p>Use a normalized model for large trees and lazy-load children when folders open.</p>
+<pre>{
+  id: "folder-1",
+  parentId: null,
+  name: "Documents",
+  type: "folder",
+  childrenLoaded: false
+}</pre>
+</div>
+
+<div class="card">
+<h2>File Explorer — Key Decisions</h2>
+<ul>
+<li>Tree state: expanded nodes, selected node.</li>
+<li>Lazy-load folder children.</li>
+<li>Virtualize very large directories.</li>
+<li>Handle rename/move/delete optimistically only when rollback is safe.</li>
+<li>Use stable IDs rather than array indexes.</li>
+<li>Cache previously loaded folders.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>14. Design a Dashboard</h2>
+<div class="diagram">Dashboard
+├── Header
+├── Filters
+├── KPI Cards
+├── Charts
+├── Tables
+└── Activity
+      ↓
+Multiple API queries
+      ↓
+Shared cache
+</div>
+<p>Independent widgets should load independently where possible so one slow API does not block the entire dashboard.</p>
+<div class="note">Use skeletons per widget, cache server state and lazy-load heavy charting features if they are not needed immediately.</div>
+</div>
+
+<div class="card">
+<h2>15. Design a Chat Application</h2>
+<div class="diagram">Chat App
+├── Conversation List
+├── Message List
+├── Composer
+└── User Presence
+        │
+        ├── REST/HTTP → history
+        └── WebSocket → live events
+</div>
+<p>Use HTTP/API for initial history and mutations where appropriate, and WebSocket/SSE for real-time events.</p>
+</div>
+
+<div class="card">
+<h2>Chat — Key Decisions</h2>
+<ul>
+<li>Paginate or cursor-load old messages.</li>
+<li>Virtualize long message lists.</li>
+<li>Keep scroll position stable.</li>
+<li>Handle reconnects.</li>
+<li>Deduplicate incoming messages.</li>
+<li>Show optimistic messages with pending state.</li>
+<li>Handle delivery/read states.</li>
+<li>Cache conversations.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>16. Design an Infinite Scroll Feed</h2>
+<div class="diagram">Viewport
+ ↓
+Intersection Observer
+ ↓
+Near end?
+ ↓
+Fetch next cursor
+ ↓
+Append page
+ ↓
+Cache pages
+ ↓
+Repeat
+</div>
+<pre>useInfiniteQuery({
+  queryKey: ["feed"],
+  queryFn: fetchFeed,
+  getNextPageParam:
+    page => page.nextCursor
+});</pre>
+<p>Cursor pagination is often preferable to page numbers for changing feeds.</p>
+</div>
+
+<div class="card">
+<h2>17. Design a Kanban Board</h2>
+<div class="diagram">Board
+├── Column
+│   ├── Card
+│   ├── Card
+│   └── Card
+├── Column
+└── Column
+
+Drag
+ ↓
+Optimistic reorder
+ ↓
+Persist move
+ ↓
+Success / rollback
+</div>
+<p>For drag-and-drop, keep transient drag state local, while board/task data belongs to shared/server state.</p>
+</div>
+
+<div class="card">
+<h2>18. Design a Workflow Builder</h2>
+<div class="diagram">Workflow Builder
+├── Toolbar
+├── Canvas
+│   ├── Node
+│   └── Edge
+├── Properties Panel
+├── Minimap
+└── Validation
+        │
+        ↓
+Workflow Model
+        │
+        ↓
+Save / Load API
+</div>
+<p>Separate the visual editor state from the persisted workflow model. This makes undo/redo, validation and serialization easier.</p>
+</div>
+
+<div class="card">
+<h2>Workflow Builder — Key Decisions</h2>
+<ul>
+<li>Normalized node/edge state.</li>
+<li>Undo/redo history.</li>
+<li>Selection and viewport state.</li>
+<li>Autosave strategy.</li>
+<li>Validation rules.</li>
+<li>Conflict handling for collaborative editing.</li>
+<li>Plugin/custom node architecture.</li>
+<li>Viewport and rendering performance.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>19. Design a Form Builder</h2>
+<div class="diagram">Form Builder
+├── Field Palette
+├── Canvas
+│   └── Field
+├── Properties Panel
+├── Preview
+└── Schema
+      ↓
+JSON definition
+      ↓
+Renderer
+</div>
+<p>Use a schema-driven model so the same schema can power rendering, validation and persistence.</p>
+<pre>{
+  type: "text",
+  name: "email",
+  label: "Email",
+  required: true
+}</pre>
+</div>
+
+<div class="card">
+<h2>20. Design a Rich Text Editor</h2>
+<p>Separate editor state from persisted document state.</p>
+<div class="diagram">Editor
+├── Toolbar
+├── Document Model
+├── Selection
+├── History
+└── Plugins
+      ↓
+Serialize
+      ↓
+API / Storage
+</div>
+<p>Use a structured document model rather than treating the editor as one giant HTML string when advanced editing features are required.</p>
+</div>
+
+<div class="card">
+<h2>21. Design a Notification System</h2>
+<div class="diagram">Event
+ ↓
+Notification service
+ ↓
+Client transport
+ ├── WebSocket/SSE
+ └── Polling fallback
+ ↓
+Notification store/cache
+ ↓
+UI
+ ├── Toast
+ └── Notification Center
+</div>
+<p>Separate ephemeral toast notifications from persistent notification history.</p>
+</div>
+
+<div class="card">
+<h2>22. Design a Theme System</h2>
+<div class="diagram">Theme Provider
+      ↓
+Theme tokens
+ ├── colors
+ ├── spacing
+ ├── typography
+ └── shadows
+      ↓
+Components
+</div>
+<pre>const theme = {
+  colors: {
+    primary: "...",
+    background: "...",
+    text: "..."
+  }
+};</pre>
+<p>Use design tokens so changing the theme does not require rewriting individual components.</p>
+</div>
+
+<div class="card">
+<h2>23. Design a Search Component</h2>
+<div class="diagram">Input
+ ↓
+Debounce
+ ↓
+Query
+ ↓
+Cache
+ ↓
+Results
+ ├── Loading
+ ├── Empty
+ └── Error
+</div>
+<p>Debounce user typing to avoid sending a request on every keystroke. Cancel or ignore stale requests when necessary.</p>
+</div>
+
+<div class="card">
+<h2>24. Design a Multi-step Form</h2>
+<div class="diagram">Step 1
+ ↓
+Step 2
+ ↓
+Step 3
+ ↓
+Review
+ ↓
+Submit
+</div>
+<ul>
+<li>Keep the overall draft in one form/state model.</li>
+<li>Validate per step.</li>
+<li>Preserve data when navigating backward.</li>
+<li>Persist drafts if the form is long or important.</li>
+<li>Handle server-side validation on final submission.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>25. Design a Large Enterprise Application</h2>
+<div class="diagram">App Shell
+├── Auth
+├── Router
+├── Design System
+├── Feature Modules
+│   ├── Users
+│   ├── Projects
+│   ├── Reports
+│   └── Settings
+├── Shared API/Data Layer
+├── Permissions
+└── Observability
+</div>
+<p>Use feature-based architecture, clear boundaries, shared design primitives and consistent data-fetching/error patterns.</p>
+</div>
+
+<div class="card">
+<h2>26. Feature-Based Architecture</h2>
+<pre>src/
+├── app/
+│   ├── router/
+│   └── providers/
+├── features/
+│   ├── users/
+│   ├── projects/
+│   └── reports/
+├── components/
+├── services/
+├── hooks/
+└── shared/</pre>
+<p>Keep feature-specific logic inside the feature and shared primitives in shared areas. Avoid a giant global "utils" folder containing unrelated business logic.</p>
+</div>
+
+<div class="card">
+<h2>27. Extensibility</h2>
+<p>A scalable frontend should allow new features without rewriting the core.</p>
+<div class="diagram">Core
+ ↓
+Extension points
+ ├── Plugins
+ ├── Config
+ ├── Renderers
+ ├── Hooks
+ └── Events
+ ↓
+New feature
+</div>
+<p>Examples: custom table cell renderers, workflow node types, form field types and dashboard widgets.</p>
+</div>
+
+<div class="card">
+<h2>28. Error Handling Architecture</h2>
+<div class="diagram">API / Component Error
+       ↓
+Classify
+ ├── Validation
+ ├── Auth
+ ├── Network
+ └── Server
+       ↓
+Feature-level handling
+       ↓
+Fallback / Retry
+       ↓
+Global Error Boundary
+       ↓
+Logging / Monitoring
+</div>
+</div>
+
+<div class="card">
+<h2>29. Frontend Scalability</h2>
+<table>
+<tr><th>Problem</th><th>Approach</th></tr>
+<tr><td>Huge lists</td><td>Virtualization + pagination.</td></tr>
+<tr><td>Huge bundle</td><td>Code splitting + dependency optimization.</td></tr>
+<tr><td>Many API requests</td><td>Caching + batching where appropriate.</td></tr>
+<tr><td>Frequent updates</td><td>Selective subscriptions + efficient rendering.</td></tr>
+<tr><td>Large team</td><td>Feature boundaries + design system + conventions.</td></tr>
+<tr><td>Complex state</td><td>Clear state categories and ownership.</td></tr>
+<tr><td>Real-time data</td><td>WebSocket/SSE + cache reconciliation.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>30. Frontend System Design Answer Template</h2>
+<pre>1. Requirements
+2. Scale
+3. Architecture
+4. Component decomposition
+5. State placement
+6. Data flow
+7. API/data model
+8. Caching
+9. Loading/error/empty states
+10. Optimistic updates
+11. Offline support
+12. Performance
+13. Accessibility
+14. Security
+15. Testing
+16. Monitoring
+17. Extensibility
+18. Trade-offs</pre>
+</div>
+
+<div class="card">
+<h2>31. Trade-off Thinking</h2>
+<p>Senior-level interviews are less about finding one "perfect" architecture and more about explaining why you chose it.</p>
+<table>
+<tr><th>Question</th><th>Example reasoning</th></tr>
+<tr><td>Client or server pagination?</td><td>Server pagination for very large datasets; client pagination for small datasets already loaded.</td></tr>
+<tr><td>Redux or local state?</td><td>Local for isolated UI; shared store only when many distant consumers need synchronized client state.</td></tr>
+<tr><td>Optimistic update?</td><td>Use when failure can be rolled back cleanly and success is highly likely.</td></tr>
+<tr><td>WebSocket or polling?</td><td>WebSocket for frequent real-time updates; polling when simplicity and lower real-time requirements matter.</td></tr>
+<tr><td>Cache aggressively?</td><td>Yes when stale data is acceptable; otherwise use shorter freshness and precise invalidation.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>How do you approach frontend system design?</b> Clarify requirements, define scale, design architecture, place state, define data flow, then cover performance, reliability, security, testing and trade-offs.</li>
+<li><b>How do you decide where state should live?</b> Keep it as close as practical to its consumers; lift it only when multiple components need the same state.</li>
+<li><b>When would you use global state?</b> For genuinely shared client state such as session information, app preferences or cross-feature workflows—not every piece of UI state.</li>
+<li><b>What is server state?</b> Data owned by a backend that the frontend fetches, caches, synchronizes and mutates.</li>
+<li><b>Why use a server-state library?</b> It can standardize caching, invalidation, retries, mutations, pagination and synchronization.</li>
+<li><b>How would you design a large data table?</b> Server-side querying, stable row IDs, virtualization, debounced filters, caching and configurable columns.</li>
+<li><b>How would you handle a million-row dataset?</b> Do not render/load it all in the browser; use server-side filtering/pagination/cursors and virtualize the visible rows.</li>
+<li><b>How would you design an infinite feed?</b> Cursor-based pagination, cached pages, Intersection Observer, deduplication and virtualization if the list becomes large.</li>
+<li><b>How would you design a chat app?</b> Fetch history through an API, receive live events through WebSocket/SSE, cache conversations, reconcile messages and handle reconnects.</li>
+<li><b>How would you design a workflow builder?</b> Separate editor state from persisted workflow state, normalize nodes/edges, support undo/redo, validation and extensible node types.</li>
+<li><b>How would you design a form builder?</b> Use a schema-driven model that defines fields, validation and rendering, then build a renderer and editor around that schema.</li>
+<li><b>How would you design a notification system?</b> Separate persistent notification history from ephemeral toasts and use a real-time transport where needed.</li>
+<li><b>How would you design a theme system?</b> Define design tokens and expose them through a provider/theme mechanism so components consume semantic tokens rather than hardcoded values.</li>
+<li><b>What is optimistic UI?</b> Updating the UI before server confirmation, then confirming or rolling back based on the result.</li>
+<li><b>How do you handle offline support?</b> Cache useful data locally, queue supported mutations, synchronize when connectivity returns and design conflict resolution.</li>
+<li><b>How do you make a frontend scalable?</b> Use clear feature boundaries, state ownership, caching, code splitting, virtualization, reusable primitives and consistent conventions.</li>
+<li><b>What is a trade-off in frontend architecture?</b> A decision where improving one property usually adds cost or complexity elsewhere, such as caching vs freshness.</li>
+<li><b>How do you prevent one failed API from breaking a dashboard?</b> Isolate widgets, give each query its own loading/error state and use boundaries/fallbacks where appropriate.</li>
+<li><b>How would you design an enterprise React application?</b> Feature-based architecture, app shell, routing, design system, shared data layer, permissions, observability, testing and strict module boundaries.</li>
+<li><b>How do you avoid overengineering?</b> Start with actual requirements and scale, choose the simplest architecture that meets them, and add complexity only when a measured need appears.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A table has 500,000 rows.</b><br>Use server-side filtering/sorting and cursor or page-based fetching. Render only visible rows with virtualization.</li>
+<li><b>Five distant components need the selected project.</b><br>Move that state to an appropriate shared owner/store rather than passing it through many unrelated components.</li>
+<li><b>A modal is used by only one page.</b><br>Keep its open/close state local to that feature; global state would add unnecessary coupling.</li>
+<li><b>A dashboard has 12 independent API calls.</b><br>Use a server-state/cache layer, allow independent loading, cache results and avoid blocking the entire dashboard on one slow widget.</li>
+<li><b>A search box sends 20 requests while typing.</b><br>Debounce input, cancel/ignore stale requests and cache recent queries where useful.</li>
+<li><b>A chat message appears twice after reconnecting.</b><br>Give messages stable IDs and deduplicate incoming events before updating the message list.</li>
+<li><b>A chat app loses connection.</b><br>Show connection status, reconnect with bounded backoff, resynchronize missed events and reconcile local state.</li>
+<li><b>A Kanban drag succeeds visually but the server rejects it.</b><br>Rollback the optimistic change and explain the failure to the user.</li>
+<li><b>A workflow builder becomes slow with 2,000 nodes.</b><br>Profile rendering, reduce unnecessary updates, virtualize/optimize where possible and keep node state normalized/selective.</li>
+<li><b>A form builder needs 50 field types.</b><br>Use a field registry/schema-driven architecture so new field types can be added without modifying a giant conditional renderer.</li>
+<li><b>An enterprise app has 20 teams creating UI components.</b><br>Introduce a design system, ownership rules, documentation and reusable primitives with clear feature boundaries.</li>
+<li><b>Users must share a filtered table URL.</b><br>Store shareable filter/sort/page state in URL search parameters and keep server data in the cache layer.</li>
+<li><b>A feed changes while the user scrolls.</b><br>Use cursor pagination and stable IDs; reconcile new items carefully so the user's scroll position is not unexpectedly disrupted.</li>
+<li><b>A user edits a document offline.</b><br>Persist a local draft/operation queue and synchronize later. For multi-user editing, define a conflict-resolution strategy rather than blindly overwriting server state.</li>
+<li><b>A dashboard chart library is huge.</b><br>Lazy-load the chart feature or split charting libraries from the initial bundle if the charts are not immediately required.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Clarify requirements before architecture.</li>
+<li>✔ Ask: who owns this state?</li>
+<li>✔ Keep local state local when possible.</li>
+<li>✔ Separate client state from server state.</li>
+<li>✔ Use URL state for shareable navigation/filter state.</li>
+<li>✔ Use caching for server data when useful.</li>
+<li>✔ Design loading + success + empty + error states.</li>
+<li>✔ Optimistic updates need rollback.</li>
+<li>✔ Offline support needs synchronization/conflict strategy.</li>
+<li>✔ Large lists → virtualization.</li>
+<li>✔ Large datasets → server-side querying.</li>
+<li>✔ Large features → code splitting.</li>
+<li>✔ Real-time → WebSocket/SSE where appropriate.</li>
+<li>✔ Feature boundaries help large teams scale.</li>
+<li>✔ Extensibility needs explicit extension points.</li>
+<li>✔ Performance techniques have trade-offs.</li>
+<li>✔ Measure before optimizing.</li>
+<li>✔ Senior design answers explain trade-offs.</li>
+</ul>
+</div>
+
+</body>
+</html>

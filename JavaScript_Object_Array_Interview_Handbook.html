@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript Objects & Arrays - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1000px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#0369a1;color:#fff;padding:26px;border-radius:12px}h2{color:#0369a1}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#e0f2fe}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+<header><h1>JavaScript Object & Array</h1><p>Simple Interview Handbook • Print Ready</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>Why Objects & Arrays Matter</h2><p>Objects store related data using keys. Arrays store ordered collections. React uses both everywhere: props, state, API responses and lists.</p></div>
+
+<div class="card"><h2>1. Spread Operator (...)</h2><p>Spread copies values from an object or array into a new object/array.</p>
+<pre>const user = { name: "Omkar", age: 25 };
+const updated = { ...user, age: 26 };
+
+const a = [1, 2, 3];
+const b = [...a, 4];</pre>
+<div class="diagram">Original object
+     │
+     └── spread ... ──► new object</div>
+<p><b>Important:</b> Spread creates a shallow copy.</p></div>
+
+<div class="card"><h2>2. Rest Operator (...)</h2><p>Rest collects remaining values into one variable.</p>
+<pre>const [first, ...remaining] = [10, 20, 30, 40];
+console.log(first);      // 10
+console.log(remaining);  // [20, 30, 40]
+
+function sum(...numbers){
+  return numbers.reduce((a,b) => a + b, 0);
+}</pre>
+<p>Same <code>...</code> syntax, different job: <b>spread expands; rest collects.</b></p></div>
+
+<div class="card"><h2>3. Destructuring</h2><p>Destructuring extracts values from objects or arrays into variables.</p>
+<pre>const user = { name: "Omkar", age: 25 };
+const { name, age } = user;
+
+const colors = ["red", "blue"];
+const [first, second] = colors;</pre>
+<h3>React Example</h3>
+<pre>function UserCard({ name, age }) {
+  return &lt;h2&gt;{name} - {age}&lt;/h2&gt;;
+}</pre></div>
+
+<div class="card"><h2>4. Object.freeze()</h2><p><code>Object.freeze()</code> prevents changing, adding or deleting properties at the first level.</p>
+<pre>const user = Object.freeze({
+  name: "Omkar",
+  age: 25
+});
+
+user.age = 26;    // ignored in non-strict mode
+user.city = "Mumbai"; // ignored
+delete user.name; // ignored</pre>
+<p>It is <b>shallow</b>. Nested objects can still change.</p>
+<pre>const user = Object.freeze({
+  profile: { age: 25 }
+});
+
+user.profile.age = 26; // can change</pre></div>
+
+<div class="card"><h2>5. Object.seal()</h2><p><code>seal()</code> prevents adding and deleting properties, but existing properties can be changed.</p>
+<pre>const user = Object.seal({
+  name: "Omkar",
+  age: 25
+});
+
+user.age = 26;       // allowed
+user.city = "Mumbai"; // not allowed
+delete user.name;     // not allowed</pre></div>
+
+<div class="card"><h2>freeze vs seal</h2><table>
+<tr><th>Operation</th><th>freeze()</th><th>seal()</th></tr>
+<tr><td>Read</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Modify existing</td><td>No</td><td>Yes</td></tr>
+<tr><td>Add property</td><td>No</td><td>No</td></tr>
+<tr><td>Delete property</td><td>No</td><td>No</td></tr></table></div>
+
+<div class="card"><h2>6. Object.assign()</h2><p><code>Object.assign()</code> copies enumerable own properties from source objects into a target object.</p>
+<pre>const user = { name: "Omkar" };
+const details = { age: 25 };
+
+const result = Object.assign({}, user, details);
+
+console.log(result);
+// { name: "Omkar", age: 25 }</pre>
+<p>Like spread, it performs a <b>shallow copy</b>.</p></div>
+
+<div class="card"><h2>7. Shallow Clone</h2><p>A shallow clone copies only the first level. Nested objects still share the same reference.</p>
+<pre>const original = {
+  name: "Omkar",
+  address: { city: "Mumbai" }
+};
+
+const copy = { ...original };
+
+copy.address.city = "Pune";
+
+console.log(original.address.city);
+// Pune</pre>
+<div class="diagram">original
+  │
+  └── address ─────┐
+                   ├── same nested object
+copy
+  │
+  └── address ─────┘</div></div>
+
+<div class="card"><h2>8. Deep Clone</h2><p>A deep clone creates independent copies of nested objects too.</p>
+<pre>const original = {
+  name: "Omkar",
+  address: { city: "Mumbai" }
+};
+
+const copy = structuredClone(original);
+
+copy.address.city = "Pune";
+
+console.log(original.address.city);
+// Mumbai</pre>
+<p><code>structuredClone()</code> is generally preferred for supported structured-cloneable data. JSON cloning is limited.</p>
+<pre>const copy = JSON.parse(JSON.stringify(original));</pre>
+<p>JSON cloning loses or changes values such as functions, <code>undefined</code>, Dates, Maps and Sets.</p></div>
+
+<div class="card"><h2>Shallow vs Deep Clone</h2><table>
+<tr><th>Feature</th><th>Shallow</th><th>Deep</th></tr>
+<tr><td>Top-level copy</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Nested objects copied</td><td>No</td><td>Yes</td></tr>
+<tr><td>Nested references shared</td><td>Yes</td><td>No</td></tr>
+<tr><td>Common example</td><td>{ ...obj }</td><td>structuredClone(obj)</td></tr></table></div>
+
+<div class="card"><h2>React Connection</h2><p>React state should be updated without mutating the existing object.</p>
+<pre>setUser(prev => ({
+  ...prev,
+  age: prev.age + 1
+}));</pre>
+<p>For nested state:</p>
+<pre>setUser(prev => ({
+  ...prev,
+  address: {
+    ...prev.address,
+    city: "Pune"
+  }
+}));</pre>
+<p>This creates new references so React can detect the update reliably.</p></div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>What does spread do?</b> Expands values into a new object or array.</li>
+<li><b>Spread vs rest?</b> Spread expands; rest collects.</li>
+<li><b>What is destructuring?</b> Extracting values into variables.</li>
+<li><b>Is spread a deep clone?</b> No, it is shallow.</li>
+<li><b>freeze vs seal?</b> freeze prevents modifications; seal allows changing existing properties.</li>
+<li><b>Does freeze deep-freeze an object?</b> No, it is shallow.</li>
+<li><b>What does Object.assign do?</b> Copies enumerable own properties into a target object.</li>
+<li><b>What is shallow copy?</b> Top level is copied but nested references are shared.</li>
+<li><b>What is deep copy?</b> Nested data is copied into independent structures.</li>
+<li><b>Best modern deep-clone option?</b> <code>structuredClone()</code> for supported data types.</li>
+<li><b>Why avoid JSON cloning?</b> It does not preserve many JavaScript types.</li>
+<li><b>Why is immutability important in React?</b> New references help React detect state changes and keep updates predictable.</li>
+</ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>You need to update one property without changing the original object.</b><br>Use object spread.</li>
+<li><b>You need to add an item without mutating an array.</b><br>Use <code>[...items, newItem]</code>.</li>
+<li><b>You need the first array value and all remaining values.</b><br>Use array destructuring with rest.</li>
+<li><b>You need selected object properties from API data.</b><br>Use object destructuring.</li>
+<li><b>You need to prevent accidental changes to a configuration object.</b><br>Use <code>Object.freeze()</code>; remember it is shallow.</li>
+<li><b>You want properties fixed but values still editable.</b><br>Use <code>Object.seal()</code>.</li>
+<li><b>You clone an object with spread, then a nested change affects the original.</b><br>The clone is shallow; clone the nested object too or use <code>structuredClone()</code>.</li>
+<li><b>A React nested state update is not written immutably.</b><br>Create new references at every changed nesting level.</li>
+<li><b>You need to merge several flat configuration objects.</b><br>Use spread or <code>Object.assign()</code>.</li>
+<li><b>You need a true independent copy of supported nested data.</b><br>Use <code>structuredClone()</code>.</li>
+<li><b>You use JSON stringify/parse to clone a Date.</b><br>It becomes a string, so JSON cloning is not appropriate when type preservation matters.</li>
+<li><b>You need a function to accept any number of arguments.</b><br>Use a rest parameter.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ Spread = expand/copy.</li><li>✔ Rest = collect.</li><li>✔ Destructuring = extract.</li>
+<li>✔ freeze = cannot modify/add/delete.</li><li>✔ seal = cannot add/delete, but can modify.</li>
+<li>✔ assign = shallow property copy.</li><li>✔ Spread/assign = shallow.</li><li>✔ structuredClone = deep clone for supported data.</li>
+<li>✔ React state updates should be immutable.</li></ul></div>
+</body></html>

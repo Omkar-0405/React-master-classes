@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript Promises - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1000px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#6d28d9;color:#fff;padding:26px;border-radius:12px}h2{color:#6d28d9}
+.card{background:#fff;padding:20px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:12px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#ede9fe}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style><script>function printPDF(){window.print()}</script></head><body>
+<header><h1>JavaScript Promises</h1><p>Simple Interview Handbook • Print Ready</p><button onclick="printPDF()">🖨 Print / Save as PDF</button></header>
+
+<div class="card"><h2>What is a Promise?</h2><p>A Promise is an object that represents the future result of an asynchronous operation.</p>
+<div class="diagram">Request starts
+     ↓
+   Promise
+  /   |   \
+Pending  Fulfilled  Rejected</div></div>
+
+<div class="card"><h2>1. Promise States</h2><table><tr><th>State</th><th>Meaning</th></tr>
+<tr><td>Pending</td><td>Operation is running.</td></tr><tr><td>Fulfilled</td><td>Operation succeeded.</td></tr><tr><td>Rejected</td><td>Operation failed.</td></tr></table>
+<pre>const p = new Promise((resolve, reject) => {
+  resolve("Success");
+});</pre>
+<p>A Promise can settle only once.</p></div>
+
+<div class="card"><h2>2. Promise Chaining</h2><p>Use the result of one asynchronous step in the next step.</p>
+<pre>fetch("/user")
+  .then(res => res.json())
+  .then(user => user.name)
+  .then(name => console.log(name))
+  .catch(error => console.error(error));</pre>
+<p>Each <code>.then()</code> returns a new Promise, which makes chaining possible.</p></div>
+
+<div class="card"><h2>3. Promise.all()</h2><p>Use when <b>all operations are required</b>.</p>
+<pre>Promise.all([fetchUsers(), fetchProducts(), fetchOrders()])
+  .then(([users, products, orders]) => console.log(users, products, orders))
+  .catch(error => console.error(error));</pre>
+<div class="diagram">A ──┐
+B ──┼──► Promise.all ──► Success when all fulfill
+C ──┘
+          Any rejection → Reject</div></div>
+
+<div class="card"><h2>4. Promise.race()</h2><p>Returns the first Promise that <b>settles</b> — fulfilled or rejected.</p>
+<pre>Promise.race([serverA(), serverB()])
+  .then(result => console.log(result))
+  .catch(error => console.error(error));</pre>
+<p>Useful for competing requests and timeouts.</p></div>
+
+<div class="card"><h2>5. Promise.allSettled()</h2><p>Waits for every Promise, whether it succeeds or fails.</p>
+<pre>Promise.allSettled([
+  Promise.resolve("A"),
+  Promise.reject("B"),
+  Promise.resolve("C")
+]).then(results => console.log(results));</pre>
+<pre>[
+ { status: "fulfilled", value: "A" },
+ { status: "rejected", reason: "B" },
+ { status: "fulfilled", value: "C" }
+]</pre></div>
+
+<div class="card"><h2>6. Promise.any()</h2><p>Returns the <b>first fulfilled</b> Promise. It keeps waiting through rejections.</p>
+<pre>Promise.any([serverA(), serverB(), serverC()])
+  .then(result => console.log(result))
+  .catch(error => console.error(error));</pre>
+<p>If all Promises reject, it rejects with <code>AggregateError</code>.</p></div>
+
+<div class="card"><h2>7. async / await</h2><p><code>async/await</code> is cleaner syntax for working with Promises.</p>
+<pre>async function getUser(){
+  try {
+    const response = await fetch("/user");
+    const user = await response.json();
+    console.log(user);
+  } catch(error) {
+    console.error(error);
+  }
+}</pre>
+<p><code>await</code> pauses that async function; it does not block the JavaScript thread.</p></div>
+
+<div class="card"><h2>8. Error Handling</h2>
+<h3>Using catch()</h3><pre>fetch("/user")
+  .then(res => res.json())
+  .catch(error => console.error(error));</pre>
+<h3>Using try/catch</h3><pre>async function load(){
+  try {
+    const res = await fetch("/user");
+    return await res.json();
+  } catch(error) {
+    console.error(error);
+  }
+}</pre></div>
+
+<div class="card"><h2>Important Comparison</h2><table>
+<tr><th>Method</th><th>Behavior</th></tr><tr><td>Promise.all</td><td>All fulfill; one rejection rejects the result.</td></tr>
+<tr><td>Promise.race</td><td>First settled Promise wins.</td></tr><tr><td>Promise.allSettled</td><td>Waits for every Promise.</td></tr>
+<tr><td>Promise.any</td><td>First fulfilled Promise wins.</td></tr></table></div>
+
+<div class="card"><h2>Most Asked Interview Questions</h2><ol>
+<li><b>What is a Promise?</b> An object representing a future asynchronous result.</li>
+<li><b>What are its states?</b> Pending, fulfilled and rejected.</li>
+<li><b>Can a Promise change state twice?</b> No. Once settled, it cannot change again.</li>
+<li><b>What does Promise.all do?</b> Waits for all to fulfill; rejects if one rejects.</li>
+<li><b>What does Promise.race do?</b> Returns the first settled result.</li>
+<li><b>What does Promise.allSettled do?</b> Waits for all and reports every outcome.</li>
+<li><b>What does Promise.any do?</b> Returns the first fulfilled result.</li>
+<li><b>What if Promise.any has all rejections?</b> It rejects with AggregateError.</li>
+<li><b>async/await vs Promise?</b> async/await is syntax built on Promises.</li>
+<li><b>Does await block JavaScript?</b> No; it pauses only the async function.</li>
+<li><b>How are errors handled?</b> With <code>.catch()</code> or <code>try/catch</code>.</li>
+<li><b>Why does .then return a Promise?</b> To allow asynchronous chaining.</li></ol></div>
+
+<div class="card"><h2>Scenario-Based Questions</h2><ol>
+<li><b>Three APIs are all required for a dashboard.</b><br>Use <code>Promise.all()</code>.</li>
+<li><b>Three servers provide the same data; first successful response is enough.</b><br>Use <code>Promise.any()</code>.</li>
+<li><b>Whichever server settles first should win, even if it fails.</b><br>Use <code>Promise.race()</code>.</li>
+<li><b>Ten independent uploads: you need every success/failure.</b><br>Use <code>Promise.allSettled()</code>.</li>
+<li><b>An API should timeout after a limit.</b><br>Race the API Promise against a timeout Promise.</li>
+<li><b>One independent API fails, but other results are still needed.</b><br>Use <code>Promise.allSettled()</code>.</li>
+<li><b>You want readable sequential async code.</b><br>Use <code>async/await</code> with <code>try/catch</code>.</li>
+<li><b>Three independent API calls are written with three sequential awaits.</b><br>Start them first and use <code>Promise.all()</code> if they do not depend on each other.</li>
+<li><b>API B needs an ID returned by API A.</b><br>Use sequential <code>await</code> or Promise chaining.</li>
+<li><b>You want every result even when some tasks fail.</b><br>Use <code>Promise.allSettled()</code>.</li>
+<li><b>Only one successful response is required.</b><br>Use <code>Promise.any()</code>.</li>
+<li><b>A rejected Promise is not handled.</b><br>Add <code>.catch()</code> or handle it with <code>try/catch</code> around <code>await</code>.</li>
+</ol></div>
+
+<div class="card"><h2>Quick Revision</h2><ul>
+<li>✔ Promise = future result.</li><li>✔ States = pending → fulfilled/rejected.</li><li>✔ all = all must fulfill.</li>
+<li>✔ race = first settled.</li><li>✔ allSettled = wait for everyone.</li><li>✔ any = first fulfilled.</li>
+<li>✔ async/await = cleaner Promise syntax.</li><li>✔ catch / try-catch = error handling.</li></ul></div>
+</body></html>

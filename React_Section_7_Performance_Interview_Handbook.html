@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Performance - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#b45309;color:#fff;padding:28px;border-radius:12px}
+h2{color:#b45309}h3{color:#92400e}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#fef3c7}
+code{background:#fffbeb;padding:2px 5px;border-radius:4px}.note{background:#fffbeb;border-left:4px solid #d97706;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 7 — React Performance</h1>
+<p>Very Frequently Asked • Memoization • Code Splitting • Virtualization • Profiling</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Performance — Big Picture</h2>
+<p>React performance is mainly about doing <b>less unnecessary work</b> and keeping important interactions responsive.</p>
+<div class="diagram">Slow UI?
+   ↓
+Measure first
+   ↓
+Find bottleneck
+   ↓
+Choose the right optimization
+   ↓
+Measure again
+
+Common tools:
+Memoization • State Colocation • Code Splitting
+Lazy Loading • Virtualization • Better data flow</div>
+<div class="note"><b>Interview rule:</b> Do not say "useMemo/useCallback everywhere." First identify why the component is rendering or why the work is expensive.</div>
+</div>
+
+<div class="card">
+<h2>2. React.memo</h2>
+<p><code>React.memo</code> memoizes a function component. If its props are considered equal, React can skip re-rendering that component when its parent renders.</p>
+<pre>const User = React.memo(function User({ name }) {
+  return &lt;h2&gt;{name}&lt;/h2&gt;;
+});</pre>
+<p>By default, React compares props using shallow/object identity comparison.</p>
+</div>
+
+<div class="card">
+<h2>React.memo — Important Limitation</h2>
+<pre>const Child = React.memo(({ onClick }) => {
+  return &lt;button onClick={onClick}&gt;Click&lt;/button&gt;;
+});
+
+function Parent() {
+  const handleClick = () => {
+    console.log("click");
+  };
+
+  return &lt;Child onClick={handleClick} /&gt;;
+}</pre>
+<p><code>handleClick</code> is a new function on each parent render, so the child receives a new prop reference and memoization may not help.</p>
+<p>Use <code>useCallback</code> when stable callback identity is actually useful.</p>
+</div>
+
+<div class="card">
+<h2>3. useMemo</h2>
+<p><code>useMemo</code> caches a calculated value until dependencies change.</p>
+<pre>const filtered = useMemo(() => {
+  return products.filter(p =>
+    p.name.includes(search)
+  );
+}, [products, search]);</pre>
+<p>Best suited for genuinely expensive calculations or for preserving a value's identity when another optimization depends on it.</p>
+</div>
+
+<div class="card">
+<h2>useMemo — Overuse</h2>
+<p>Memoization itself has a cost: dependency tracking, memory and extra complexity.</p>
+<pre>// Often unnecessary
+const fullName = useMemo(
+  () =&gt; firstName + " " + lastName,
+  [firstName, lastName]
+);</pre>
+<p>For cheap calculations, normal JavaScript is often better.</p>
+</div>
+
+<div class="card">
+<h2>4. useCallback</h2>
+<p><code>useCallback</code> caches a function reference.</p>
+<pre>const handleSelect = useCallback((id) => {
+  setSelected(id);
+}, []);</pre>
+<p>It is useful mainly when:</p>
+<ul>
+<li>Passing a callback to a memoized child.</li>
+<li>A stable function reference matters to another Hook/API.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>React.memo + useCallback</h2>
+<pre>const Button = React.memo(function Button({ onClick }) {
+  console.log("Button render");
+  return &lt;button onClick={onClick}&gt;Save&lt;/button&gt;;
+});
+
+function Parent() {
+  const save = useCallback(() => {
+    console.log("save");
+  }, []);
+
+  return &lt;Button onClick={save} /&gt;;
+}</pre>
+<div class="diagram">Parent render
+     ↓
+useCallback → same function reference
+     ↓
+React.memo → props unchanged
+     ↓
+Child can skip render</div>
+</div>
+
+<div class="card">
+<h2>5. Code Splitting</h2>
+<p><b>Code splitting</b> breaks a large JavaScript bundle into smaller chunks that can be loaded when needed.</p>
+<div class="diagram">One large bundle
+       ↓
+  Split into chunks
+   /      |       \
+Home   Dashboard   Admin
+   ↓       ↓         ↓
+load when needed</div>
+<p>This can reduce the JavaScript needed for the initial page.</p>
+</div>
+
+<div class="card">
+<h2>React.lazy</h2>
+<p><code>React.lazy</code> lets a component be loaded dynamically.</p>
+<pre>const Admin = React.lazy(
+  () =&gt; import("./Admin")
+);</pre>
+<p>The imported module is loaded when React needs to render that lazy component.</p>
+</div>
+
+<div class="card">
+<h2>Suspense</h2>
+<p><code>Suspense</code> provides fallback UI while a lazy component or another supported Suspense-enabled operation is waiting.</p>
+<pre>&lt;Suspense fallback={&lt;p&gt;Loading...&lt;/p&gt;}&gt;
+  &lt;Admin /&gt;
+&lt;/Suspense&gt;</pre>
+<div class="note"><b>Easy memory:</b> React.lazy = load component later. Suspense = show fallback while waiting.</div>
+</div>
+
+<div class="card">
+<h2>6. Bundle Optimization</h2>
+<p>The goal is to reduce the amount of JavaScript the browser needs to download, parse and execute.</p>
+<ul>
+<li>Code split routes/features.</li>
+<li>Remove unused dependencies.</li>
+<li>Prefer tree-shakeable packages.</li>
+<li>Avoid importing huge libraries for tiny features.</li>
+<li>Analyze production bundles.</li>
+<li>Compress and cache assets.</li>
+</ul>
+<pre>// Prefer a focused import when supported
+import debounce from "some-library/debounce";</pre>
+<p>Exact tree-shaking behavior depends on the library and build tool.</p>
+</div>
+
+<div class="card">
+<h2>7. Lazy Loading</h2>
+<p>Lazy loading means delaying the loading of something until it is needed.</p>
+<table>
+<tr><th>Example</th><th>Why?</th></tr>
+<tr><td>Admin route</td><td>Most users may never open it.</td></tr>
+<tr><td>Large chart</td><td>Load only when chart is visible/needed.</td></tr>
+<tr><td>Heavy editor</td><td>Avoid loading it on every page.</td></tr>
+</table>
+<p>Lazy loading is useful when it improves the critical initial path. Too many tiny chunks can also add overhead.</p>
+</div>
+
+<div class="card">
+<h2>8. Virtualization</h2>
+<p><b>Virtualization</b> renders only the visible portion of a large list instead of creating thousands of DOM nodes at once.</p>
+<div class="diagram">10,000 rows
+┌────────────────────┐
+│ Row 120  ← visible │
+│ Row 121            │
+│ Row 122            │
+│ Row 123            │
+└────────────────────┘
+
+Only visible/nearby rows are mounted.
+As user scrolls:
+old rows removed → new rows rendered</div>
+<p>This can greatly reduce DOM work and memory for very large lists.</p>
+</div>
+
+<div class="card">
+<h2>react-window / react-virtualized</h2>
+<p>These libraries provide virtualization techniques for large lists and grids.</p>
+<table>
+<tr><th>Library</th><th>Use</th></tr>
+<tr><td>react-window</td><td>Lightweight virtualization for lists/grids.</td></tr>
+<tr><td>react-virtualized</td><td>Older, feature-rich virtualization library.</td></tr>
+</table>
+<p>Choose based on your project's requirements and current library support.</p>
+</div>
+
+<div class="card">
+<h2>9. Prevent Unnecessary Re-renders</h2>
+<p>First understand what is causing the render.</p>
+<ul>
+<li>Keep state close to where it is used.</li>
+<li>Split large components.</li>
+<li>Use React.memo when a component benefits from memoization.</li>
+<li>Stabilize expensive callback/value props when needed.</li>
+<li>Avoid creating unnecessary derived state.</li>
+<li>Use virtualization for huge collections.</li>
+<li>Use transitions/deferred values for suitable non-urgent work.</li>
+</ul>
+<div class="note">A re-render is not automatically a performance problem. React can re-render and still make no DOM changes.</div>
+</div>
+
+<div class="card">
+<h2>10. State Colocation</h2>
+<p><b>State colocation</b> means keeping state as close as possible to the components that actually use it.</p>
+<div class="diagram">❌ State too high
+
+App
+ ↓
+Huge state object
+ ↓
+Many unrelated children
+
+✔ State colocated
+
+App
+ ├── Header
+ └── SearchBox
+       └── search state</div>
+<p>When search state lives inside SearchBox, unrelated parts of the app do not need to participate in that state flow.</p>
+</div>
+
+<div class="card">
+<h2>Why State Colocation Helps</h2>
+<pre>function SearchBox() {
+  const [query, setQuery] = useState("");
+
+  return (
+    &lt;input
+      value={query}
+      onChange={e =&gt; setQuery(e.target.value)}
+    /&gt;
+  );
+}</pre>
+<p>Keeping temporary UI state local can reduce the number of components affected by updates and makes ownership clearer.</p>
+</div>
+
+<div class="card">
+<h2>11. Memoization Strategy</h2>
+<div class="diagram">1. Measure
+   ↓
+2. Find expensive render/calculation
+   ↓
+3. Ask why it happens
+   ↓
+4. Fix data/state structure first
+   ↓
+5. Memoize only if useful
+   ↓
+6. Measure again</div>
+<table>
+<tr><th>Problem</th><th>Possible tool</th></tr>
+<tr><td>Expensive calculation</td><td>useMemo</td></tr>
+<tr><td>Memoized child receives changing callback</td><td>useCallback</td></tr>
+<tr><td>Child re-renders with same props</td><td>React.memo</td></tr>
+<tr><td>Huge list</td><td>Virtualization</td></tr>
+<tr><td>Huge initial bundle</td><td>Code splitting/lazy loading</td></tr>
+<tr><td>Unrelated components respond to local UI state</td><td>State colocation</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. Performance Profiling — React DevTools</h2>
+<p>The <b>React DevTools Profiler</b> helps identify which components render, how often they render, and where rendering time is spent.</p>
+<div class="diagram">Profiler
+   ↓
+Record interaction
+   ↓
+Inspect commits
+   ↓
+Find expensive components
+   ↓
+Check why they render
+   ↓
+Optimize
+   ↓
+Profile again</div>
+<p>Use profiling to validate that an optimization actually improves the real application.</p>
+</div>
+
+<div class="card">
+<h2>What to Look For in the Profiler</h2>
+<ul>
+<li>Components rendering more often than expected.</li>
+<li>Expensive render durations.</li>
+<li>Large commits.</li>
+<li>Parent updates causing unrelated child work.</li>
+<li>Expensive calculations.</li>
+<li>Interactions that feel slow.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Performance Optimization Order</h2>
+<div class="diagram">1. Measure
+   ↓
+2. Fix unnecessary work
+   ↓
+3. Colocate state
+   ↓
+4. Split large components
+   ↓
+5. Virtualize huge lists
+   ↓
+6. Code split large features
+   ↓
+7. Memoize targeted bottlenecks
+   ↓
+8. Measure again</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is React.memo?</b> A memoization mechanism that can skip a function component's render when its props are equal.</li>
+<li><b>When should you use React.memo?</b> When a component re-renders often with the same props and skipping its render is beneficial.</li>
+<li><b>What is useMemo?</b> It caches a calculated value between renders.</li>
+<li><b>What is useCallback?</b> It caches a function reference between renders.</li>
+<li><b>useMemo vs useCallback?</b> useMemo caches a value; useCallback caches a function.</li>
+<li><b>Why can useMemo/useCallback hurt performance?</b> They add dependency/memoization overhead and complexity.</li>
+<li><b>What is code splitting?</b> Splitting JavaScript into chunks loaded when needed.</li>
+<li><b>React.lazy vs Suspense?</b> lazy defines a dynamically loaded component; Suspense provides fallback UI while it is waiting.</li>
+<li><b>What is virtualization?</b> Rendering only visible items from a large collection.</li>
+<li><b>Why use virtualization?</b> To reduce DOM nodes, rendering work and memory for very large lists.</li>
+<li><b>What is state colocation?</b> Keeping state close to the components that use it.</li>
+<li><b>How do you prevent unnecessary re-renders?</b> Fix state/data flow first, then use targeted memoization, stable props, colocation and virtualization where appropriate.</li>
+<li><b>How do you profile React performance?</b> Use React DevTools Profiler to inspect renders and commits, then measure after changes.</li>
+<li><b>Does every re-render mean the DOM changes?</b> No. React can render/reconcile and determine that no DOM update is necessary.</li>
+<li><b>How do you optimize a large initial bundle?</b> Analyze the bundle, remove unnecessary dependencies, code split large features and lazy load non-critical code.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A memoized child still renders every time the parent renders.</b><br>Check whether its props contain new object/function references. Stabilize them only if the optimization is useful.</li>
+<li><b>A child receives a callback created inside the parent.</b><br>If the child is memoized and callback identity is causing renders, consider useCallback.</li>
+<li><b>A calculation filters 100,000 records on every render.</b><br>Profile it; if genuinely expensive, consider useMemo or moving the work elsewhere.</li>
+<li><b>A simple string concatenation is wrapped in useMemo.</b><br>Remove it unless there is a specific identity/performance reason; the calculation is cheap.</li>
+<li><b>The application downloads a huge admin module even for normal users.</b><br>Use route/feature code splitting and lazy loading.</li>
+<li><b>A page contains 20,000 table rows.</b><br>Use virtualization rather than rendering every row into the DOM.</li>
+<li><b>A search input causes the entire application to re-render.</b><br>Consider colocating the search state and inspect the component tree.</li>
+<li><b>A global state update causes many unrelated components to update.</b><br>Review state ownership, context boundaries and subscriptions; colocate state where possible.</li>
+<li><b>A developer adds React.memo to every component.</b><br>Do not blindly memoize. Measure first and target components with actual rendering costs.</li>
+<li><b>A large list scrolls poorly.</b><br>Profile it and consider virtualization, reducing expensive row rendering, and avoiding unnecessary layout work.</li>
+<li><b>A component is expensive only because it receives a constantly recreated object prop.</b><br>Check whether the object can be derived/stabilized appropriately and whether React.memo then provides value.</li>
+<li><b>A route is rarely visited.</b><br>Lazy load/code split that route so it does not have to be part of the initial JavaScript.</li>
+<li><b>The React Profiler shows an unexpected large commit.</b><br>Inspect which components rendered and why, then optimize the actual bottleneck.</li>
+<li><b>After adding useMemo, the app becomes more complex but no faster.</b><br>Remove the unnecessary memoization and prefer simpler code.</li>
+<li><b>A user types into a large searchable UI and typing feels delayed.</b><br>Consider state colocation and, where appropriate, useTransition/useDeferredValue plus efficient rendering/virtualization.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ React.memo = memoize component rendering based on props.</li>
+<li>✔ useMemo = memoize calculated value.</li>
+<li>✔ useCallback = memoize function reference.</li>
+<li>✔ Don't memoize everything.</li>
+<li>✔ Code splitting = smaller JS chunks.</li>
+<li>✔ React.lazy = lazy component loading.</li>
+<li>✔ Suspense = fallback while waiting.</li>
+<li>✔ Lazy loading = load only when needed.</li>
+<li>✔ Virtualization = render only visible large-list items.</li>
+<li>✔ State colocation = keep state near its usage.</li>
+<li>✔ Re-render does not necessarily mean DOM update.</li>
+<li>✔ Profile before optimizing.</li>
+<li>✔ Optimize → measure again.</li>
+</ul>
+</div>
+
+</body></html>

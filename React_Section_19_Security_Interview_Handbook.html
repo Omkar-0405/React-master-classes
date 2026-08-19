@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Security - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#172554;color:#fff;padding:28px;border-radius:12px}
+h2{color:#1d4ed8}h3{color:#1e40af}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#dbeafe}
+code{background:#eff6ff;padding:2px 5px;border-radius:4px}.note{background:#eff6ff;border-left:4px solid #2563eb;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 19 — React Security</h1>
+<p>Simple Interview Handbook • XSS • CSRF • CSP • DOMPurify • JWT Storage • HTTPS • Secure Cookies</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Why Web Security Matters</h2>
+<p>Frontend security is about reducing the ways an attacker can execute code, steal data, impersonate users, or abuse authenticated actions.</p>
+<div class="diagram">User Input / Network / Browser
+          ↓
+       React App
+          ↓
+Security controls
+ ├── Output escaping
+ ├── CSP
+ ├── Secure cookies
+ ├── HTTPS
+ ├── CSRF protection
+ └── Safe data handling
+</div>
+<div class="note"><b>Interview idea:</b> Security is layered. No single control such as JWT, CSP or DOMPurify solves every web security problem.</div>
+</div>
+
+<div class="card">
+<h2>2. XSS — Cross-Site Scripting</h2>
+<p><b>XSS</b> happens when attacker-controlled content is interpreted as executable code in another user's browser.</p>
+<div class="diagram">Attacker-controlled input
+        ↓
+Application renders it unsafely
+        ↓
+Browser interprets attacker content
+        ↓
+Code executes in user's context
+</div>
+<p>XSS can be used to manipulate pages, steal accessible data, perform actions as the user, or abuse application functionality.</p>
+</div>
+
+<div class="card">
+<h2>3. React and XSS</h2>
+<p>React normally escapes text inserted through JSX.</p>
+<pre>const comment = userInput;
+
+return (
+  &lt;p&gt;{comment}&lt;/p&gt;
+);</pre>
+<p>The value is treated as text rather than being interpreted as HTML.</p>
+<div class="note">This protection does not mean the entire application is automatically XSS-safe. Dangerous HTML APIs, third-party libraries, URLs and DOM manipulation can still create vulnerabilities.</div>
+</div>
+
+<div class="card">
+<h2>4. dangerouslySetInnerHTML</h2>
+<p><code>dangerouslySetInnerHTML</code> tells React to insert raw HTML. It should be used only when the HTML is trusted or has been safely sanitized.</p>
+<pre>// Risky with untrusted input
+&lt;div
+  dangerouslySetInnerHTML={{
+    __html: userInput
+  }}
+/&gt;</pre>
+<p>Never assume that "it came from the database" means it is safe. Stored attacker input can still be dangerous.</p>
+</div>
+
+<div class="card">
+<h2>5. DOMPurify</h2>
+<p><b>DOMPurify</b> is a sanitizer commonly used to remove dangerous HTML content before rendering HTML that must be accepted as input.</p>
+<pre>import DOMPurify from "dompurify";
+
+const cleanHTML =
+  DOMPurify.sanitize(untrustedHTML);
+
+return (
+  &lt;div
+    dangerouslySetInnerHTML={{
+      __html: cleanHTML
+    }}
+  /&gt;
+);</pre>
+<div class="note">Sanitization is a defense for a specific HTML-rendering boundary. Prefer plain text rendering whenever HTML is not actually required.</div>
+</div>
+
+<div class="card">
+<h2>6. XSS Prevention</h2>
+<ul>
+<li>Prefer normal JSX text rendering.</li>
+<li>Avoid raw HTML when unnecessary.</li>
+<li>Sanitize untrusted HTML before rendering.</li>
+<li>Use a strong Content Security Policy.</li>
+<li>Validate data at appropriate boundaries.</li>
+<li>Keep dependencies updated.</li>
+<li>Be careful with third-party scripts and DOM APIs.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>7. CSRF — Cross-Site Request Forgery</h2>
+<p><b>CSRF</b> tricks a user's browser into sending an unwanted authenticated request to a site where the user is already logged in.</p>
+<div class="diagram">User logged into bank.com
+        ↓
+Visits malicious-site.com
+        ↓
+Malicious page causes request
+        ↓
+Browser may attach bank cookies
+        ↓
+Bank receives authenticated request
+</div>
+<p>CSRF is particularly relevant when authentication credentials are automatically attached by the browser, such as cookies.</p>
+</div>
+
+<div class="card">
+<h2>8. CSRF Protection</h2>
+<p>Common defenses include:</p>
+<ul>
+<li>SameSite cookies.</li>
+<li>CSRF tokens.</li>
+<li>Origin/Referer validation where appropriate.</li>
+<li>Server-side request validation.</li>
+</ul>
+<pre>Set-Cookie:
+session=...;
+HttpOnly;
+Secure;
+SameSite=Lax</pre>
+<p>Exact cookie policy depends on the application and cross-site requirements.</p>
+</div>
+
+<div class="card">
+<h2>9. SameSite Cookies</h2>
+<table>
+<tr><th>Setting</th><th>Idea</th></tr>
+<tr><td><code>Strict</code></td><td>Most restrictive cross-site cookie behavior.</td></tr>
+<tr><td><code>Lax</code></td><td>Allows some top-level navigation use cases while restricting many cross-site requests.</td></tr>
+<tr><td><code>None</code></td><td>Allows cross-site use, but requires <code>Secure</code>.</td></tr>
+</table>
+<div class="note">SameSite is an important CSRF defense, but do not treat it as the only security control for every application.</div>
+</div>
+
+<div class="card">
+<h2>10. CSP — Content Security Policy</h2>
+<p><b>CSP</b> is a browser security policy that restricts which resources and script sources a page is allowed to use.</p>
+<pre>Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+  object-src 'none';</pre>
+<p>A carefully designed CSP can reduce the impact of many XSS attacks by limiting where executable content can come from.</p>
+</div>
+
+<div class="card">
+<h2>CSP Mental Model</h2>
+<div class="diagram">HTML page
+   ↓
+Browser receives CSP
+   ↓
+Browser checks resource
+   ↓
+Allowed? ── Yes → Load
+    │
+    No
+    ↓
+Block / report according to policy
+</div>
+</div>
+
+<div class="card">
+<h2>11. Useful CSP Directives</h2>
+<table>
+<tr><th>Directive</th><th>Purpose</th></tr>
+<tr><td><code>default-src</code></td><td>Fallback source policy.</td></tr>
+<tr><td><code>script-src</code></td><td>Controls script sources.</td></tr>
+<tr><td><code>style-src</code></td><td>Controls style sources.</td></tr>
+<tr><td><code>img-src</code></td><td>Controls image sources.</td></tr>
+<tr><td><code>connect-src</code></td><td>Controls fetch/XHR/WebSocket destinations.</td></tr>
+<tr><td><code>font-src</code></td><td>Controls font sources.</td></tr>
+<tr><td><code>frame-src</code></td><td>Controls embedded frames.</td></tr>
+<tr><td><code>object-src</code></td><td>Controls plugin/object sources.</td></tr>
+<tr><td><code>frame-ancestors</code></td><td>Controls which sites can embed the page.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>12. JWT</h2>
+<p><b>JWT (JSON Web Token)</b> is a token format commonly used to represent claims between a client and server.</p>
+<div class="diagram">Login
+ ↓
+Server authenticates user
+ ↓
+Token / session credential
+ ↓
+Client
+ ↓
+Authenticated request
+ ↓
+Server validates credential
+</div>
+<p>A JWT is normally signed so the server can detect tampering. Signing does not automatically encrypt the token's contents.</p>
+</div>
+
+<div class="card">
+<h2>13. JWT Storage</h2>
+<p>A major frontend security decision is where authentication credentials are stored.</p>
+<table>
+<tr><th>Location</th><th>Important tradeoff</th></tr>
+<tr><td>localStorage</td><td>Accessible to JavaScript, so an XSS vulnerability can expose stored tokens.</td></tr>
+<tr><td>sessionStorage</td><td>Also accessible to JavaScript; typically scoped to the tab/session lifecycle.</td></tr>
+<tr><td>HttpOnly cookie</td><td>JavaScript cannot read it; browser sends it automatically, so CSRF protections matter.</td></tr>
+</table>
+<div class="note"><b>Interview answer:</b> There is no universal "JWT must be stored here" rule. For browser apps, HttpOnly Secure cookies are often preferred for session/refresh credentials because JavaScript cannot directly read them, while CSRF and cookie policy must be designed correctly.</div>
+</div>
+
+<div class="card">
+<h2>14. Secure Cookies</h2>
+<pre>Set-Cookie:
+  session=abc;
+  HttpOnly;
+  Secure;
+  SameSite=Lax;
+  Path=/</pre>
+<table>
+<tr><th>Attribute</th><th>Purpose</th></tr>
+<tr><td><code>HttpOnly</code></td><td>Prevents JavaScript from reading the cookie through document.cookie.</td></tr>
+<tr><td><code>Secure</code></td><td>Sends the cookie only over HTTPS connections.</td></tr>
+<tr><td><code>SameSite</code></td><td>Controls cross-site cookie sending behavior.</td></tr>
+<tr><td><code>Path</code></td><td>Limits which URL paths receive the cookie.</td></tr>
+<tr><td><code>Max-Age/Expires</code></td><td>Controls cookie lifetime.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>15. HTTPS</h2>
+<p><b>HTTPS</b> uses TLS to protect communication between the browser and server.</p>
+<div class="diagram">Browser
+   ⇅ encrypted TLS connection
+Server
+
+Protects against:
+- network eavesdropping
+- tampering in transit
+- impersonation when certificate validation succeeds
+</div>
+<p>HTTPS protects data in transit. It does not make an insecure application automatically safe from XSS, CSRF, broken authorization or server-side vulnerabilities.</p>
+</div>
+
+<div class="card">
+<h2>16. HTTPS + Secure Cookie</h2>
+<div class="diagram">HTTPS
+  ↓
+Encrypted transport
+  ↓
+Secure cookie
+  ↓
+Cookie sent only over HTTPS
+  ↓
+HttpOnly
+  ↓
+JavaScript cannot directly read it
+  ↓
+SameSite / CSRF controls
+  ↓
+Reduce browser-based attack surface
+</div>
+</div>
+
+<div class="card">
+<h2>17. Access Token + Refresh Token</h2>
+<p>A common architecture uses a short-lived access credential and a longer-lived refresh credential.</p>
+<div class="diagram">Login
+ ↓
+Short-lived access token
+ ↓
+API requests
+
+Refresh credential
+ ↓
+Used to obtain new access token
+ ↓
+Prefer protected storage such as HttpOnly cookie
+</div>
+<p>The exact architecture depends on the authentication system. Rotation, expiration and server-side revocation strategies are also important.</p>
+</div>
+
+<div class="card">
+<h2>18. Don't Trust the Frontend</h2>
+<p>Frontend checks improve UX but are not security boundaries.</p>
+<pre>// UI check
+if (user.role === "admin") {
+  showDeleteButton();
+}</pre>
+<p>The server must still verify authorization:</p>
+<pre>// Server
+if (!currentUser.canDelete) {
+  return response.status(403).end();
+}</pre>
+<div class="note"><b>Golden rule:</b> Authentication and authorization must ultimately be enforced server-side.</div>
+</div>
+
+<div class="card">
+<h2>19. Security Headers</h2>
+<p>Security-related response headers can strengthen browser protections.</p>
+<table>
+<tr><th>Header</th><th>Purpose</th></tr>
+<tr><td>Content-Security-Policy</td><td>Restricts resource/script behavior.</td></tr>
+<tr><td>Strict-Transport-Security</td><td>Tells browsers to use HTTPS for the site for a specified period.</td></tr>
+<tr><td>X-Content-Type-Options: nosniff</td><td>Reduces MIME-type sniffing behavior.</td></tr>
+<tr><td>Referrer-Policy</td><td>Controls referrer information sent with requests.</td></tr>
+<tr><td>Permissions-Policy</td><td>Controls access to selected browser capabilities.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>20. Common Security Mistakes</h2>
+<ul>
+<li>Putting long-lived tokens in localStorage without understanding XSS exposure.</li>
+<li>Rendering untrusted HTML directly.</li>
+<li>Disabling CSP because it is inconvenient.</li>
+<li>Assuming HTTPS prevents XSS.</li>
+<li>Relying only on frontend role checks.</li>
+<li>Using cookies without considering CSRF.</li>
+<li>Logging tokens/passwords.</li>
+<li>Trusting API data without validation where validation is required.</li>
+<li>Using outdated dependencies with known vulnerabilities.</li>
+<li>Building custom security mechanisms without understanding their threat model.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>21. Security Mental Model</h2>
+<div class="diagram">XSS
+ ↓
+Prevent unsafe execution
+ ↓
+Escaping + Sanitization + CSP
+
+CSRF
+ ↓
+Prevent unwanted authenticated actions
+ ↓
+SameSite + CSRF tokens + Origin checks
+
+Credential theft
+ ↓
+Protect authentication secrets
+ ↓
+HttpOnly + Secure + short lifetime + rotation
+
+Network attacks
+ ↓
+Protect data in transit
+ ↓
+HTTPS / TLS
+
+Authorization
+ ↓
+Protect resources
+ ↓
+Server-side authorization
+</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>What is XSS?</b> An attack where attacker-controlled content is executed in another user's browser context.</li>
+<li><b>Does React prevent XSS?</b> React escapes normal JSX text output, but unsafe HTML APIs, URLs, DOM manipulation and dependencies can still introduce XSS risks.</li>
+<li><b>What is dangerouslySetInnerHTML?</b> An API for inserting raw HTML; it must not receive untrusted unsanitized content.</li>
+<li><b>What is DOMPurify?</b> A library commonly used to sanitize HTML before it is rendered as HTML.</li>
+<li><b>What is CSRF?</b> An attack that causes a user's browser to make an unwanted authenticated request to a site where the user is already logged in.</li>
+<li><b>How do you prevent CSRF?</b> Use appropriate SameSite cookie settings, CSRF tokens and server-side Origin/Referer validation where appropriate.</li>
+<li><b>What is CSP?</b> A browser policy controlling allowed resource/script sources and reducing the impact of many injection attacks.</li>
+<li><b>Why is CSP useful?</b> It creates another browser-enforced layer that can restrict where executable content can come from.</li>
+<li><b>Where should JWTs be stored?</b> There is no universal answer; HttpOnly Secure cookies are often preferred for browser session/refresh credentials, while CSRF protections must be designed.</li>
+<li><b>Why is localStorage risky for tokens?</b> JavaScript can read it, so an XSS vulnerability can expose tokens stored there.</li>
+<li><b>What does HttpOnly do?</b> Prevents JavaScript from reading the cookie through document.cookie.</li>
+<li><b>What does Secure do?</b> Restricts the cookie to HTTPS connections.</li>
+<li><b>What does SameSite do?</b> Controls when cookies are sent in cross-site contexts and can reduce CSRF risk.</li>
+<li><b>What does HTTPS protect?</b> It protects data in transit using TLS; it does not fix application-level vulnerabilities.</li>
+<li><b>Can frontend authorization checks protect an API?</b> No. The server must enforce authorization.</li>
+<li><b>Does signing a JWT encrypt it?</b> No. Signing provides integrity/authenticity of the token; the payload is not necessarily secret.</li>
+<li><b>What is the difference between authentication and authorization?</b> Authentication answers who the user is; authorization answers what the user is allowed to do.</li>
+<li><b>What security headers should a frontend engineer know?</b> CSP, HSTS, X-Content-Type-Options, Referrer-Policy and Permissions-Policy are common examples.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A user comment contains &lt;script&gt; and is rendered as text.</b><br>Normal React JSX text rendering is the safer approach because React escapes the value.</li>
+<li><b>A product needs rich HTML comments from users.</b><br>Sanitize the HTML with a trusted sanitizer such as DOMPurify before rendering it, and use CSP as an additional layer.</li>
+<li><b>A developer uses dangerouslySetInnerHTML with raw database content.</b><br>Review the trust boundary; database content can contain stored attacker input and should be treated as untrusted unless its safety is guaranteed.</li>
+<li><b>A JWT is stored in localStorage and an XSS vulnerability is discovered.</b><br>Assume the token may be exposed. Remediate the XSS, rotate/revoke credentials as appropriate and consider a safer credential-storage architecture.</li>
+<li><b>A session cookie is HttpOnly but a malicious site can trigger state-changing requests.</b><br>Implement appropriate CSRF defenses such as SameSite controls and CSRF token/origin validation.</li>
+<li><b>A developer says HTTPS prevents XSS.</b><br>Explain that HTTPS protects data in transit, while XSS is an application/browser execution problem.</li>
+<li><b>A frontend hides an admin button for normal users.</b><br>Keep the UI check for UX, but enforce the permission on the server/API.</li>
+<li><b>An attacker changes role: "user" to "admin" in browser devtools.</b><br>Never trust client-side role data for authorization; the server must derive and enforce permissions from trusted state.</li>
+<li><b>A CSP blocks a legitimate script.</b><br>Review the policy and deployment model, then explicitly allow only the required trusted source/nonces/hashes rather than disabling CSP broadly.</li>
+<li><b>A developer suggests script-src 'unsafe-inline' everywhere.</b><br>Explain that broad unsafe-inline weakens CSP; prefer nonces/hashes and a policy compatible with the application's architecture where feasible.</li>
+<li><b>A cookie contains a refresh credential.</b><br>Use Secure and HttpOnly, choose an appropriate SameSite policy, restrict scope where possible and implement server-side expiration/rotation/revocation strategies.</li>
+<li><b>A log entry contains an Authorization header.</b><br>Redact credentials from logs and audit the logging pipeline.</li>
+<li><b>A user can access /admin only by manually typing the URL.</b><br>Hiding navigation is not authorization. The server must return an authorization failure for unauthorized users.</li>
+<li><b>A third-party script is added to the app.</b><br>Review its trust, permissions, supply-chain risk and CSP implications; load only what is necessary and keep dependencies updated.</li>
+<li><b>A developer wants to build a custom token encryption scheme in JavaScript.</b><br>Prefer established, well-reviewed authentication/security mechanisms instead of inventing cryptography.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ XSS = attacker-controlled code/content executes in browser context.</li>
+<li>✔ React escapes normal JSX text.</li>
+<li>✔ dangerouslySetInnerHTML needs trusted/sanitized HTML.</li>
+<li>✔ DOMPurify sanitizes HTML.</li>
+<li>✔ CSRF = unwanted authenticated request.</li>
+<li>✔ SameSite helps reduce CSRF.</li>
+<li>✔ CSRF tokens/origin checks may also be needed.</li>
+<li>✔ CSP restricts resource/script sources.</li>
+<li>✔ localStorage tokens are readable by JavaScript.</li>
+<li>✔ HttpOnly cookies cannot be read by JavaScript.</li>
+<li>✔ Secure cookies require HTTPS for transmission.</li>
+<li>✔ SameSite controls cross-site cookie behavior.</li>
+<li>✔ HTTPS protects data in transit.</li>
+<li>✔ HTTPS does not fix XSS or authorization bugs.</li>
+<li>✔ JWT signing ≠ encryption.</li>
+<li>✔ Server must enforce authorization.</li>
+<li>✔ Never log secrets.</li>
+<li>✔ Security is defense in depth.</li>
+</ul>
+</div>
+
+</body>
+</html>

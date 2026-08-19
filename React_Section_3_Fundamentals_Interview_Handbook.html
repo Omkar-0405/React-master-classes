@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Fundamentals - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1080px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.65}
+header{background:#2563eb;color:#fff;padding:28px;border-radius:12px}h2{color:#2563eb}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#dbeafe}
+code{background:#eef2ff;padding:2px 5px;border-radius:4px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 3 — React Fundamentals</h1>
+<p>Simple Interview Handbook • React Introduction • JSX • Components • Props • State • Rendering • Keys</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. Why React?</h2>
+<p>React is a JavaScript library for building user interfaces using reusable components.</p>
+<ul>
+<li><b>Component-based:</b> break UI into small reusable pieces.</li>
+<li><b>Declarative:</b> describe what the UI should look like.</li>
+<li><b>Reusable:</b> components can be used in many places.</li>
+<li><b>Ecosystem:</b> works with routing, state management, data fetching and many other tools.</li>
+</ul>
+<pre>function Welcome() {
+  return &lt;h1&gt;Hello React&lt;/h1&gt;;
+}</pre>
+</div>
+
+<div class="card">
+<h2>2. Real DOM</h2>
+<p>The <b>DOM</b> is the browser's object representation of the HTML document.</p>
+<pre>document.querySelector("#title").textContent = "Hello";</pre>
+<p>Direct DOM changes can become difficult to manage when a large UI has many changing parts.</p>
+</div>
+
+<div class="card">
+<h2>3. Virtual DOM</h2>
+<p>The Virtual DOM is an in-memory representation of UI that React uses to determine what DOM changes are needed.</p>
+<div class="diagram">State / Props change
+        ↓
+React creates new UI description
+        ↓
+Compare with previous result
+        ↓
+Determine necessary DOM updates
+        ↓
+Browser DOM</div>
+<p><b>Important:</b> React does not update the real DOM for every component calculation. It calculates changes and commits the necessary DOM updates.</p>
+</div>
+
+<div class="card">
+<h2>4. JSX</h2>
+<p>JSX is a syntax extension that lets you write UI markup inside JavaScript.</p>
+<pre>const element = &lt;h1&gt;Hello {name}&lt;/h1&gt;;</pre>
+<p>JSX is transformed into JavaScript. It is not HTML itself.</p>
+</div>
+
+<div class="card">
+<h2>5. Babel</h2>
+<p>Babel is a JavaScript compiler/transformation tool. In React projects, it can transform JSX and modern JavaScript syntax into code that the configured environment can understand.</p>
+<pre>const element = &lt;h1&gt;Hello&lt;/h1&gt;;</pre>
+<p>Conceptually, JSX is transformed into JavaScript calls used to describe the React element tree.</p>
+</div>
+
+<div class="card">
+<h2>6. ReactDOM</h2>
+<p><code>react-dom</code> provides React-specific DOM APIs for browser applications.</p>
+<pre>import { createRoot } from "react-dom/client";
+import App from "./App";
+
+createRoot(document.getElementById("root"))
+  .render(&lt;App /&gt;);</pre>
+<p><code>createRoot()</code> creates a React root, and <code>render()</code> starts rendering the application into the DOM.</p>
+</div>
+
+<div class="card">
+<h2>JSX Rules</h2>
+<ul>
+<li>Return one parent element, or use a Fragment.</li>
+<li>Close tags properly.</li>
+<li>Use <code>className</code> instead of HTML <code>class</code>.</li>
+<li>Use camelCase for most DOM properties/events.</li>
+<li>JavaScript expressions go inside <code>{}</code>.</li>
+</ul>
+<pre>function User() {
+  const name = "Omkar";
+
+  return (
+    &lt;div className="user"&gt;
+      &lt;h2&gt;{name}&lt;/h2&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>JSX Expressions</h2>
+<p>Use braces to insert JavaScript expressions.</p>
+<pre>const age = 25;
+
+return &lt;p&gt;Age: {age}&lt;/p&gt;;</pre>
+<p>You can use expressions such as calculations, function calls and ternaries.</p>
+<pre>&lt;p&gt;{age &gt;= 18 ? "Adult" : "Minor"}&lt;/p&gt;</pre>
+<p>Statements such as <code>if</code> cannot be placed directly inside JSX braces.</p>
+</div>
+
+<div class="card">
+<h2>Fragments</h2>
+<p>Fragments let a component return multiple elements without adding an extra DOM element.</p>
+<pre>return (
+  &lt;&gt;
+    &lt;h1&gt;Title&lt;/h1&gt;
+    &lt;p&gt;Description&lt;/p&gt;
+  &lt;/&gt;
+);</pre>
+<p>Long form: <code>&lt;React.Fragment&gt;...&lt;/React.Fragment&gt;</code>.</p>
+</div>
+
+<div class="card">
+<h2>Conditional Rendering</h2>
+<pre>function User({ isLoggedIn }) {
+  return (
+    &lt;div&gt;
+      {isLoggedIn ? &lt;Dashboard /&gt; : &lt;Login /&gt;}
+    &lt;/div&gt;
+  );
+}</pre>
+<p>Common approaches: ternary, <code>&&</code>, early return and variables.</p>
+<p><b>Tip:</b> Be careful with <code>0 && &lt;Component /&gt;</code>; it renders <code>0</code>.</p>
+</div>
+
+<div class="card">
+<h2>Lists</h2>
+<pre>const users = [
+  { id: 1, name: "A" },
+  { id: 2, name: "B" }
+];
+
+return (
+  &lt;ul&gt;
+    {users.map(user =&gt; (
+      &lt;li key={user.id}&gt;{user.name}&lt;/li&gt;
+    ))}
+  &lt;/ul&gt;
+);</pre>
+<p>When rendering a collection, each sibling needs a stable key.</p>
+</div>
+
+<div class="card">
+<h2>Functional Components</h2>
+<p>A function component is a JavaScript function that returns React elements.</p>
+<pre>function Button({ text }) {
+  return &lt;button&gt;{text}&lt;/button&gt;;
+}</pre>
+<p>Modern React primarily uses function components with Hooks.</p>
+</div>
+
+<div class="card">
+<h2>Class Components</h2>
+<p>Class components extend <code>React.Component</code>. They are still supported, but new React code generally uses function components.</p>
+<pre>class Welcome extends React.Component {
+  render() {
+    return &lt;h1&gt;Hello {this.props.name}&lt;/h1&gt;;
+  }
+}</pre>
+</div>
+
+<div class="card">
+<h2>Smart vs Presentational Components</h2>
+<table>
+<tr><th>Type</th><th>Typical Responsibility</th></tr>
+<tr><td>Smart / Container</td><td>Coordinates state, data fetching and business logic.</td></tr>
+<tr><td>Presentational</td><td>Focuses mainly on displaying UI based on props.</td></tr>
+</table>
+<p>This is a design pattern, not a special React component type.</p>
+</div>
+
+<div class="card">
+<h2>Higher Order Components (HOC)</h2>
+<p>A HOC is a function that takes a component and returns an enhanced component.</p>
+<pre>function withLoading(Component) {
+  return function Enhanced(props) {
+    if (props.loading) return &lt;p&gt;Loading...&lt;/p&gt;;
+    return &lt;Component {...props} /&gt;;
+  };
+}</pre>
+<p>HOCs were common before Hooks. They are still useful in some libraries and legacy code.</p>
+</div>
+
+<div class="card">
+<h2>Compound Components</h2>
+<p>Compound components work together through a shared parent API.</p>
+<pre>&lt;Tabs&gt;
+  &lt;Tabs.List&gt;
+    &lt;Tabs.Tab&gt;Profile&lt;/Tabs.Tab&gt;
+    &lt;Tabs.Tab&gt;Settings&lt;/Tabs.Tab&gt;
+  &lt;/Tabs.List&gt;
+
+  &lt;Tabs.Panel&gt;Content&lt;/Tabs.Panel&gt;
+&lt;/Tabs&gt;</pre>
+<p>This pattern is useful for flexible, readable component APIs.</p>
+</div>
+
+<div class="card">
+<h2>Props</h2>
+<p>Props are read-only inputs passed from a parent component to a child.</p>
+<pre>function User({ name, age }) {
+  return &lt;p&gt;{name} - {age}&lt;/p&gt;;
+}
+
+&lt;User name="Omkar" age={25} /&gt;</pre>
+<p>The child should not mutate its props.</p>
+</div>
+
+<div class="card">
+<h2>Children</h2>
+<p><code>children</code> contains content placed between a component's opening and closing tags.</p>
+<pre>function Card({ children }) {
+  return &lt;div className="card"&gt;{children}&lt;/div&gt;;
+}
+
+&lt;Card&gt;
+  &lt;h2&gt;Profile&lt;/h2&gt;
+  &lt;p&gt;Details&lt;/p&gt;
+&lt;/Card&gt;</pre>
+</div>
+
+<div class="card">
+<h2>Default Props</h2>
+<p>For function components, a common modern approach is a default parameter value.</p>
+<pre>function Button({ text = "Submit" }) {
+  return &lt;button&gt;{text}&lt;/button&gt;;
+}</pre>
+<p>If the prop is <code>undefined</code>, the default is used. <code>null</code> does not trigger the default parameter.</p>
+</div>
+
+<div class="card">
+<h2>Prop Drilling</h2>
+<p>Prop drilling means passing data through intermediate components that do not actually need the data, only so a deeper component can receive it.</p>
+<div class="diagram">App
+ ↓ props
+Layout
+ ↓ props
+Sidebar
+ ↓ props
+UserProfile</div>
+<p>Possible solutions include component composition, Context or a state-management library, depending on the problem.</p>
+</div>
+
+<div class="card">
+<h2>State</h2>
+<p>State is data owned by a component or application that can change over time and cause the UI to update.</p>
+<pre>import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;
+      {count}
+    &lt;/button&gt;
+  );
+}</pre>
+</div>
+
+<div class="card">
+<h2>Local State</h2>
+<p>State used by one component or a small component subtree.</p>
+<pre>const [isOpen, setIsOpen] = useState(false);</pre>
+</div>
+
+<div class="card">
+<h2>Shared State</h2>
+<p>State used by multiple components. Often, the state is moved to their closest common parent and passed down through props.</p>
+<div class="diagram">Parent owns state
+   ↓        ↓
+Child A  Child B</div>
+<p>For larger applications, Context or a state-management library may be appropriate.</p>
+</div>
+
+<div class="card">
+<h2>Derived State</h2>
+<p>Derived state is a value that can be calculated from existing props/state.</p>
+<pre>const fullName = `${firstName} ${lastName}`;</pre>
+<p>Do not store a value separately in state when it can be reliably calculated from existing data. This avoids synchronization bugs.</p>
+</div>
+
+<div class="card">
+<h2>Initial Render</h2>
+<p>The first time React renders the component tree, it creates the initial UI and commits the necessary DOM updates.</p>
+<div class="diagram">App starts
+   ↓
+Render component tree
+   ↓
+Commit DOM changes
+   ↓
+Browser displays UI</div>
+</div>
+
+<div class="card">
+<h2>Re-render</h2>
+<p>A re-render means React calls a component again to calculate its next UI result. It can happen because of state changes, parent renders or changed context/props.</p>
+<p><b>Important:</b> A component re-render does not automatically mean the browser DOM is completely rebuilt.</p>
+</div>
+
+<div class="card">
+<h2>Reconciliation</h2>
+<p>Reconciliation is React's process of comparing the previous and next element trees to determine what needs to change.</p>
+<div class="diagram">Previous UI
+    ↓
+Compare
+    ↑
+Next UI
+    ↓
+Necessary changes
+    ↓
+Commit DOM updates</div>
+</div>
+
+<div class="card">
+<h2>Keys</h2>
+<p>Keys give React a stable identity for elements in a list.</p>
+<pre>{users.map(user =&gt; (
+  &lt;User key={user.id} user={user} /&gt;
+))}</pre>
+<p>Keys help React match old and new children during reconciliation.</p>
+</div>
+
+<div class="card">
+<h2>Stable Keys</h2>
+<p>A good key is:</p>
+<ul>
+<li>Unique among the siblings.</li>
+<li>Stable across renders.</li>
+<li>Based on the item's identity.</li>
+</ul>
+<p>Database IDs are often good keys.</p>
+</div>
+
+<div class="card">
+<h2>Why Index Keys Can Cause Problems</h2>
+<pre>// Avoid when list order can change
+items.map((item, index) =&gt; (
+  &lt;Item key={index} item={item} /&gt;
+));</pre>
+<p>If items are inserted, removed or reordered, the same index may refer to a different item. React can then preserve component state against the wrong item.</p>
+<p>Index keys are generally okay for truly static lists where items never reorder, insert, or delete.</p>
+</div>
+
+<div class="card">
+<h2>Complete React Mental Model</h2>
+<div class="diagram">Props / State change
+        ↓
+Component renders
+        ↓
+New React element tree
+        ↓
+Reconciliation
+        ↓
+Commit necessary DOM changes
+        ↓
+Browser rendering
+        ↓
+Screen</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>Why React?</b> It provides a component-based, declarative way to build dynamic UIs.</li>
+<li><b>Virtual DOM vs Real DOM?</b> Virtual DOM is React's in-memory UI representation; Real DOM is the browser's actual document tree.</li>
+<li><b>What is JSX?</b> A syntax extension for describing UI inside JavaScript.</li>
+<li><b>What does Babel do?</b> It transforms JSX and modern JavaScript according to the project's configuration.</li>
+<li><b>What is ReactDOM?</b> The package that provides browser DOM integration APIs such as createRoot.</li>
+<li><b>What are props?</b> Read-only inputs passed from parent to child.</li>
+<li><b>What is prop drilling?</b> Passing props through components that do not need them to reach a deeper component.</li>
+<li><b>Local vs shared state?</b> Local state belongs to one component/subtree; shared state is needed by multiple components.</li>
+<li><b>What is derived state?</b> A value calculated from existing props/state rather than independently stored.</li>
+<li><b>What causes a re-render?</b> Common causes include state updates, parent renders, changed props and relevant context updates.</li>
+<li><b>What is reconciliation?</b> Comparing previous and next React element trees to determine necessary updates.</li>
+<li><b>Why are keys required?</b> They provide stable identity for list items during reconciliation.</li>
+<li><b>Why is index a bad key?</b> When a list changes order/length, indexes can point to different items and cause incorrect state association.</li>
+<li><b>What is an HOC?</b> A function that takes a component and returns an enhanced component.</li>
+<li><b>What are compound components?</b> A group of components designed to work together through a shared parent API.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>You need a reusable button used across many pages.</b><br>Create a function component and pass differences through props.</li>
+<li><b>A child needs to display a parent's data.</b><br>Pass the data through props.</li>
+<li><b>A deep child needs data and many intermediate components do not use it.</b><br>Consider composition, Context or suitable shared state instead of excessive prop drilling.</li>
+<li><b>Two sibling components need the same changing state.</b><br>Lift the state to their closest common parent and pass the needed data/callbacks.</li>
+<li><b>A value can be calculated from existing state.</b><br>Prefer derived data instead of storing duplicate state.</li>
+<li><b>A list of users is rendered from API data.</b><br>Use map and a stable unique key such as the user ID.</li>
+<li><b>A list can be reordered by drag-and-drop.</b><br>Do not use the array index as the key; use a stable item ID.</li>
+<li><b>A list item contains an input and items are inserted at the beginning.</b><br>Use stable IDs so input state stays associated with the correct item.</li>
+<li><b>A component's state changes.</b><br>React re-renders the relevant component tree and reconciles the result before committing necessary DOM changes.</li>
+<li><b>A parent re-renders.</b><br>Its children may also be evaluated again; React then determines whether DOM changes are actually needed.</li>
+<li><b>You need multiple sibling JSX elements without an extra div.</b><br>Use a Fragment.</li>
+<li><b>You need to show either Login or Dashboard.</b><br>Use conditional rendering such as a ternary or early return.</li>
+<li><b>You have a reusable component that wraps arbitrary content.</b><br>Use the children prop.</li>
+<li><b>You want to add loading behavior around many components.</b><br>A HOC can be used, although modern React often favors Hooks and composition.</li>
+<li><b>You want a flexible Tabs API.</b><br>Compound components can provide a clean API such as Tabs.List, Tabs.Tab and Tabs.Panel.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ React = component-based + declarative UI.</li>
+<li>✔ JSX = UI syntax inside JavaScript.</li>
+<li>✔ Babel = transforms JSX/modern JS.</li>
+<li>✔ ReactDOM = browser DOM integration.</li>
+<li>✔ Props = parent → child inputs.</li>
+<li>✔ State = changing data that affects UI.</li>
+<li>✔ Derived state = calculate, don't duplicate.</li>
+<li>✔ Re-render ≠ full DOM rebuild.</li>
+<li>✔ Reconciliation = compare UI trees.</li>
+<li>✔ Keys = stable identity for list items.</li>
+<li>✔ Avoid index keys when lists can change.</li>
+</ul>
+</div>
+
+</body></html>

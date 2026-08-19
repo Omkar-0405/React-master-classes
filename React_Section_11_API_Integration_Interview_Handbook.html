@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React API Integration - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#0369a1;color:#fff;padding:28px;border-radius:12px}
+h2{color:#0369a1}h3{color:#075985}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#e0f2fe}
+code{background:#f0f9ff;padding:2px 5px;border-radius:4px}.note{background:#f0f9ff;border-left:4px solid #0284c7;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 11 — API Integration</h1>
+<p>Simple Interview Handbook • Fetch • Axios • AbortController • Authentication • Errors • Retry • Pagination • Infinite Scroll</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is API Integration?</h2>
+<p>API integration means connecting the React application to a backend/service to send requests and receive data.</p>
+<div class="diagram">React UI
+   ↓
+API Client
+   ↓
+HTTP Request
+   ↓
+Backend / API
+   ↓
+Response
+   ↓
+Parse + handle
+   ↓
+State / Cache
+   ↓
+UI</div>
+<div class="note"><b>Interview idea:</b> A good API layer handles loading, success, errors, cancellation, authentication, retries and data transformation without scattering duplicated logic across components.</div>
+</div>
+
+<div class="card">
+<h2>2. Fetch</h2>
+<p><code>fetch()</code> is the browser's built-in API for making HTTP requests.</p>
+<pre>async function getUsers() {
+  const response = await fetch("/api/users");
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json();
+}</pre>
+<p><b>Important:</b> Fetch does not reject its Promise just because the server returns HTTP 4xx/5xx. You normally check <code>response.ok</code> yourself.</p>
+</div>
+
+<div class="card">
+<h2>POST with Fetch</h2>
+<pre>const response = await fetch("/api/users", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: "Omkar",
+    email: "omkar@example.com"
+  })
+});
+
+if (!response.ok) {
+  throw new Error("Request failed");
+}
+
+const user = await response.json();</pre>
+</div>
+
+<div class="card">
+<h2>Fetch Error Handling</h2>
+<pre>async function request() {
+  try {
+    const response = await fetch("/api/data");
+
+    if (!response.ok) {
+      throw new Error(
+        `Request failed: ${response.status}`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}</pre>
+<p>The <code>catch</code> handles network/abort errors and errors you explicitly throw for unsuccessful HTTP responses.</p>
+</div>
+
+<div class="card">
+<h2>3. Axios</h2>
+<p><b>Axios</b> is an HTTP client library with conveniences such as interceptors, request configuration and automatic response transformations.</p>
+<pre>import axios from "axios";
+
+const response = await axios.get("/api/users");
+
+console.log(response.data);</pre>
+<p>Unlike raw fetch, Axios rejects its Promise by default for HTTP status codes outside its successful range.</p>
+</div>
+
+<div class="card">
+<h2>Axios POST</h2>
+<pre>const response = await axios.post("/api/users", {
+  name: "Omkar",
+  email: "omkar@example.com"
+});
+
+console.log(response.data);</pre>
+</div>
+
+<div class="card">
+<h2>Fetch vs Axios</h2>
+<table>
+<tr><th>Fetch</th><th>Axios</th></tr>
+<tr><td>Built into modern browsers.</td><td>Third-party library.</td></tr>
+<tr><td>Need to check response.ok for HTTP errors.</td><td>Rejects non-2xx/3xx responses by default.</td></tr>
+<tr><td>Manual conventions for interceptors/reusable config.</td><td>Built-in interceptors and convenient configuration.</td></tr>
+<tr><td>No dependency.</td><td>Extra dependency.</td></tr>
+</table>
+<div class="note"><b>Interview answer:</b> Neither is universally better. Fetch is native and sufficient for many apps; Axios can simplify cross-cutting HTTP concerns.</div>
+</div>
+
+<div class="card">
+<h2>4. AbortController</h2>
+<p><code>AbortController</code> lets you cancel an in-progress fetch request.</p>
+<pre>const controller = new AbortController();
+
+fetch("/api/users", {
+  signal: controller.signal
+});
+
+// Cancel it
+controller.abort();</pre>
+<p>Cancellation is especially useful when a component unmounts or a newer request makes an older request unnecessary.</p>
+</div>
+
+<div class="card">
+<h2>AbortController with useEffect</h2>
+<pre>useEffect(() =&gt; {
+  const controller = new AbortController();
+
+  async function load() {
+    try {
+      const response = await fetch("/api/users", {
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setError(error);
+      }
+    }
+  }
+
+  load();
+
+  return () =&gt; controller.abort();
+}, []);</pre>
+<div class="note">Cleanup aborts the request when the effect is cleaned up, helping avoid unnecessary work and stale responses.</div>
+</div>
+
+<div class="card">
+<h2>5. Authentication</h2>
+<p>Authentication answers: <b>"Who is this user?"</b></p>
+<p>Authorization answers: <b>"What is this user allowed to do?"</b></p>
+<div class="diagram">Login
+ ↓
+Credentials / OAuth
+ ↓
+Server verifies identity
+ ↓
+Session / token
+ ↓
+Authenticated requests
+ ↓
+Backend checks authorization
+ ↓
+Response</div>
+</div>
+
+<div class="card">
+<h2>6. JWT</h2>
+<p>A <b>JWT (JSON Web Token)</b> is a signed token format commonly used to carry claims between parties.</p>
+<pre>eyJhbGciOiJIUzI1NiJ9.
+eyJzdWIiOiIxMjMifQ.
+signature</pre>
+<p>A JWT commonly has a header, payload and signature. The payload is <b>not secret merely because it is encoded</b>. Do not put sensitive secrets in it.</p>
+</div>
+
+<div class="card">
+<h2>JWT Request Flow</h2>
+<div class="diagram">Login
+ ↓
+Server issues token
+ ↓
+Client stores/uses credential
+ ↓
+Request
+Authorization: Bearer &lt;token&gt;
+ ↓
+Server verifies token
+ ↓
+Protected response</div>
+<p>Where the credential is stored matters greatly for security. Avoid exposing sensitive long-lived tokens to JavaScript when an appropriately configured secure cookie-based session is possible.</p>
+</div>
+
+<div class="card">
+<h2>7. Refresh Token</h2>
+<p>A refresh token is used to obtain a new access token after the short-lived access token expires.</p>
+<div class="diagram">Access token expires
+       ↓
+Client sends refresh request
+       ↓
+Server validates refresh credential
+       ↓
+New access token
+       ↓
+Retry original API request</div>
+<p>Refresh-token designs vary. Secure applications typically use short-lived access tokens and carefully protect refresh credentials.</p>
+</div>
+
+<div class="card">
+<h2>Access Token vs Refresh Token</h2>
+<table>
+<tr><th>Access Token</th><th>Refresh Token</th></tr>
+<tr><td>Used frequently for API authorization.</td><td>Used to obtain a new access token.</td></tr>
+<tr><td>Usually shorter lifetime.</td><td>Usually longer lifetime.</td></tr>
+<tr><td>Sent to protected APIs.</td><td>Should be sent only to the refresh endpoint.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>8. Cookie Authentication</h2>
+<p>With cookie-based authentication, the browser stores a session credential in a cookie and sends it with matching requests.</p>
+<pre>Set-Cookie:
+session=abc123;
+HttpOnly;
+Secure;
+SameSite=Lax</pre>
+<p><code>HttpOnly</code> prevents JavaScript from reading the cookie. <code>Secure</code> limits it to HTTPS. <code>SameSite</code> controls cross-site sending behavior.</p>
+<div class="note">Cookie security also requires CSRF considerations and appropriate server configuration.</div>
+</div>
+
+<div class="card">
+<h2>9. OAuth</h2>
+<p><b>OAuth 2.0</b> is an authorization framework. It allows an application to obtain limited access to resources without sharing the user's password with the client application.</p>
+<div class="diagram">User
+ ↓
+Client App
+ ↓
+Authorization Server
+ ↓
+User grants permission
+ ↓
+Authorization code
+ ↓
+Token exchange
+ ↓
+Client accesses resource server</div>
+<p>For browser/mobile applications, Authorization Code + PKCE is a common modern flow.</p>
+</div>
+
+<div class="card">
+<h2>Authentication Storage — Interview View</h2>
+<table>
+<tr><th>Approach</th><th>Main concern</th></tr>
+<tr><td>HttpOnly Secure cookie</td><td>Helps protect credential from JavaScript access; requires CSRF-aware design.</td></tr>
+<tr><td>localStorage token</td><td>Accessible to JavaScript, so XSS can expose it.</td></tr>
+<tr><td>sessionStorage token</td><td>Also accessible to JavaScript; lifetime differs from localStorage.</td></tr>
+</table>
+<p>There is no single storage choice that solves all security problems. Threat model, backend architecture and cookie settings matter.</p>
+</div>
+
+<div class="card">
+<h2>10. Axios Interceptors</h2>
+<p>Interceptors can run logic before a request or after a response.</p>
+<pre>const api = axios.create({
+  baseURL: "/api"
+});
+
+api.interceptors.request.use(config =&gt; {
+  // add common request configuration
+  return config;
+});
+
+api.interceptors.response.use(
+  response =&gt; response,
+  error =&gt; {
+    // central error handling
+    return Promise.reject(error);
+  }
+);</pre>
+<p>Common uses include common headers, logging and authentication flows.</p>
+</div>
+
+<div class="card">
+<h2>11. Error Handling</h2>
+<p>Handle errors at the right level.</p>
+<div class="diagram">Request
+ ↓
+Network error? → Retry / offline UI
+ ↓
+HTTP error?
+ ├─ 401 → authenticate/refresh/session handling
+ ├─ 403 → not authorized
+ ├─ 404 → resource not found
+ ├─ 429 → rate limit/backoff
+ └─ 5xx → server issue / retry when safe
+ ↓
+Validation error → show field/message
+</div>
+</div>
+
+<div class="card">
+<h2>HTTP Error Handling Example</h2>
+<pre>async function getUser(id) {
+  const response = await fetch(`/api/users/${id}`);
+
+  if (response.status === 404) {
+    throw new Error("User not found");
+  }
+
+  if (!response.ok) {
+    throw new Error("Server error");
+  }
+
+  return response.json();
+}</pre>
+<p>For production apps, create structured application errors instead of relying only on generic strings.</p>
+</div>
+
+<div class="card">
+<h2>12. Retry</h2>
+<p>Retry means attempting a failed request again. Retries should be deliberate, not automatic for every error.</p>
+<div class="diagram">Request fails
+    ↓
+Is retry safe?
+    ↓
+Transient error?
+    ↓ yes
+Wait with backoff
+    ↓
+Retry
+    ↓
+Stop after limit</div>
+<p>Retries are generally more appropriate for transient network/server failures than for permanent 4xx errors.</p>
+</div>
+
+<div class="card">
+<h2>Exponential Backoff</h2>
+<pre>delay = baseDelay * 2^attempt
+
+Attempt 0 → 1x
+Attempt 1 → 2x
+Attempt 2 → 4x
+Attempt 3 → 8x</pre>
+<p>Real systems often add <b>jitter</b> so many clients do not retry at exactly the same time.</p>
+</div>
+
+<div class="card">
+<h2>Retry Example</h2>
+<pre>async function retry(fn, maxRetries = 3) {
+  let attempt = 0;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+
+      const delay =
+        500 * 2 ** attempt +
+        Math.random() * 200;
+
+      await new Promise(resolve =>
+        setTimeout(resolve, delay)
+      );
+
+      attempt++;
+    }
+  }
+}</pre>
+<p>Production retry logic should classify errors and respect request idempotency.</p>
+</div>
+
+<div class="card">
+<h2>13. Pagination</h2>
+<p>Pagination divides a large result set into smaller pages.</p>
+<pre>GET /api/products?page=2&amp;limit=20</pre>
+<div class="diagram">Page 1 → items 1–20
+Page 2 → items 21–40
+Page 3 → items 41–60</div>
+<p>It reduces the amount of data returned and rendered at once.</p>
+</div>
+
+<div class="card">
+<h2>Offset vs Cursor Pagination</h2>
+<table>
+<tr><th>Offset</th><th>Cursor</th></tr>
+<tr><td><code>?page=10&amp;limit=20</code></td><td><code>?cursor=abc123&amp;limit=20</code></td></tr>
+<tr><td>Simple to understand.</td><td>Better suited to changing/large datasets in many cases.</td></tr>
+<tr><td>Can become expensive/inconsistent at large offsets.</td><td>Uses a position/token from the previous result.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Pagination Example</h2>
+<pre>async function getProducts(page) {
+  const response = await fetch(
+    `/api/products?page=${page}&amp;limit=20`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed");
+  }
+
+  return response.json();
+}</pre>
+</div>
+
+<div class="card">
+<h2>14. Infinite Scroll</h2>
+<p>Infinite scroll automatically loads another page when the user approaches the end of the current list.</p>
+<div class="diagram">Initial page
+    ↓
+User scrolls
+    ↓
+Near bottom?
+    ↓ yes
+Fetch next page
+    ↓
+Append items
+    ↓
+Repeat</div>
+<p>Intersection Observer is often better than listening to every scroll event.</p>
+</div>
+
+<div class="card">
+<h2>Infinite Scroll with IntersectionObserver</h2>
+<pre>const observer = new IntersectionObserver(entries =&gt; {
+  if (entries[0].isIntersecting) {
+    loadNextPage();
+  }
+});
+
+observer.observe(sentinelElement);</pre>
+<p>The sentinel is usually a small element placed after the last item.</p>
+</div>
+
+<div class="card">
+<h2>15. Pagination + Infinite Scroll + Virtualization</h2>
+<div class="diagram">Backend pagination
+       ↓
+Fetch pages
+       ↓
+Infinite scroll
+       ↓
+Large accumulated list
+       ↓
+Virtualization
+       ↓
+Only visible rows rendered</div>
+<p>These solve different problems: pagination limits transferred data, infinite scroll controls when pages are requested, and virtualization limits rendered DOM nodes.</p>
+</div>
+
+<div class="card">
+<h2>16. Race Conditions</h2>
+<p>Suppose a user searches "rea" and then quickly searches "react". The older request may finish after the newer request and overwrite the correct result.</p>
+<div class="diagram">Search "rea" → Request A ───────→ response A
+Search "react" → Request B → response B
+
+If A finishes last:
+❌ old result overwrites new result
+
+Solution:
+Abort A / ignore stale A
+</div>
+<p>Use AbortController, request IDs or a server-state library that handles query identity/cancellation appropriately.</p>
+</div>
+
+<div class="card">
+<h2>17. API Layer Best Practices</h2>
+<ul>
+<li>Keep API calls out of random UI code when possible; create reusable API functions/services.</li>
+<li>Centralize common base URL and headers.</li>
+<li>Handle authentication consistently.</li>
+<li>Normalize/validate response data where needed.</li>
+<li>Cancel obsolete requests.</li>
+<li>Handle loading, empty and error states.</li>
+<li>Retry only safe/transient failures.</li>
+<li>Use pagination for large datasets.</li>
+<li>Use server-state caching when appropriate.</li>
+<li>Never trust client-side authorization.</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>Fetch vs Axios?</b> Fetch is built into browsers; Axios is a library with conveniences such as interceptors and different default error behavior.</li>
+<li><b>Does fetch reject on 404?</b> No. It normally resolves with a Response, so check response.ok/status.</li>
+<li><b>Why use AbortController?</b> To cancel in-progress fetch requests, especially obsolete or unmounted requests.</li>
+<li><b>What is JWT?</b> A signed token format containing claims; its payload is encoded, not automatically encrypted.</li>
+<li><b>Access token vs refresh token?</b> Access token authorizes API requests and is usually short-lived; refresh token obtains a new access token.</li>
+<li><b>What is OAuth?</b> An authorization framework that allows delegated access without giving the client the user's password.</li>
+<li><b>What is a cookie-based session?</b> The browser sends a session credential in a cookie with matching requests.</li>
+<li><b>What does HttpOnly do?</b> Prevents JavaScript from reading the cookie.</li>
+<li><b>What does Secure do?</b> Restricts cookie transmission to HTTPS.</li>
+<li><b>What is SameSite?</b> A cookie attribute controlling cross-site sending behavior.</li>
+<li><b>What is retry with exponential backoff?</b> Reattempting transient failures with progressively longer delays.</li>
+<li><b>Should every API error be retried?</b> No. Retry only suitable transient failures and consider idempotency/rate limits.</li>
+<li><b>What is pagination?</b> Dividing large datasets into smaller result pages.</li>
+<li><b>Offset vs cursor pagination?</b> Offset uses page/offset positions; cursor uses a continuation token/position and is often better for changing large datasets.</li>
+<li><b>What is infinite scroll?</b> Automatically loading additional pages as the user approaches the end of a list.</li>
+<li><b>Why use IntersectionObserver?</b> It can detect when a sentinel approaches the viewport without manually processing every scroll event.</li>
+<li><b>How do you handle API race conditions?</b> Cancel obsolete requests or ensure stale responses cannot overwrite newer results.</li>
+<li><b>Where should authentication be enforced?</b> On the server/API; frontend guards are only a UX/navigation layer.</li>
+<li><b>What status code represents unauthorized authentication?</b> Commonly 401 for missing/invalid authentication; 403 is commonly used when the identity is known but access is forbidden.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>fetch returns 404 but catch does not run.</b><br>Check response.ok/status and throw your own application error if needed.</li>
+<li><b>A component unmounts while a fetch is running.</b><br>Use AbortController in the effect cleanup to cancel the request.</li>
+<li><b>Search results show old data after a fast second search.</b><br>Abort the older request or ignore responses that are no longer current.</li>
+<li><b>The server returns 500 temporarily.</b><br>Retry with a bounded exponential backoff if the request is safe to retry.</li>
+<li><b>A POST failed due to a validation error.</b><br>Do not blindly retry; show the validation error and let the user correct it.</li>
+<li><b>A GET request gets rate-limited with 429.</b><br>Respect Retry-After when provided and use controlled backoff.</li>
+<li><b>You have 100,000 users in the database.</b><br>Do not return all users. Use pagination, filtering and appropriate server-side indexing.</li>
+<li><b>Users can sort/filter a paginated table.</b><br>Include sorting/filter values in the API request and reset pagination appropriately when the query changes.</li>
+<li><b>A feed should load more when the user reaches the bottom.</b><br>Use paginated API requests with an IntersectionObserver sentinel.</li>
+<li><b>Infinite scroll repeatedly requests the same page.</b><br>Track loading state and the next cursor/page; prevent duplicate next-page requests.</li>
+<li><b>A list has thousands of accumulated items.</b><br>Combine pagination/infinite loading with virtualization if rendering all accumulated items becomes expensive.</li>
+<li><b>You need login persistence without exposing a long-lived credential to JavaScript.</b><br>Consider a secure HttpOnly cookie-based session/refresh design with appropriate CSRF protection.</li>
+<li><b>A JWT payload contains a password.</b><br>Never do this. JWT payloads are readable when encoded; secrets must not be placed in them.</li>
+<li><b>A user can access /admin in the UI by changing the URL.</b><br>Frontend routing is not security. The backend must verify authorization for every protected operation.</li>
+<li><b>Multiple components need the same API data.</b><br>Consider a server-state cache such as TanStack Query or RTK Query to avoid duplicated fetching and coordinate cache updates.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Fetch = native browser HTTP API.</li>
+<li>✔ Check fetch response.ok yourself.</li>
+<li>✔ Axios = HTTP client with useful abstractions.</li>
+<li>✔ AbortController = cancel fetch.</li>
+<li>✔ Authentication = identity.</li>
+<li>✔ Authorization = permissions.</li>
+<li>✔ JWT payload is readable, not automatically secret.</li>
+<li>✔ Access token = API authorization.</li>
+<li>✔ Refresh token = obtain new access token.</li>
+<li>✔ HttpOnly = JavaScript cannot read cookie.</li>
+<li>✔ Secure = HTTPS-only cookie transmission.</li>
+<li>✔ OAuth = delegated authorization framework.</li>
+<li>✔ Retry only suitable transient failures.</li>
+<li>✔ Exponential backoff + jitter helps avoid retry storms.</li>
+<li>✔ Pagination = split large result set.</li>
+<li>✔ Cursor = continuation position/token.</li>
+<li>✔ Infinite scroll = automatically request next page.</li>
+<li>✔ IntersectionObserver = efficient visibility trigger.</li>
+<li>✔ Cancel/ignore stale requests to prevent race conditions.</li>
+<li>✔ Backend must enforce authorization.</li>
+</ul>
+</div>
+
+</body>
+</html>

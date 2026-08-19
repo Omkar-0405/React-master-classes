@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- Primary SEO Meta Tags -->
+  <title id="seo-title">React & JavaScript Interview Masterclass Hub | 38 Handbooks & System Design</title>
+  <meta id="seo-description" name="description" content="Master 38 senior frontend developer interview handbooks across 17 structured categories: JS Fundamentals, Fiber, Hooks, Redux, Performance, System Design & Machine Coding.">
+  <meta name="keywords" content="React interview questions, JavaScript interview handbook, React Fiber, useEffect, Redux Toolkit, Frontend System Design, Machine coding problems, Web Performance, Core Web Vitals">
+  <meta name="author" content="Omkar">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link id="canonical-url" rel="canonical" href="index.html">
+
+  <!-- Open Graph / Facebook / LinkedIn SEO Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="index.html">
+  <meta id="og-title" property="og:title" content="React & JavaScript Interview Masterclass Hub">
+  <meta id="og-description" property="og:description" content="Comprehensive senior React & JavaScript interview prep kit covering 38 modules across 17 categories.">
+  <meta property="og:site_name" content="React & JS Masterclass Hub">
+  <meta property="og:image" content="https://raw.githubusercontent.com/facebook/react/main/fixtures/dom/public/react-logo.png">
+
+  <!-- Twitter Card SEO Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta id="twitter-title" name="twitter:title" content="React & JavaScript Interview Masterclass Hub">
+  <meta id="twitter-description" name="twitter:description" content="Comprehensive senior React & JavaScript interview prep kit covering 38 modules across 17 categories.">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/facebook/react/main/fixtures/dom/public/react-logo.png">
+
+  <!-- Structured Data JSON-LD Schema.org for Google Search Rich Snippets -->
+  <script id="seo-jsonld" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "React & JavaScript Interview Masterclass Hub",
+    "url": "index.html",
+    "description": "Comprehensive senior React & JavaScript interview handbooks covering 38 modules across 17 structured categories.",
+    "author": {
+      "@type": "Person",
+      "name": "Omkar"
+    },
+    "hasPart": [
+      {
+        "@type": "LearningResource",
+        "name": "JavaScript Fundamentals",
+        "learningResourceType": "Handbook"
+      },
+      {
+        "@type": "LearningResource",
+        "name": "React Fiber & Rendering Internals",
+        "learningResourceType": "Handbook"
+      },
+      {
+        "@type": "LearningResource",
+        "name": "Frontend System Design",
+        "learningResourceType": "Handbook"
+      }
+    ]
+  }
+  </script>
+
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Reading Progress Bar -->
+    <div id="progress-bar"></div>
+
+    <!-- Mobile Drawer Backdrop Overlay -->
+    <div id="mobile-drawer-overlay" class="mobile-drawer-overlay"></div>
+
+    <!-- Top Navigation Header -->
+    <header class="top-header" role="banner">
+      <div class="header-left">
+        <button id="menu-toggle-btn" class="menu-toggle-btn" title="Toggle Navigation Sidemenu" aria-label="Toggle Navigation Sidemenu">
+          ☰
+        </button>
+        <a href="#" class="brand-logo" title="React & JS Interview Masterclass Home">
+          <div class="brand-icon">⚛</div>
+          <span class="brand-title-text">React & JS Hub</span>
+          <span class="brand-badge">Masterclass</span>
+        </a>
+      </div>
+
+      <div class="header-center">
+        <button id="search-trigger-btn" class="search-trigger-btn" aria-label="Search 38 Interview Handbooks">
+          <span class="search-btn-inner">
+            <span class="search-icon-sm">🔍</span>
+            <span class="search-trigger-text-full">Search 38 Handbooks & Concepts...</span>
+            <span class="search-trigger-text-short">Search</span>
+          </span>
+          <span class="search-shortcut">
+            <span>Ctrl</span><span>K</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <div class="overall-progress-pill" title="Your overall study progress">
+          <span>Mastered:</span>
+          <div class="progress-mini-bar">
+            <div id="progress-mini-fill" class="progress-mini-fill"></div>
+          </div>
+          <span id="progress-count-text">0 / 38 (0%)</span>
+        </div>
+
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Color Theme" aria-label="Toggle Light/Dark Theme">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-label" class="theme-label">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="layout-container">
+      <!-- Left Sidemenu (Primary 17 Categories Navigation) -->
+      <aside id="left-sidebar" class="left-sidebar" aria-label="Curriculum Navigation Sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title-row">
+            <span class="sidebar-heading">Interview Curriculum</span>
+            <div class="sidebar-actions">
+              <button id="collapse-sidebar-btn" class="icon-btn-sm" title="Collapse Sidebar" aria-label="Collapse Sidebar">◀</button>
+            </div>
+          </div>
+          <input 
+            type="text" 
+            id="sidebar-filter-input" 
+            class="sidebar-filter-input" 
+            placeholder="Filter 17 categories & topics..." 
+            aria-label="Filter topics in sidemenu"
+          />
+        </div>
+
+        <!-- Dynamic Category & Topic Navigation List -->
+        <nav id="sidebar-nav-scroll" class="sidebar-nav-scroll" aria-label="Sidemenu Navigation">
+          <!-- Populated dynamically by app.js from search-index.js -->
+        </nav>
+      </aside>
+
+      <!-- Main Reader Workspace -->
+      <main class="main-content-area" role="main">
+        <!-- Hero Header Banner -->
+        <header class="doc-hero-banner">
+          <nav class="doc-breadcrumbs" aria-label="Breadcrumb">
+            <span id="breadcrumb-cat" class="breadcrumb-cat">JavaScript Fundamentals</span>
+            <span>/</span>
+            <span id="breadcrumb-title">Execution Context</span>
+          </nav>
+
+          <h1 id="doc-main-title" class="doc-main-title">JavaScript Execution Context & Call Stack</h1>
+
+          <div class="doc-meta-row">
+            <span id="meta-difficulty" class="meta-badge difficulty">Core Fundamentals</span>
+            <span id="meta-readtime" class="meta-badge readtime">8 min read</span>
+
+            <div class="doc-actions-row">
+              <button id="print-pdf-btn" class="action-btn" title="Print handbook or save as PDF" aria-label="Print handbook or save as PDF">
+                📄 Print / PDF
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Injected Handbook Content -->
+        <article id="doc-content" class="doc-content">
+          <!-- Content fetched and dynamically injected by app.js -->
+        </article>
+
+        <!-- Sequential Previous / Next Topic Bottom Footer -->
+        <footer class="topic-nav-footer" role="navigation" aria-label="Sequential Handbook Navigation">
+          <a id="prev-topic-card" href="#" class="nav-topic-card prev" style="visibility: hidden;">
+            <span class="nav-direction-label">◀ Previous Topic</span>
+            <span class="nav-topic-title">Previous Handbook Title</span>
+          </a>
+
+          <a id="next-topic-card" href="#" class="nav-topic-card next" style="visibility: hidden;">
+            <span class="nav-direction-label">Next Topic ▶</span>
+            <span class="nav-topic-title">Next Handbook Title</span>
+          </a>
+        </footer>
+      </main>
+
+      <!-- Right Table of Contents (TOC Panel - Desktop) -->
+      <aside class="right-toc-panel" aria-label="Table of Contents Panel">
+        <span class="toc-title">On This Page</span>
+        <ul id="toc-list" class="toc-list">
+          <!-- Populated dynamically by app.js based on loaded h2/h3 tags -->
+        </ul>
+      </aside>
+    </div>
+
+    <!-- Mobile Table of Contents Bottom Sheet -->
+    <div id="mobile-toc-sheet" class="mobile-toc-sheet" role="dialog" aria-modal="true" aria-label="Table of Contents Sheet">
+      <div class="sheet-handle-bar"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">📑 On This Page</span>
+        <button id="close-mobile-toc-btn" class="icon-btn-sm" style="font-size: 1.1rem;" aria-label="Close Table of Contents">✕</button>
+      </div>
+      <div class="sheet-content-scroll">
+        <ul id="mobile-toc-list" class="toc-list">
+          <!-- Populated dynamically by app.js -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Quick Action Bar -->
+    <nav class="mobile-bottom-bar" aria-label="Mobile Navigation Bar">
+      <button id="mobile-btn-menu" class="mobile-bottom-btn" aria-label="Curriculum Menu">
+        <span class="btn-icon">📚</span>
+        <span>Curriculum</span>
+      </button>
+      <button id="mobile-btn-search" class="mobile-bottom-btn" aria-label="Search Handbooks">
+        <span class="btn-icon">🔍</span>
+        <span>Search</span>
+      </button>
+      <button id="mobile-btn-toc" class="mobile-bottom-btn" aria-label="Table of Contents">
+        <span class="btn-icon">📑</span>
+        <span>Contents</span>
+      </button>
+      <button id="mobile-btn-theme" class="mobile-bottom-btn" aria-label="Toggle Theme">
+        <span class="btn-icon">🌓</span>
+        <span>Theme</span>
+      </button>
+      <button id="mobile-btn-top" class="mobile-bottom-btn" aria-label="Scroll to Top">
+        <span class="btn-icon">⬆️</span>
+        <span>Top</span>
+      </button>
+    </nav>
+
+    <!-- Global Search Modal Command Palette (Full Screen Mobile Enhanced) -->
+    <div id="search-modal-backdrop" class="search-modal-backdrop" aria-hidden="true">
+      <div class="search-modal-card" role="dialog" aria-modal="true" aria-label="Global Search">
+        <div class="search-input-wrapper">
+          <button id="mobile-search-back-btn" class="mobile-search-back-btn" title="Back" aria-label="Back">←</button>
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="search-modal-input" 
+            class="search-modal-input" 
+            placeholder="Search 38 handbooks, hooks, system design..." 
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            aria-label="Search Input"
+          />
+          <button id="clear-search-btn" class="clear-search-btn" style="display: none;" aria-label="Clear Search">✕</button>
+          <button id="modal-esc-btn" class="modal-esc-hint" aria-label="Close Search Modal">ESC</button>
+        </div>
+
+        <!-- Quick Category Filter Scroll Bar (Mobile & Desktop) -->
+        <div id="search-cat-pills-row" class="search-cat-pills-row" aria-label="Search Category Filters">
+          <button class="search-cat-pill active" data-cat="all">All</button>
+          <button class="search-cat-pill" data-cat="js-fundamentals">JS Fund.</button>
+          <button class="search-cat-pill" data-cat="browser-internals">Browser</button>
+          <button class="search-cat-pill" data-cat="react-fundamentals">React</button>
+          <button class="search-cat-pill" data-cat="hooks">Hooks</button>
+          <button class="search-cat-pill" data-cat="rendering-fiber">Fiber</button>
+          <button class="search-cat-pill" data-cat="performance-optimization">Performance</button>
+          <button class="search-cat-pill" data-cat="state-management">State</button>
+          <button class="search-cat-pill" data-cat="system-design">System Design</button>
+          <button class="search-cat-pill" data-cat="coding-exercises">Coding</button>
+        </div>
+
+        <ul id="search-results-list" class="search-results-list" aria-label="Search Results">
+          <!-- Populated dynamically with search suggestions -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/search-index.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

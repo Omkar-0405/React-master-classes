@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React State Management - Interview Handbook</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;background:#f5f7fb;color:#20242c;line-height:1.62}
+header{background:#7c3aed;color:#fff;padding:28px;border-radius:12px}
+h2{color:#7c3aed}h3{color:#5b21b6}
+.card{background:#fff;padding:21px;margin:18px 0;border-radius:10px;box-shadow:0 2px 8px #0001}
+pre{background:#181818;color:#eee;padding:14px;border-radius:8px;overflow:auto}
+.diagram{font-family:Consolas,monospace;background:#f8fafc;border:1px dashed #94a3b8;padding:14px;white-space:pre;overflow:auto}
+button{padding:10px 16px;border:0;border-radius:7px;cursor:pointer;font-weight:bold}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#ede9fe}
+code{background:#f5f3ff;padding:2px 5px;border-radius:4px}.note{background:#f5f3ff;border-left:4px solid #7c3aed;padding:10px 14px}
+@media print{button{display:none}body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}}
+</style>
+<script>function printPDF(){window.print()}</script>
+</head>
+<body>
+
+<header>
+<h1>Section 8 — React State Management</h1>
+<p>Simple Interview Handbook • Context • Redux • Redux Toolkit • Zustand • MobX • Recoil • Jotai • Signals • TanStack Query</p>
+<button onclick="printPDF()">🖨 Print / Save as PDF</button>
+</header>
+
+<div class="card">
+<h2>1. What is State Management?</h2>
+<p><b>State</b> is data that changes over time and affects application behavior or UI. State management is how that data is stored, updated, shared and synchronized.</p>
+<div class="diagram">User action
+    ↓
+Update state
+    ↓
+Application reacts
+    ↓
+UI updates
+
+Different state types:
+Local UI state
+Shared client state
+Server state
+URL state
+Form state</div>
+<div class="note"><b>Important:</b> Not every piece of state belongs in Redux or another global store. Keep state local when possible.</div>
+</div>
+
+<div class="card">
+<h2>2. Context API</h2>
+<p>Context lets components read a value from a provider without passing it through every intermediate component.</p>
+<pre>const ThemeContext = createContext("light");
+
+function App() {
+  return (
+    &lt;ThemeContext.Provider value="dark"&gt;
+      &lt;Dashboard /&gt;
+    &lt;/ThemeContext.Provider&gt;
+  );
+}
+
+function Button() {
+  const theme = useContext(ThemeContext);
+  return &lt;button&gt;{theme}&lt;/button&gt;;
+}</pre>
+<p>Common uses include theme, locale, authentication information and other shared configuration.</p>
+</div>
+
+<div class="card">
+<h2>Context API — Performance</h2>
+<p>When a context value changes, consumers of that context may re-render.</p>
+<pre>const value = useMemo(() => ({
+  user,
+  logout
+}), [user, logout]);</pre>
+<p>For large or frequently changing state, consider splitting contexts or using a state-management solution with more targeted subscriptions.</p>
+</div>
+
+<div class="card">
+<h2>3. Redux — Big Picture</h2>
+<p><b>Redux</b> is a predictable state container based on a central store, actions and reducers.</p>
+<div class="diagram">UI
+ ↓ dispatch(action)
+Action
+ ↓
+Middleware (optional)
+ ↓
+Reducer
+ ↓
+New Store State
+ ↓
+Subscribed UI
+ ↓
+Render</div>
+<p>The reducer calculates the next state from the current state and an action.</p>
+</div>
+
+<div class="card">
+<h2>Redux Store</h2>
+<p>The <b>store</b> holds the application's Redux state and provides APIs for reading state, dispatching actions and subscribing to changes.</p>
+<pre>const store = configureStore({
+  reducer: {
+    counter: counterReducer
+  }
+});</pre>
+<p>Modern Redux applications usually use Redux Toolkit's <code>configureStore</code>.</p>
+</div>
+
+<div class="card">
+<h2>Redux Action</h2>
+<p>An <b>action</b> is an object describing what happened.</p>
+<pre>{
+  type: "counter/increment",
+  payload: 1
+}</pre>
+<p>Actions should describe events or state changes rather than directly changing the store.</p>
+</div>
+
+<div class="card">
+<h2>Redux Reducer</h2>
+<p>A reducer is a function that receives the current state and action and calculates the next state.</p>
+<pre>function counterReducer(state = { value: 0 }, action) {
+  if (action.type === "increment") {
+    return { value: state.value + 1 };
+  }
+
+  return state;
+}</pre>
+<p>Reducers should be predictable and should not perform asynchronous side effects.</p>
+</div>
+
+<div class="card">
+<h2>Redux Dispatch</h2>
+<p><code>dispatch()</code> sends an action into the Redux update flow.</p>
+<pre>dispatch({
+  type: "counter/increment",
+  payload: 1
+});</pre>
+<p>Middleware can intercept or transform the dispatch flow before reducers process actions.</p>
+</div>
+
+<div class="card">
+<h2>Redux Middleware</h2>
+<p>Middleware sits between <code>dispatch</code> and the reducer.</p>
+<div class="diagram">dispatch(action)
+      ↓
+  Middleware
+      ↓
+   Reducer
+      ↓
+   New state</div>
+<p>Common uses: logging, analytics, async workflows and other cross-cutting behavior.</p>
+</div>
+
+<div class="card">
+<h2>4. Redux Toolkit</h2>
+<p><b>Redux Toolkit (RTK)</b> is the recommended way to write modern Redux logic. It reduces boilerplate and provides safer defaults.</p>
+<div class="diagram">configureStore
+     ↓
+  createSlice
+     ↓
+reducers + actions
+     ↓
+dispatch
+     ↓
+store</div>
+</div>
+
+<div class="card">
+<h2>createSlice</h2>
+<p><code>createSlice</code> generates action creators and reducers from one slice definition.</p>
+<pre>const counterSlice = createSlice({
+  name: "counter",
+  initialState: { value: 0 },
+  reducers: {
+    increment(state) {
+      state.value += 1;
+    },
+    add(state, action) {
+      state.value += action.payload;
+    }
+  }
+});
+
+export const { increment, add } = counterSlice.actions;
+export default counterSlice.reducer;</pre>
+<p>The apparent mutation is handled safely by Immer, which creates the immutable update result.</p>
+</div>
+
+<div class="card">
+<h2>createAsyncThunk</h2>
+<p><code>createAsyncThunk</code> helps represent an asynchronous operation with pending, fulfilled and rejected lifecycle actions.</p>
+<pre>export const fetchUser = createAsyncThunk(
+  "user/fetchUser",
+  async (userId) => {
+    const response = await fetch(`/api/users/${userId}`);
+    return response.json();
+  }
+);</pre>
+<pre>extraReducers: builder => {
+  builder
+    .addCase(fetchUser.pending, state => {
+      state.loading = true;
+    })
+    .addCase(fetchUser.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = action.payload;
+    })
+    .addCase(fetchUser.rejected, state => {
+      state.loading = false;
+    });
+}</pre>
+</div>
+
+<div class="card">
+<h2>RTK Query</h2>
+<p><b>RTK Query</b> is Redux Toolkit's data-fetching and server-state solution. It handles fetching, caching, subscriptions, invalidation and generated hooks.</p>
+<pre>const api = createApi({
+  reducerPath: "api",
+  baseQuery: fetchBaseQuery({
+    baseUrl: "/api"
+  }),
+  endpoints: builder => ({
+    getUsers: builder.query({
+      query: () => "/users"
+    })
+  })
+});
+
+export const { useGetUsersQuery } = api;</pre>
+<p>It is often preferable to writing manual Redux reducers for API cache state.</p>
+</div>
+
+<div class="card">
+<h2>5. Zustand</h2>
+<p><b>Zustand</b> is a small client-state library based on a store and hooks. Components can subscribe to selected pieces of state.</p>
+<pre>const useCounter = create(set => ({
+  count: 0,
+  increment: () =>
+    set(state => ({ count: state.count + 1 }))
+}));
+
+function Counter() {
+  const count = useCounter(state => state.count);
+  const increment = useCounter(state => state.increment);
+
+  return (
+    &lt;button onClick={increment}&gt;
+      {count}
+    &lt;/button&gt;
+  );
+}</pre>
+<p>It is popular when you want simple global client state with little boilerplate.</p>
+</div>
+
+<div class="card">
+<h2>6. MobX</h2>
+<p><b>MobX</b> uses observable state and reactive tracking. Components can automatically react to observable values they read.</p>
+<pre>class Counter {
+  count = 0;
+
+  increment() {
+    this.count++;
+  }
+}</pre>
+<p>MobX's model is more reactive and mutable-looking than Redux's action/reducer model.</p>
+</div>
+
+<div class="card">
+<h2>Redux vs MobX</h2>
+<table>
+<tr><th>Redux</th><th>MobX</th></tr>
+<tr><td>Explicit actions and reducers.</td><td>Observable reactive state.</td></tr>
+<tr><td>Centralized predictable update flow.</td><td>Automatic tracking of observable dependencies.</td></tr>
+<tr><td>Strong ecosystem and DevTools.</td><td>Less boilerplate for some object-oriented/reactive models.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>7. Recoil</h2>
+<p><b>Recoil</b> was designed around atoms and selectors for shared React state. Atoms represent state units; selectors derive state.</p>
+<pre>const countState = atom({
+  key: "count",
+  default: 0
+});
+
+const count = useRecoilValue(countState);
+const setCount = useSetRecoilState(countState);</pre>
+<div class="note"><b>Interview note:</b> Recoil has historically been used for atom-based React state, but always check current project status before choosing a library for a new application.</div>
+</div>
+
+<div class="card">
+<h2>8. Jotai</h2>
+<p><b>Jotai</b> uses small pieces of state called atoms. Components subscribe to the atoms they use.</p>
+<pre>const countAtom = atom(0);
+
+function Counter() {
+  const [count, setCount] = useAtom(countAtom);
+
+  return (
+    &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;
+      {count}
+    &lt;/button&gt;
+  );
+}</pre>
+<p>Jotai is useful when you prefer granular, atom-based state.</p>
+</div>
+
+<div class="card">
+<h2>9. Signals</h2>
+<p><b>Signals</b> are reactive values where changing a signal can notify the code that depends on it. Signals are used by several UI frameworks and libraries, with different APIs.</p>
+<div class="diagram">Signal value
+    ↓
+Reactive dependency
+    ↓
+Only affected computation/UI
+    ↓
+Update</div>
+<p>Unlike React's standard state model, signal systems can track dependencies at a finer level. In React, signal libraries are third-party approaches rather than a built-in core state primitive.</p>
+</div>
+
+<div class="card">
+<h2>10. Client State vs Server State</h2>
+<p>This distinction is extremely important in interviews.</p>
+<table>
+<tr><th>Client State</th><th>Server State</th></tr>
+<tr><td>Modal open/closed</td><td>Users loaded from API</td></tr>
+<tr><td>Selected tab</td><td>Product list from server</td></tr>
+<tr><td>Theme</td><td>Cached API response</td></tr>
+<tr><td>Draft UI state</td><td>Data that can become stale remotely</td></tr>
+</table>
+<p>Redux/Zustand are often used for client state. TanStack Query and RTK Query are designed for server-state/data-fetching concerns.</p>
+</div>
+
+<div class="card">
+<h2>11. TanStack Query — Big Picture</h2>
+<p><b>TanStack Query</b> manages asynchronous server state: fetching, caching, synchronization, refetching, mutations and invalidation.</p>
+<div class="diagram">Component
+   ↓
+useQuery
+   ↓
+TanStack Query Cache
+   ↓
+API
+   ↑
+Cached data / refetch / invalidation</div>
+<p>It is not a replacement for every type of global client state. Its main strength is server data.</p>
+</div>
+
+<div class="card">
+<h2>12. TanStack Query — Caching</h2>
+<pre>const { data, isPending, error } = useQuery({
+  queryKey: ["users"],
+  queryFn: fetchUsers
+});</pre>
+<p>The <code>queryKey</code> identifies the query in the cache. If another component asks for the same key, TanStack Query can reuse the cached query and coordinate subscribers.</p>
+</div>
+
+<div class="card">
+<h2>Query Key</h2>
+<p>Query keys should include the variables that affect the result.</p>
+<pre>useQuery({
+  queryKey: ["user", userId],
+  queryFn: () => fetchUser(userId)
+});</pre>
+<p>Different user IDs should produce different cache entries.</p>
+</div>
+
+<div class="card">
+<h2>13. staleTime</h2>
+<p><code>staleTime</code> controls how long fetched data is considered <b>fresh</b>.</p>
+<pre>useQuery({
+  queryKey: ["products"],
+  queryFn: fetchProducts,
+  staleTime: 60_000
+});</pre>
+<p>Here, data is considered fresh for about 60 seconds. During that period, TanStack Query does not treat it as stale simply because time passed.</p>
+<div class="note"><b>Key idea:</b> staleTime is about freshness, not how long data physically remains in memory.</div>
+</div>
+
+<div class="card">
+<h2>14. cacheTime / gcTime</h2>
+<p>In current TanStack Query terminology, the setting is <code>gcTime</code>. Older versions/docs commonly called it <code>cacheTime</code>.</p>
+<pre>useQuery({
+  queryKey: ["users"],
+  queryFn: fetchUsers,
+  gcTime: 5 * 60 * 1000
+});</pre>
+<p><code>gcTime</code> controls how long inactive cached query data can remain before garbage collection. It is different from <code>staleTime</code>.</p>
+</div>
+
+<div class="card">
+<h2>staleTime vs gcTime</h2>
+<table>
+<tr><th>staleTime</th><th>gcTime</th></tr>
+<tr><td>How long data is considered fresh.</td><td>How long inactive cached data can remain before garbage collection.</td></tr>
+<tr><td>Affects freshness/refetch behavior.</td><td>Affects inactive-cache lifetime.</td></tr>
+<tr><td>Does not mean data is deleted after this time.</td><td>Applies to inactive queries, not actively observed ones.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>15. Query Invalidation</h2>
+<p>After a mutation, cached data may no longer be correct. <code>invalidateQueries</code> marks matching queries stale and allows them to refetch according to TanStack Query's rules.</p>
+<pre>const queryClient = useQueryClient();
+
+queryClient.invalidateQueries({
+  queryKey: ["todos"]
+});</pre>
+<div class="diagram">Mutation succeeds
+      ↓
+Invalidate ["todos"]
+      ↓
+Cached query becomes stale
+      ↓
+Active query can refetch
+      ↓
+UI receives fresh data</div>
+</div>
+
+<div class="card">
+<h2>16. Mutations</h2>
+<p><code>useMutation</code> is used for operations that change server data, such as create, update and delete.</p>
+<pre>const mutation = useMutation({
+  mutationFn: updateUser,
+  onSuccess: () => {
+    queryClient.invalidateQueries({
+      queryKey: ["users"]
+    });
+  }
+});
+
+mutation.mutate(userData);</pre>
+<p>Queries are generally for reading/fetching; mutations are for server-side changes.</p>
+</div>
+
+<div class="card">
+<h2>17. Optimistic Updates</h2>
+<p>An optimistic update changes the UI immediately before the server confirms success.</p>
+<div class="diagram">User clicks Like
+      ↓
+Update UI immediately 👍
+      ↓
+Send API request
+      ↓
+Success → keep change
+Failure → rollback</div>
+<pre>useMutation({
+  mutationFn: updateTodo,
+  onMutate: async newTodo => {
+    await queryClient.cancelQueries({
+      queryKey: ["todos"]
+    });
+
+    const previous = queryClient.getQueryData(["todos"]);
+
+    queryClient.setQueryData(["todos"], old =>
+      updateLocally(old, newTodo)
+    );
+
+    return { previous };
+  },
+  onError: (_error, _newTodo, context) => {
+    queryClient.setQueryData(
+      ["todos"],
+      context.previous
+    );
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({
+      queryKey: ["todos"]
+    });
+  }
+});</pre>
+<p>The exact implementation depends on the data shape.</p>
+</div>
+
+<div class="card">
+<h2>18. Infinite Queries</h2>
+<p>Infinite queries manage paginated data where another page can be requested as the user scrolls or clicks "Load more".</p>
+<pre>const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage
+} = useInfiniteQuery({
+  queryKey: ["posts"],
+  queryFn: fetchPosts,
+  initialPageParam: 1,
+  getNextPageParam: lastPage =>
+    lastPage.nextPage ?? undefined
+});</pre>
+<p>TanStack Query keeps the pages together in the query data and provides APIs for fetching the next page.</p>
+</div>
+
+<div class="card">
+<h2>19. TanStack Query Refetching</h2>
+<p>Queries can refetch when data becomes stale and under configured triggers such as component mounting, window focus or network reconnection.</p>
+<p>These behaviors are configurable. Do not say "TanStack Query always refetches whenever a component renders."</p>
+</div>
+
+<div class="card">
+<h2>20. Which Tool Should I Choose?</h2>
+<table>
+<tr><th>Need</th><th>Good starting choice</th></tr>
+<tr><td>Simple local UI state</td><td>useState</td></tr>
+<tr><td>Shared values like theme</td><td>Context</td></tr>
+<tr><td>Predictable large client-state architecture</td><td>Redux Toolkit</td></tr>
+<tr><td>Small/simple global client state</td><td>Zustand / Jotai, depending on team preference</td></tr>
+<tr><td>Reactive observable model</td><td>MobX</td></tr>
+<tr><td>Server/API state</td><td>TanStack Query or RTK Query</td></tr>
+<tr><td>Complex API cache inside Redux ecosystem</td><td>RTK Query</td></tr>
+</table>
+<div class="note"><b>Best interview answer:</b> Choose based on the type of state, team ecosystem, complexity and performance needs—not because one library is universally "best."</div>
+</div>
+
+<div class="card">
+<h2>Most Asked Interview Questions</h2>
+<ol>
+<li><b>Context vs Redux?</b> Context is a value-sharing mechanism; Redux is a structured state-management architecture with a store, actions and reducers.</li>
+<li><b>What are the core Redux concepts?</b> Store, state, actions, reducers and dispatch; middleware extends the dispatch flow.</li>
+<li><b>What is middleware?</b> Logic that runs in the Redux dispatch pipeline before/around reducer processing.</li>
+<li><b>Why Redux Toolkit?</b> It provides recommended defaults and utilities that reduce Redux boilerplate.</li>
+<li><b>What is createSlice?</b> It defines a slice's initial state/reducers and generates action creators and the reducer.</li>
+<li><b>What is createAsyncThunk?</b> A helper for async workflows that dispatches pending/fulfilled/rejected lifecycle actions.</li>
+<li><b>What is RTK Query?</b> Redux Toolkit's data-fetching and caching solution for server state.</li>
+<li><b>Redux vs Zustand?</b> Redux has a more structured explicit architecture; Zustand is smaller and often simpler for global client state.</li>
+<li><b>What is MobX?</b> A reactive state-management library based on observable state and dependency tracking.</li>
+<li><b>What are atoms in Jotai/Recoil?</b> Small independent state units that components can subscribe to.</li>
+<li><b>What are Signals?</b> Reactive state primitives that track dependencies and notify affected computations/UI.</li>
+<li><b>What is server state?</b> Data owned remotely that can become stale and needs fetching, caching, synchronization and invalidation.</li>
+<li><b>What is TanStack Query?</b> A server-state/data-fetching library for caching, synchronization, queries and mutations.</li>
+<li><b>What is staleTime?</b> How long query data is considered fresh.</li>
+<li><b>What is gcTime?</b> How long inactive cached data can remain before garbage collection; older TanStack Query versions called this cacheTime.</li>
+<li><b>staleTime vs gcTime?</b> Freshness vs inactive-cache lifetime.</li>
+<li><b>What is invalidation?</b> Marking matching cached queries stale so they can be refetched as appropriate.</li>
+<li><b>What is optimistic update?</b> Updating the UI/cache before server confirmation, with rollback on failure.</li>
+<li><b>What is a mutation?</b> An operation that changes server data.</li>
+<li><b>What is an infinite query?</b> A query model for loading and managing multiple pages of paginated data.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Scenario-Based Questions</h2>
+<ol>
+<li><b>A theme is needed by many deeply nested components.</b><br>Context is a natural choice.</li>
+<li><b>A small modal's open state is used by one component.</b><br>Keep it local with useState rather than putting it in Redux.</li>
+<li><b>A large application has complex shared client state and many teams.</b><br>Redux Toolkit can provide a predictable standardized architecture.</li>
+<li><b>You need a tiny global store with simple state.</b><br>Zustand or Jotai may be a good fit depending on team preference.</li>
+<li><b>You need API caching and background synchronization.</b><br>Use TanStack Query or RTK Query rather than building an API cache manually in basic Redux state.</li>
+<li><b>A product query should remain fresh for 60 seconds.</b><br>Set staleTime to 60 seconds.</li>
+<li><b>A query is inactive and should be removed after five minutes.</b><br>Configure gcTime appropriately.</li>
+<li><b>You update a todo and the list must become fresh.</b><br>Invalidate the relevant todo query after the mutation succeeds.</li>
+<li><b>A like button should feel instant.</b><br>Use an optimistic update, then rollback if the server rejects it.</li>
+<li><b>A user scrolls through thousands of API results.</b><br>Use an infinite query for pagination and consider UI virtualization for rendering many rows.</li>
+<li><b>Two users have different IDs in the same screen.</b><br>Include the ID in the query key, e.g. ["user", userId].</li>
+<li><b>A Redux reducer makes an API request.</b><br>Do not put asynchronous side effects directly in reducers; use middleware/thunks/RTK Query or another appropriate layer.</li>
+<li><b>A context contains rapidly changing large application state.</b><br>Consider splitting contexts or using a store with targeted subscriptions to reduce unnecessary consumers re-rendering.</li>
+<li><b>You need loading/error/success state for an API call in Redux.</b><br>createAsyncThunk plus slice reducers can model the lifecycle, or RTK Query may be better if this is primarily server-state caching.</li>
+<li><b>A team asks which state library is universally best.</b><br>Explain that the correct choice depends on state type, complexity, ecosystem, team familiarity and performance requirements.</li>
+<li><b>You want to reuse API data across multiple components.</b><br>Use a server-state cache such as TanStack Query or RTK Query.</li>
+<li><b>A mutation succeeds but the UI still shows old cached data.</b><br>Update the cache directly or invalidate/refetch the relevant query.</li>
+<li><b>Optimistic update fails.</b><br>Rollback the previous cached state and show an error.</li>
+<li><b>You have an existing Redux app with many manual API reducers.</b><br>Consider migrating suitable API-state logic to RTK Query rather than continuing to hand-build cache behavior.</li>
+<li><b>You need state derived from other atom values.</b><br>Atom-based libraries can provide derived atoms/selectors depending on the library.</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Quick Revision</h2>
+<ul>
+<li>✔ Context = share values through a tree.</li>
+<li>✔ Redux = structured centralized client-state architecture.</li>
+<li>✔ Store = Redux state container.</li>
+<li>✔ Action = describes what happened.</li>
+<li>✔ Reducer = calculates next state.</li>
+<li>✔ Dispatch = sends action.</li>
+<li>✔ Middleware = dispatch pipeline extension.</li>
+<li>✔ Redux Toolkit = recommended modern Redux approach.</li>
+<li>✔ createSlice = reducers + generated actions.</li>
+<li>✔ createAsyncThunk = async lifecycle actions.</li>
+<li>✔ RTK Query = API fetching/caching in Redux Toolkit.</li>
+<li>✔ Zustand = simple global client state.</li>
+<li>✔ MobX = observable reactive state.</li>
+<li>✔ Jotai/Recoil = atom-based state models.</li>
+<li>✔ Signals = reactive state primitives.</li>
+<li>✔ Server state ≠ ordinary client state.</li>
+<li>✔ TanStack Query = server-state management.</li>
+<li>✔ staleTime = freshness.</li>
+<li>✔ gcTime = inactive cache lifetime.</li>
+<li>✔ Invalidation = mark cached data stale.</li>
+<li>✔ Optimistic update = UI first, server confirmation later.</li>
+<li>✔ Mutation = change server data.</li>
+<li>✔ Infinite query = paginated/infinite data.</li>
+</ul>
+</div>
+
+</body>
+</html>

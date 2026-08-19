@@ -1,0 +1,341 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Fundamentals - Execution Context</title>
+<style>
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    margin:40px;
+    line-height:1.7;
+    color:#222;
+    background:#f5f7fb;
+}
+.container{
+    max-width:1000px;
+    margin:auto;
+    background:#fff;
+    padding:40px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,.1);
+}
+h1,h2,h3{color:#0d47a1}
+pre{
+    background:#272822;
+    color:#f8f8f2;
+    padding:15px;
+    border-radius:8px;
+    overflow:auto;
+}
+code{font-family:Consolas, monospace;}
+.diagram{
+    white-space:pre;
+    background:#eef3ff;
+    padding:15px;
+    border-left:5px solid #0d47a1;
+    overflow:auto;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+table,th,td{
+    border:1px solid #bbb;
+}
+th,td{
+    padding:10px;
+}
+button{
+    background:#0d47a1;
+    color:white;
+    border:none;
+    padding:12px 22px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+    margin-bottom:20px;
+}
+@media print{
+    button{display:none;}
+    body{background:white;margin:0;}
+    .container{
+        box-shadow:none;
+        padding:0;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<button onclick="window.print()">📄 Download / Save as PDF</button>
+
+<h1>Section 1 - JavaScript Execution Context</h1>
+
+<h2>What is Execution Context?</h2>
+
+<p>
+Execution Context is the environment where JavaScript code is executed.
+Before running your code, JavaScript creates a workspace that contains
+variables, functions, memory and information about the current execution.
+</p>
+
+<h2>Types of Execution Context</h2>
+
+<div class="diagram">
+Execution Context
+
+├── Global Execution Context (Created once)
+├── Function Execution Context (Created on every function call)
+└── Eval Execution Context (Rarely used)
+</div>
+
+<h2>Global Execution Context (GEC)</h2>
+
+<p>
+The Global Execution Context is created when the JavaScript file starts executing.
+Every JavaScript program has exactly one Global Execution Context.
+</p>
+
+<pre><code>let name = "Omkar";
+
+function greet() {
+    console.log("Hello");
+}
+
+greet();</code></pre>
+
+<div class="diagram">
+Global Execution Context
+
+Memory
+-------------------------
+name  -> undefined
+greet -> function
+
+Execution
+-------------------------
+Line 1
+Line 2
+Line 3
+</div>
+
+<h2>Function Execution Context (FEC)</h2>
+
+<p>
+Every time a function is called, JavaScript creates a new Function Execution Context.
+Each function call has its own memory and local variables.
+</p>
+
+<pre><code>function add(a,b){
+   return a+b;
+}
+
+add(10,20);</code></pre>
+
+<div class="diagram">
+Global Context
+
+↓
+
+add()
+
+↓
+
+Function Execution Context
+
+Arguments
+a = 10
+b = 20
+</div>
+
+<h2>Call Stack</h2>
+
+<p>
+Execution Contexts are stored inside the Call Stack using the LIFO (Last In First Out) principle.
+</p>
+
+<pre><code>function one(){
+   two();
+}
+
+function two(){
+   three();
+}
+
+function three(){
+   console.log("Hello");
+}
+
+one();</code></pre>
+
+<div class="diagram">
+Top
+
+three()
+
+two()
+
+one()
+
+Global
+
+Bottom
+</div>
+
+<h2>Memory Creation Phase</h2>
+
+<p>
+Before executing code, JavaScript scans the entire program and allocates memory.
+</p>
+
+<table>
+<tr><th>Identifier</th><th>Memory Value</th></tr>
+<tr><td>var variable</td><td>undefined</td></tr>
+<tr><td>Function Declaration</td><td>Complete Function</td></tr>
+<tr><td>let / const</td><td>Created but uninitialized (TDZ)</td></tr>
+</table>
+
+<pre><code>console.log(a);
+
+var a = 10;
+
+function sayHello(){
+   console.log("Hello");
+}</code></pre>
+
+<h2>Execution Phase</h2>
+
+<p>
+After memory allocation, JavaScript executes code line by line.
+</p>
+
+<div class="diagram">
+Memory Creation
+      ↓
+Execution Starts
+      ↓
+Assign Values
+      ↓
+Call Functions
+      ↓
+Finish
+</div>
+
+<h2>Lexical Environment</h2>
+
+<p>
+Every Execution Context has a Lexical Environment that stores local variables
+and keeps a reference to the outer environment.
+</p>
+
+<pre><code>let company = "OpenAI";
+
+function employee(){
+    let name = "Omkar";
+    console.log(company);
+}
+
+employee();</code></pre>
+
+<div class="diagram">
+Global Scope
+company
+
+    ↑
+
+employee()
+name
+</div>
+
+<h2>Scope Chain</h2>
+
+<p>
+If a variable is not found in the current scope, JavaScript searches the parent scope,
+then grandparent scope until the global scope.
+</p>
+
+<pre><code>let country = "India";
+
+function first(){
+
+   let state = "Maharashtra";
+
+   function second(){
+
+      let city = "Mumbai";
+
+      console.log(country);
+
+   }
+
+   second();
+
+}
+
+first();</code></pre>
+
+<div class="diagram">
+Global
+country
+
+↑
+
+first()
+state
+
+↑
+
+second()
+city
+</div>
+
+<h2>Execution Flow</h2>
+
+<div class="diagram">
+JS Starts
+   ↓
+Global Execution Context
+   ↓
+Memory Creation Phase
+   ↓
+Execution Phase
+   ↓
+Function Call
+   ↓
+New Function Context
+   ↓
+Return
+   ↓
+End
+</div>
+
+<h2>Interview Questions</h2>
+
+<ol>
+<li><strong>What is an Execution Context?</strong><br>It is the environment where JavaScript executes code.</li>
+<li><strong>How many Global Execution Contexts exist?</strong><br>Only one per JavaScript program.</li>
+<li><strong>When is a Function Execution Context created?</strong><br>Whenever a function is invoked.</li>
+<li><strong>What are the two phases?</strong><br>Memory Creation Phase and Execution Phase.</li>
+<li><strong>What is the Call Stack?</strong><br>A LIFO stack that stores active execution contexts.</li>
+<li><strong>What is a Lexical Environment?</strong><br>It stores variables and references the outer scope.</li>
+<li><strong>What is Scope Chain?</strong><br>The path JavaScript follows to find a variable.</li>
+<li><strong>Why is Execution Context important in React?</strong><br>Hooks, closures and event handlers all rely on it.</li>
+</ol>
+
+<h2>Summary</h2>
+
+<ul>
+<li>Execution Context is the workspace where JavaScript runs code.</li>
+<li>Every program has one Global Execution Context.</li>
+<li>Every function call creates a new Function Execution Context.</li>
+<li>JavaScript first allocates memory, then executes code.</li>
+<li>Lexical Environment and Scope Chain control variable lookup.</li>
+<li>The Call Stack manages function execution.</li>
+</ul>
+
+</div>
+</body>
+</html>
