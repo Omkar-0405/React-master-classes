@@ -68,15 +68,6 @@ window.INTERVIEW_CATEGORIES = [
         tags: ["promises", "async", "await", "promise.all", "promise.race", "microtask", "error handling"],
         readTime: "10 min read",
         difficulty: "Advanced"
-      },
-      {
-        id: "sublime-promises-roadmap",
-        fileName: "Sublime_JavaScript_Promises_Interview_Handbook",
-        title: "React & JS Interview Master Roadmap",
-        summary: "Master syllabus & comprehensive topic checklist for 3-5 years React/JS senior developer interviews.",
-        tags: ["roadmap", "syllabus", "interview checklist", "faang", "senior frontend"],
-        readTime: "15 min read",
-        difficulty: "Master Guide"
       }
     ]
   },

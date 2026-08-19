@@ -12,7 +12,6 @@
   <url><loc>#js-fundamentals/js-objects-arrays</loc><priority>0.9</priority></url>
   <url><loc>#js-fundamentals/js-fp</loc><priority>0.9</priority></url>
   <url><loc>#js-fundamentals/js-promises</loc><priority>0.9</priority></url>
-  <url><loc>#js-fundamentals/sublime-promises-roadmap</loc><priority>0.9</priority></url>
   <url><loc>#browser-internals/browser-rendering-pipeline</loc><priority>0.85</priority></url>
   <url><loc>#browser-internals/browser-event-loop</loc><priority>0.85</priority></url>
   <url><loc>#browser-internals/browser-event-propagation</loc><priority>0.85</priority></url>
