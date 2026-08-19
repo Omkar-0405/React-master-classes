@@ -104,13 +104,13 @@
       </div>
 
       <div class="header-right">
-        <!-- <div class="overall-progress-pill" title="Your overall study progress">
-          <span>Mastered:</span>
+        <div class="overall-progress-pill" title="Your overall study progress" id="overall-progress-pill">
+          <span class="progress-pill-label">Mastered:</span>
           <div class="progress-mini-bar">
             <div id="progress-mini-fill" class="progress-mini-fill"></div>
           </div>
-          <span id="progress-count-text">0 / 38 (0%)</span>
-        </div> -->
+          <span id="progress-count-text">0 / 37 (0%)</span>
+        </div>
 
         <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Color Theme"
           aria-label="Toggle Light/Dark Theme">
@@ -132,6 +132,20 @@
                 aria-label="Collapse Sidebar">◀</button>
             </div>
           </div>
+
+          <div class="sidebar-progress-card">
+            <div class="sidebar-progress-info">
+              <span class="sidebar-progress-label">Overall Progress</span>
+              <span id="sidebar-progress-pct" class="sidebar-progress-pct">0%</span>
+            </div>
+            <div class="sidebar-progress-bar">
+              <div id="sidebar-progress-fill" class="sidebar-progress-fill"></div>
+            </div>
+            <div class="sidebar-progress-sub">
+              <span id="sidebar-progress-count">0 of 37 completed</span>
+            </div>
+          </div>
+
           <input type="text" id="sidebar-filter-input" class="sidebar-filter-input"
             placeholder="Filter 17 categories & topics..." aria-label="Filter topics in sidemenu" />
         </div>
@@ -159,6 +173,10 @@
             <span id="meta-readtime" class="meta-badge readtime">8 min read</span>
 
             <div class="doc-actions-row">
+              <button id="mark-mastered-btn" class="action-btn mark-mastered-btn" title="Toggle completion status for this handbook">
+                <span id="mark-mastered-icon">○</span>
+                <span id="mark-mastered-text">Mark Mastered</span>
+              </button>
               <button id="print-pdf-btn" class="action-btn" title="Print handbook or save as PDF"
                 aria-label="Print handbook or save as PDF">
                 📄 Print / PDF

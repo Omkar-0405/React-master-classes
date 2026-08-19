@@ -294,11 +294,18 @@ body {
   border-radius: var(--radius-full);
   font-size: 0.825rem;
   font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.overall-progress-pill:hover {
+  border-color: var(--border-focus);
+  background: var(--bg-surface);
 }
 
 .progress-mini-bar {
-  width: 50px;
-  height: 6px;
+  width: 60px;
+  height: 7px;
   background: var(--border-color);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -306,9 +313,84 @@ body {
 
 .progress-mini-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  background: linear-gradient(90deg, #10b981, #06b6d4, #6366f1);
   width: 0%;
   transition: width 0.3s ease;
+}
+
+/* Sidebar Progress Card */
+.sidebar-progress-card {
+  background: var(--bg-surface-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-progress-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.775rem;
+  font-weight: 600;
+}
+
+.sidebar-progress-label {
+  color: var(--text-secondary);
+}
+
+.sidebar-progress-pct {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.sidebar-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.sidebar-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #06b6d4, #6366f1);
+  width: 0%;
+  transition: width 0.3s ease-in-out;
+}
+
+.sidebar-progress-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.mark-mastered-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.mark-mastered-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.mark-mastered-btn.mastered {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.mark-mastered-btn.mastered:hover {
+  background: linear-gradient(135deg, #059669, #047857);
 }
 
 .theme-toggle-btn {

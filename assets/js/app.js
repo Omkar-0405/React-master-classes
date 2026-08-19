@@ -45,6 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressMiniFill = document.getElementById('progress-mini-fill');
   const progressCountText = document.getElementById('progress-count-text');
   
+  const sidebarProgressFill = document.getElementById('sidebar-progress-fill');
+  const sidebarProgressPct = document.getElementById('sidebar-progress-pct');
+  const sidebarProgressCount = document.getElementById('sidebar-progress-count');
+  const markMasteredBtn = document.getElementById('mark-mastered-btn');
+  const markMasteredIcon = document.getElementById('mark-mastered-icon');
+  const markMasteredText = document.getElementById('mark-mastered-text');
+  
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   const themeIcon = document.getElementById('theme-icon');
   const themeLabel = document.getElementById('theme-label');
@@ -132,6 +139,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (printPdfBtn) {
     printPdfBtn.addEventListener('click', () => window.print());
+  }
+
+  if (markMasteredBtn) {
+    markMasteredBtn.addEventListener('click', () => {
+      if (!currentFileId) return;
+      const isCompleted = completedFiles.includes(currentFileId);
+      toggleFileCompleted(currentFileId, !isCompleted);
+
+      const checkbox = document.querySelector(`.topic-checkbox[data-file-id="${currentFileId}"]`);
+      if (checkbox) checkbox.checked = !isCompleted;
+    });
   }
 
   // Global Search Triggers
@@ -351,6 +369,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (progressCountText) progressCountText.textContent = `${count} / ${total} (${pct}%)`;
     if (progressMiniFill) progressMiniFill.style.width = `${pct}%`;
+
+    if (sidebarProgressPct) sidebarProgressPct.textContent = `${pct}%`;
+    if (sidebarProgressFill) sidebarProgressFill.style.width = `${pct}%`;
+    if (sidebarProgressCount) sidebarProgressCount.textContent = `${count} of ${total} completed`;
+
+    updateMarkMasteredBtnState();
+  }
+
+  function updateMarkMasteredBtnState() {
+    if (!markMasteredBtn || !currentFileId) return;
+    const isCompleted = completedFiles.includes(currentFileId);
+
+    if (isCompleted) {
+      markMasteredBtn.classList.add('mastered');
+      if (markMasteredIcon) markMasteredIcon.textContent = '✓';
+      if (markMasteredText) markMasteredText.textContent = 'Mastered';
+    } else {
+      markMasteredBtn.classList.remove('mastered');
+      if (markMasteredIcon) markMasteredIcon.textContent = '○';
+      if (markMasteredText) markMasteredText.textContent = 'Mark Mastered';
+    }
   }
 
   // ==========================================================================
@@ -385,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!fileObj) return;
 
     currentFileId = fileId;
+    updateMarkMasteredBtnState();
 
     // Dynamic SEO Updates
     updateSEOMetadata(fileObj);
